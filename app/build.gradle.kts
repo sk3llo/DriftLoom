@@ -20,7 +20,7 @@ plugins {
 val gitWorkingBranch = providers.exec {
     commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
 }.standardOutput.asText.map { it.trim() }
-val defaultBranches = listOf("master", "dev")
+val defaultBranches = listOf("main", "master", "dev")
 val workingBranch = gitWorkingBranch.getOrElse("")
 val normalizedWorkingBranch = workingBranch
     .replaceFirst("^[^A-Za-z]+".toRegex(), "")

@@ -405,13 +405,13 @@ public class MainActivity extends AppCompatActivity {
         // let the text view grow a little more as well.
         if (getString(R.string.app_name).length() > "DriftLoom".length()) {
             final ViewGroup.LayoutParams layoutParams =
-                    drawerHeaderBinding.drawerHeaderDriftLoomTitle.getLayoutParams();
+                    drawerHeaderBinding.drawerHeaderDriftloomTitle.getLayoutParams();
             layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-            drawerHeaderBinding.drawerHeaderDriftLoomTitle.setLayoutParams(layoutParams);
-            drawerHeaderBinding.drawerHeaderDriftLoomTitle.setMaxLines(2);
-            drawerHeaderBinding.drawerHeaderDriftLoomTitle.setMinWidth(getResources()
+            drawerHeaderBinding.drawerHeaderDriftloomTitle.setLayoutParams(layoutParams);
+            drawerHeaderBinding.drawerHeaderDriftloomTitle.setMaxLines(2);
+            drawerHeaderBinding.drawerHeaderDriftloomTitle.setMinWidth(getResources()
                     .getDimensionPixelSize(R.dimen.drawer_header_driftloom_title_default_width));
-            drawerHeaderBinding.drawerHeaderDriftLoomTitle.setMaxWidth(getResources()
+            drawerHeaderBinding.drawerHeaderDriftloomTitle.setMaxWidth(getResources()
                     .getDimensionPixelSize(R.dimen.drawer_header_driftloom_title_max_width));
         }
     }
