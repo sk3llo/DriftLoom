@@ -12,7 +12,9 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Initial iOS playback: paste a YouTube URL, resolve streams locally, and play HLS or a compatible
   combined audio/video stream through AVPlayer. A forbidden stream can be refreshed once while
   preserving playback position. The shared Compose settings/about foundation is retained.
-- iOS search, subscriptions, downloads, queues, and background/lock-screen controls are not yet ported.
+- iOS Discover: direct YouTube search for videos, Shorts, channels, and playlists; channel uploads,
+  playlist and Mix contents, related videos, and paginated results. Results open in the native player.
+- iOS subscriptions, downloads, queues, and background/lock-screen controls are not yet ported.
 
 The earlier playback fix was verified on an Android phone before this rebrand.
 The rename itself does not imply a new device test or an installed update.
@@ -47,6 +49,7 @@ Xcode builds `:shared:embedAndSignAppleFrameworkForXcode` and links the local
 swift test --package-path iosApp/Playback
 swift run --package-path iosApp/Playback PlaybackProbe \
   'https://www.youtube.com/watch?v=11-9ZaYiTPE' --seek-60
+swift run --package-path iosApp/Playback BrowseProbe 'NDLS404 SENSOJI' --play
 ```
 
 The tests use a loopback HTTP server for real 403/404 failures and need no external network
@@ -55,15 +58,28 @@ real YouTube requests, starts native playback, seeks to 60 seconds, and verifies
 65 seconds. Without `--seek-60`, it verifies the first three seconds instead. Availability can
 vary with YouTube restrictions or extractor changes.
 
+The browsing probe verifies live search, continuation requests, channels, playlists when present
+in the results, Mix playlists, related-video pagination, and optionally native playback of a result. Browse parser and
+store tests cover current/legacy renderer shapes, Shorts, unavailable pages, deduplication,
+repeated continuation tokens, retry, and stale search/pagination responses.
+
 For an app-level simulator smoke check, launch a Debug build with
 `--playback-smoke-url https://www.youtube.com/watch?v=11-9ZaYiTPE` and inspect the
 `DriftLoomSmoke` log result. This path is compiled out of Release builds and does not activate
-without the flag. Normal startup performs no extraction.
+without the flag. To check the Discover screen, use
+`--browse-smoke-query 'NDLS404 SENSOJI'`. Add `--browse-smoke-play` to load another page and
+open a result through the same callback as a row tap, then verify playback past 65 seconds.
+Inspect the `DriftLoomBrowseSmoke` and `DriftLoomSmoke` log results. Normal startup performs
+no browsing or playback requests until the user searches or opens a video.
 
 The iOS resolver uses [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit), pinned to a
 specific revision in `Package.swift` and the lockfiles. Only local extraction is enabled;
 its optional remote service is disabled. MIT attribution is included in the app's licenses
 screen. The `StreamResolving` interface allows replacing the extractor independently of the UI.
+Browsing is a separate `Browsing` interface. Its client reads YouTube page data directly and
+keeps continuation context in memory; it does not use a third-party browsing server or a
+hard-coded web client version. Metadata currently uses English with Portugal as its content
+region. Full localization and user-selectable regions remain future work.
 
 ## Development
 

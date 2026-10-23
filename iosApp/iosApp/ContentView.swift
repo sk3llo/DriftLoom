@@ -17,20 +17,26 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
+            SearchView { videoID in
+                selectedTab = 1
+                playback.open(videoID)
+            }
+                .tabItem { Label("Discover", systemImage: "magnifyingglass") }.tag(0)
             PlaybackView(playback: playback)
-                .tabItem { Label("Watch", systemImage: "play.rectangle") }.tag(0)
+                .tabItem { Label("Watch", systemImage: "play.rectangle") }.tag(1)
             ComposeView()
                 .ignoresSafeArea(edges: .top)
-                .tabItem { Label("About", systemImage: "info.circle") }.tag(1)
+                .tabItem { Label("About", systemImage: "info.circle") }.tag(2)
         }
         .tint(.teal)
         .task {
 #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--playback-smoke-url") { selectedTab = 1 }
             await runPlaybackSmokeCheck(playback)
 #endif
         }
         .onOpenURL { url in
-            selectedTab = 0
+            selectedTab = 1
             playback.open(url.absoluteString)
         }
     }
@@ -40,9 +46,10 @@ private struct PlaybackView: View {
     @ObservedObject var playback: PlaybackSession
     @State private var input = ""
     @State private var showsLicenses = false
+    @State private var navigationPath: [BrowseRoute] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("A little room to explore.")
@@ -77,6 +84,9 @@ private struct PlaybackView: View {
                         Label("Stream refreshed. Continuing playback.", systemImage: "arrow.clockwise")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
+                    if let videoID = playback.videoID {
+                        RelatedVideosView(videoID: videoID, onPlay: playback.open)
+                    }
                     if playback.phase == .idle {
                         ContentUnavailableView("Your next discovery starts here",
                                                systemImage: "play.rectangle.on.rectangle",
@@ -86,6 +96,12 @@ private struct PlaybackView: View {
                 .padding()
             }
             .navigationTitle("DriftLoom")
+            .onReceive(playback.$videoID) { _ in
+                if !navigationPath.isEmpty { navigationPath.removeAll() }
+            }
+            .navigationDestination(for: BrowseRoute.self) { route in
+                BrowsePageView(route: route) { videoID in playback.open(videoID) }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if playback.phase != .idle {
@@ -140,5 +156,33 @@ private struct PlaybackView: View {
 
     private func dismissKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+
+private struct RelatedVideosView: View {
+    let videoID: String
+    let onPlay: (String) -> Void
+    @StateObject private var related = BrowseStore()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if !related.items.isEmpty {
+                Text("More to explore").font(.title3.weight(.semibold))
+                ForEach(related.items.filter { $0.kind == .video }.prefix(5)) { item in
+                    Button { onPlay(item.contentID) } label: { BrowseRow(item: item) }
+                        .buttonStyle(.plain)
+                }
+                NavigationLink("See all related videos", value: BrowseRoute.related(videoID))
+            } else if related.isLoading {
+                ProgressView("Finding related videos…").font(.footnote)
+            } else if related.error != nil {
+                Button("Try loading related videos again") {
+                    Task { await related.load(.related(videoID)) }
+                }
+                .font(.footnote)
+            }
+        }
+        .task(id: videoID) { await related.load(.related(videoID)) }
     }
 }

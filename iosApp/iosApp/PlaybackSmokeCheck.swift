@@ -7,10 +7,10 @@ import Foundation
 @MainActor
 func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
     let arguments = ProcessInfo.processInfo.arguments
-    guard let flag = arguments.firstIndex(of: "--playback-smoke-url"),
-          arguments.indices.contains(flag + 1) else { return }
+    let flag = arguments.firstIndex(of: "--playback-smoke-url")
+    guard flag != nil || arguments.contains("--browse-smoke-play") else { return }
     session.player.isMuted = true
-    session.open(arguments[flag + 1])
+    if let flag, arguments.indices.contains(flag + 1) { session.open(arguments[flag + 1]) }
     var hasSeeked = false
     for _ in 0..<90 {
         do { try await Task.sleep(for: .seconds(1)) } catch { return }
@@ -30,5 +30,28 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
         }
     }
     NSLog("DriftLoomSmoke: FAIL timed out")
+}
+
+@MainActor
+func runBrowseSmokeCheck(_ store: BrowseStore, onPlay: (String) -> Void) async {
+    let arguments = ProcessInfo.processInfo.arguments
+    guard arguments.contains("--browse-smoke-query"), !Task.isCancelled, !store.isLoading else { return }
+    guard store.error == nil, !store.items.isEmpty else {
+        NSLog("DriftLoomBrowseSmoke: FAIL search")
+        return
+    }
+    NSLog("DriftLoomBrowseSmoke: PASS rendered search results=%d", store.items.count)
+    if arguments.contains("--browse-smoke-play") {
+        if store.canLoadMore {
+            await store.loadMore()
+            guard store.paginationError == nil else { NSLog("DriftLoomBrowseSmoke: FAIL pagination"); return }
+            NSLog("DriftLoomBrowseSmoke: PASS pagination results=%d", store.items.count)
+        }
+        guard let video = store.items.first(where: { $0.kind == .video }) else {
+            NSLog("DriftLoomBrowseSmoke: FAIL no video")
+            return
+        }
+        onPlay(video.contentID)
+    }
 }
 #endif

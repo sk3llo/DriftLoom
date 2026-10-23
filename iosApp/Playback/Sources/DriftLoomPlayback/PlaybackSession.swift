@@ -14,6 +14,7 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var title = "DriftLoom"
     @Published public private(set) var video: ResolvedVideo?
     @Published public private(set) var didRecover = false
+    @Published public private(set) var videoID: String?
 
     private let resolver: any StreamResolving
     private var currentRequest: VideoRequest?
@@ -52,6 +53,7 @@ public final class PlaybackSession: ObservableObject {
         do {
             let request = try VideoRequest(input: input)
             currentRequest = request
+            videoID = request.videoID
             recoveryPolicy = PlaybackRecoveryPolicy()
             didRecover = false
             title = "YouTube video"
@@ -75,6 +77,7 @@ public final class PlaybackSession: ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
 #endif
         currentRequest = nil
+        videoID = nil
         title = "DriftLoom"
         didRecover = false
         video = nil

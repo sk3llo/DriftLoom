@@ -6,7 +6,8 @@ let package = Package(
     platforms: [.iOS("18.2"), .macOS(.v14)],
     products: [
         .library(name: "DriftLoomPlayback", targets: ["DriftLoomPlayback"]),
-        .executable(name: "PlaybackProbe", targets: ["PlaybackProbe"])
+        .executable(name: "PlaybackProbe", targets: ["PlaybackProbe"]),
+        .executable(name: "BrowseProbe", targets: ["BrowseProbe"])
     ],
     dependencies: [
         .package(url: "https://github.com/alexeichhorn/YouTubeKit.git",
@@ -15,6 +16,7 @@ let package = Package(
     targets: [
         .target(name: "DriftLoomPlayback", dependencies: ["YouTubeKit"]),
         .executableTarget(name: "PlaybackProbe", dependencies: ["DriftLoomPlayback"]),
+        .executableTarget(name: "BrowseProbe", dependencies: ["DriftLoomPlayback"]),
         .testTarget(name: "DriftLoomPlaybackTests", dependencies: ["DriftLoomPlayback"])
     ]
 )
