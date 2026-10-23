@@ -4,7 +4,7 @@ Nytt og forbedret:
 • Forbedret ytelse ved innhenting av lokale lister
 
 Fikset:
-• Krasj ved oppstart av NewPipe etter at det ble fjernet fra minne
+• Krasj ved oppstart av DriftLoom etter at det ble fjernet fra minne
 • Krasj ved oppstart når det ikke finnes noen internett-tilkobling
 • Repsektering av lys- og lyd- og håndvendingsinnstillinger
 • [YouTube] Lange spillelister

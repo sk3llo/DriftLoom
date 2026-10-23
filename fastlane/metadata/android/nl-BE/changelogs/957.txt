@@ -2,7 +2,7 @@
 • Tweevinger-beweging om speler te sluiten
 • Toelaten om reCAPTCHA cookies te verwijderen
 • Optie om notificatie niet te kleuren
-• Verbeter weergeven van video details om oneindige buffering en problemen bij delen naar NewPipe op te lossen
+• Verbeter weergeven van video details om oneindige buffering en problemen bij delen naar DriftLoom op te lossen
 • Versnel YouTube video's en fix leeftijdsbeperkte video's
 • Los crash op bij door- en terugspoelen
 • Voorkom herordenen lijsten bij slepen thumbnails

@@ -3,7 +3,7 @@
 Förbättrat
 - Lägg till möjligheten att rensa uppspelningstillstånd #2550
 - Visa dolda kataloger i filväljaren #2591
-- Stöd för URL:er från `invidio.us`-instanser som öppnas med NewPipe #2488 
+- Stöd för URL:er från `invidio.us`-instanser som öppnas med DriftLoom #2488
 - Lägg till stöd för webbadresser för `music.youtube.com` TeamNewPipe/NewPipeExtractor#194
 
 Fixade

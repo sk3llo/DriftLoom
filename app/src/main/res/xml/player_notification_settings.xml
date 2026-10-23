@@ -31,7 +31,7 @@
         android:layout="@layout/settings_category_header_layout"
         app:iconSpaceReserved="false">
 
-        <org.schabi.newpipe.settings.custom.NotificationActionsPreference />
+        <org.schabi.driftloom.settings.custom.NotificationActionsPreference />
     </PreferenceCategory>
 
 </PreferenceScreen>

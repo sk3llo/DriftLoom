@@ -3,7 +3,7 @@ Alterações em 0.17.3
 Melhorado em
 - Adicionada opção para limpar estados de reprodução #2550
 - Mostrar diretórios ocultos no seletor de ficheiros #2591
-- URLs de apoio de instâncias `invidio.us` a serem abertas com NewPipe #2488 
+- URLs de apoio de instâncias `invidio.us` a serem abertas com DriftLoom #2488
 - Adicionar suporte para `music.youtube.com` URLs TeamNewPipe/NewPipeExtractor#194
 
 Fixa

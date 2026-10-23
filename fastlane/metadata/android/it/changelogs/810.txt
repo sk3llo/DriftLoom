@@ -11,7 +11,7 @@ Migliorato
 • [YouTube] Aggiungi supporto ai link del canale /c/shortened_url
 
 Fisso
-• Risolti diversi problemi durante la condivisione di un video su NewPipe e il download diretto dei suoi flussi
+• Risolti diversi problemi durante la condivisione di un video su DriftLoom e il download diretto dei suoi flussi
 • Risolto il problema con l'accesso del giocatore dal suo thread di creazione
 • Corretto il paging dei risultati di ricerca
 • [YouTube] Risolto il problema con l'attivazione di NPE che causava NPE

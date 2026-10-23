@@ -3,7 +3,7 @@ Nytt
 • Mute-knapp i spelare
 
 Förbättrat
-• Tillåt öppning music.youtube.com och media.ccc.de länkar i NewPipe
+• Tillåt öppning music.youtube.com och media.ccc.de länkar i DriftLoom
 • Flytta två inställningar från Utseende till Innehåll
 • Dölj sökalternativ på 5, 15, 25 sekunder om inexakt sökning är aktiverad
 

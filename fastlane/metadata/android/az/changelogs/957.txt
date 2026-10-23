@@ -2,7 +2,7 @@
 • Oyunçu bağlamaq üçün iki barmaq jesti 
 • reCAPTCHA kukilərinin təmizlənməsinə icazə verin
 • Bildirişi rəngləndirməmək üçün seçim 
-• Sonsuz buferləşdirməni, NewPipe ilə paylaşarkən səhv davranışı və digər uyğunsuzluqları düzəltmək üçün video detallarının necə açıldığını təkmilləşdirin
+• Sonsuz buferləşdirməni, DriftLoom ilə paylaşarkən səhv davranışı və digər uyğunsuzluqları düzəltmək üçün video detallarının necə açıldığını təkmilləşdirin
 • YouTube videolarını sürətləndirin və yaş məhdudiyyəti olanları düzəldin 
 • Sürətli irəli/geri çevirmə zamanı qəzanı düzəldin
 • Eskizləri dartmaqla siyahıları yenidən təşkil etməyin

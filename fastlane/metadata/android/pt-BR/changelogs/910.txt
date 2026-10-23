@@ -1,1 +1,1 @@
-Migração do banco de dados corrigida que impediu que NewPipe iniciasse em alguns casos raros.
+Migração do banco de dados corrigida que impediu que DriftLoom iniciasse em alguns casos raros.

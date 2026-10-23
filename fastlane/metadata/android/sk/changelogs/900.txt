@@ -3,7 +3,7 @@ New
 • Mute button in players
 
 Improved
-• Allow opening music.youtube.com and media.ccc.de links in NewPipe
+• Allow opening music.youtube.com and media.ccc.de links in DriftLoom
 • Relocate two settings from Appearance to Content
 • Hide 5, 15, 25 second seek options if inexact seek is enabled
 

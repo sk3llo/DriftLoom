@@ -12,7 +12,7 @@ Melhorado
 - Melhorou várias cadeias de caracteres em inglês
 
 Fixa
-- Jogador fixo a recomeçar, embora seja pausado quando a opção "minimizar no comutador da aplicação" é ativada e o NewPipe é minimizado
+- Jogador fixo a recomeçar, embora seja pausado quando a opção "minimizar no comutador da aplicação" é ativada e o DriftLoom é minimizado
 - Fixar o valor de brilho inicial para o gesto
 - Downloads de subtítulos .srt fixos contendo nem todas as quebras de linha
 - Corrigido o download para cartão SD falhando porque alguns dispositivos Android 5 não são compatíveis com CTF

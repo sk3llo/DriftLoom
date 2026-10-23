@@ -11,7 +11,7 @@ Fejlesztések
 • [YouTube] Támogatás a /c/shortened_url csatorna linkekhez
 
 Javítások
-• Több hiba javítása NewPipe-on megosztást követő letöltés esetén
+• Több hiba javítása DriftLoom-on megosztást követő letöltés esetén
 • Lejátszó hozzáférés létrehozó szál fixálása
 • Keresési eredmény lapozás fixálása
 • [YouTube] NPE-tokozó null fixálása

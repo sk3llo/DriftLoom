@@ -1,7 +1,7 @@
 改进
 • 添加了清除播放状态的选项#2550
 • 在文件选取器中显示隐藏文件#2591
-• 支持使用 NewPipe 应用程序打开的"invidio.us"#2488
+• 支持使用 DriftLoom 应用程序打开的"invidio.us"#2488
 • 添加对"music.youtube.com URL 的支持Extractor#194 
 
 修复

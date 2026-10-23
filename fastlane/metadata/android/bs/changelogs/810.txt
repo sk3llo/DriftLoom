@@ -12,7 +12,7 @@ Poboljšano
 • [YouTube] Dodana podrška za linkove kanala /c/shortened_url
 
 Ispravljeno
-• Ispravljeno više problema prilikom dijeljenja videa na NewPipe i direktnog preuzimanja njegovih tokova
+• Ispravljeno više problema prilikom dijeljenja videa na DriftLoom i direktnog preuzimanja njegovih tokova
 • Ispravljen pristup playeru izvan teme njegovog kreiranja
 • Ispravljeno podjeljivanje rezultata pretrage
 • [YouTube] Ispravljeno prebacivanje na null što je uzrokovalo NPE

@@ -4,7 +4,7 @@ Nowości i ulepszenia:
 • Ulepszono wydajność podczas pobierania list lokalnych
 
 Naprawiono:
-• Naprawiono awarię podczas uruchamiania NewPipe po usunięciu go z pamięci RAM
+• Naprawiono awarię podczas uruchamiania DriftLoom po usunięciu go z pamięci RAM
 • Naprawiono awarię podczas uruchamiania, gdy nie ma połączenia z Internetem
 
 Pozostałe:

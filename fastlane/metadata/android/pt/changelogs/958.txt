@@ -4,7 +4,7 @@ Novo e melhorado:
 - Melhor desempenho na busca de listas locais
 
 Corrigido:
-- Falha ao iniciar o NewPipe após ter sido removido da RAM
+- Falha ao iniciar o DriftLoom após ter sido removido da RAM
 - Falha na inicialização quando não há conexão à Internet
 - Respeitando as configurações de luminosidade e de volume
 - Listas de reprodução longas

@@ -4,7 +4,7 @@ Novo
 
 Poboljšano
 
-• Omogućeno otvaranje linkova music.youtube.com i media.ccc.de u NewPipe-u
+• Omogućeno otvaranje linkova music.youtube.com i media.ccc.de u DriftLoom-u
 • Premještanje dvije postavke iz Izgled u Sadržaj
 • Sakrivanje opcija pretraživanja od 5, 15, 25 sekundi ako je omogućeno neprecizno pretraživanje
 

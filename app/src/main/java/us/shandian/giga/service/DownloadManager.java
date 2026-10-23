@@ -19,11 +19,11 @@ import us.shandian.giga.get.DownloadMission;
 import us.shandian.giga.get.FinishedMission;
 import us.shandian.giga.get.Mission;
 import us.shandian.giga.get.sqlite.FinishedMissionStore;
-import org.schabi.newpipe.streams.io.StoredDirectoryHelper;
-import org.schabi.newpipe.streams.io.StoredFileHelper;
+import org.schabi.driftloom.streams.io.StoredDirectoryHelper;
+import org.schabi.driftloom.streams.io.StoredFileHelper;
 import us.shandian.giga.util.Utility;
 
-import static org.schabi.newpipe.BuildConfig.DEBUG;
+import static org.schabi.driftloom.BuildConfig.DEBUG;
 import static us.shandian.giga.get.DownloadMission.ERROR_NOTHING;
 import static us.shandian.giga.get.DownloadMission.ERROR_PROGRESS_LOST;
 

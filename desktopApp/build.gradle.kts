@@ -22,12 +22,12 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "net.newpipe.app.MainKt"
+        mainClass = "net.driftloom.app.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = NEWPIPE_APPLICATION_ID_NEW
-            packageVersion = NEWPIPE_VERSION_NAME
+            packageName = DRIFTLOOM_APPLICATION_ID_NEW
+            packageVersion = DRIFTLOOM_VERSION_NAME
         }
     }
 }

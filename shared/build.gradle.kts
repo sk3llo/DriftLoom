@@ -16,13 +16,13 @@ plugins {
 // Better than adding a third-party dependency for something as simple as this
 // https://stackoverflow.com/a/74771876/8446131
 val buildConfigGenerator by tasks.registering(Sync::class) {
-    val buildConfigPackage = NEWPIPE_APPLICATION_ID_NEW
+    val buildConfigPackage = DRIFTLOOM_APPLICATION_ID_NEW
     val rawClass = """
         package $buildConfigPackage
 
         object BuildConfig {
-            const val VERSION_NAME = "$NEWPIPE_VERSION_NAME"
-            const val APP_NAME = "NewPipe"
+            const val VERSION_NAME = "$DRIFTLOOM_VERSION_NAME"
+            const val APP_NAME = "DriftLoom"
         }
     """.trimIndent()
     from(resources.text.fromString(rawClass)) {
@@ -48,14 +48,14 @@ kotlin {
     }
 
     android {
-        namespace = NEWPIPE_APPLICATION_ID_NEW
+        namespace = DRIFTLOOM_APPLICATION_ID_NEW
         compileSdk {
-            version = release(NEWPIPE_VERSION_SDK_COMPILE_MAJOR) {
-                minorApiLevel = NEWPIPE_VERSION_SDK_COMPILE_MINOR
+            version = release(DRIFTLOOM_VERSION_SDK_COMPILE_MAJOR) {
+                minorApiLevel = DRIFTLOOM_VERSION_SDK_COMPILE_MINOR
             }
         }
         minSdk {
-            version = release(NEWPIPE_VERSION_SDK_MIN)
+            version = release(DRIFTLOOM_VERSION_SDK_MIN)
         }
         androidResources {
             enable = true

@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		E903CDBEAD6067C2E88D0E13 /* NewPipe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NewPipe.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DriftLoom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -59,7 +59,7 @@
 		80BC5A75E8EEBCC3CC64764B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E903CDBEAD6067C2E88D0E13 /* NewPipe.app */,
+				E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,7 +87,7 @@
 			packageProductDependencies = (
 			);
 			productName = iosApp;
-			productReference = E903CDBEAD6067C2E88D0E13 /* NewPipe.app */;
+			productReference = E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

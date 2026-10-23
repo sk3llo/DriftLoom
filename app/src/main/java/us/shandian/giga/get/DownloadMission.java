@@ -8,7 +8,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.schabi.newpipe.DownloaderImpl;
+import org.schabi.driftloom.DownloaderImpl;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,12 +25,12 @@ import java.util.Objects;
 
 import javax.net.ssl.SSLException;
 
-import org.schabi.newpipe.streams.io.StoredFileHelper;
+import org.schabi.driftloom.streams.io.StoredFileHelper;
 import us.shandian.giga.postprocessing.Postprocessing;
 import us.shandian.giga.service.DownloadManagerService;
 import us.shandian.giga.util.Utility;
 
-import static org.schabi.newpipe.BuildConfig.DEBUG;
+import static org.schabi.driftloom.BuildConfig.DEBUG;
 
 public class DownloadMission extends Mission {
     private static final long serialVersionUID = 6L;// last bump: 07 october 2019

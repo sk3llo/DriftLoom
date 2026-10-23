@@ -4,7 +4,7 @@ Yeni və təkmilləşdirilmiş:
 • Yerli siyahıları əldə edərkən təkmilləşdirilmiş performans 
 
 Sabit:
- • RAM-dan çıxarıldıqdan sonra NewPipe-ı işə salarkən yaranan qəza düzəldildi
+ • RAM-dan çıxarıldıqdan sonra DriftLoom-ı işə salarkən yaranan qəza düzəldildi
  • İnternet bağlantısı olmadıqda işə salma zamanı yaranan qəza düzəldildi 
 • Parlaqlıq və həcm jest parametrlərinə uyğun olaraq düzəldildi 
 • [YouTube] Sabit uzun çalğı siyahıları 

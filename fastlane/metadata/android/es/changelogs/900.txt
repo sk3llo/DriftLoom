@@ -3,7 +3,7 @@ Nuevo
 - Botón de silencio en reproductores
 
 Mejora de
-- Permitir la apertura de enlaces music.youtube.com y media.ccc.de en NewPipe
+- Permitir la apertura de enlaces music.youtube.com y media.ccc.de en DriftLoom
 - Reubicar dos ajustes de Apariencia a Contenido
 - Ocultar opciones de búsqueda de 5, 15 y 25 seg. si activada búsqueda inexacta
 

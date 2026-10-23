@@ -4,7 +4,7 @@ Novo i poboljšano:
 • Poboljšane performanse prilikom preuzimanja lokalnih lista
 
 Ispravljeno:
-• Ispravljen pad sistema prilikom pokretanja NewPipe-a nakon što je uklonjen iz RAM-a
+• Ispravljen pad sistema prilikom pokretanja DriftLoom-a nakon što je uklonjen iz RAM-a
 • Ispravljen pad sistema prilikom pokretanja kada nema internet veze
 • Ispravljeno u vezi s postavkama gestova za svjetlinu i jačinu zvuka
 • [YouTube] Ispravljene duge liste reprodukcije

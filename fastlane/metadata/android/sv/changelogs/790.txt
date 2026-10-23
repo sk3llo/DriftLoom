@@ -10,6 +10,6 @@ Förbättrat
 • [SoundCloud] Åtgärda client_id-extraktion #2745
 
 Utveckling
-• Lägg till saknade beroenden som ärvts från NewPipeExtractor till NewPipe #2535
+• Lägg till saknade beroenden som ärvts från NewPipeExtractor till DriftLoom #2535
 • Migrera till AndroidX #2685
 • Uppdatering till ExoPlayer 2.10.6 #2697, #2736

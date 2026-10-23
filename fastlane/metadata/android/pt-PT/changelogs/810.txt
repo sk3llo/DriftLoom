@@ -11,7 +11,7 @@ Melhorado
 - [YouTube] Adicionar suporte a /c/shortened_url channel links
 
 Fixa
-- Corrigido múltiplos problemas ao partilhar um vídeo para NewPipe e descarregar diretamente os seus fluxos
+- Corrigido múltiplos problemas ao partilhar um vídeo para DriftLoom e descarregar diretamente os seus fluxos
 - Acesso fixo do jogador fora do seu fio de criação
 - Paginação fixa de resultados de pesquisa
 - Ligar nulo fixo causando NPE

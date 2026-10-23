@@ -3,7 +3,7 @@ Promjene u verziji 0.17.3
 Poboljšano
 • Dodata opcija za brisanje stanja reprodukcije #2550
 • Prikaz skrivenih direktorija u biraču datoteka #2591
-• Podrška za otvaranje URL-ova iz instanci `invidio.us` pomoću NewPipe #2488
+• Podrška za otvaranje URL-ova iz instanci `invidio.us` pomoću DriftLoom #2488
 • Dodata podrška za URL-ove `music.youtube.com` TeamNewPipe/NewPipeExtractor#194
 
 Ispravljeno

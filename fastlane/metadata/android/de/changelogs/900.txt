@@ -3,7 +3,7 @@ Neu:
 • Stummschalttaste in Playern
 
 Verbessert:
-• Öffnen von music.youtube.com und media.ccc.de Links in NewPipe erlaubt
+• Öffnen von music.youtube.com und media.ccc.de Links in DriftLoom erlaubt
 • Zwei Einstellungen von „Erscheinungsbild“ zu „Inhalt“ verschoben
 • Ausblenden der Suchoptionen 5, 15 und 25 Sekunden, wenn die ungenaue Suche aktiviert ist
 

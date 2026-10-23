@@ -3,7 +3,7 @@ Modifiche in 0.17.3
 Migliorato
 • Aggiunta l'opzione per cancellare gli stati di riproduzione #2550
 • Mostra le directory nascoste nel selettore di file #2591
-• Supporta gli URL delle istanze `invidio.us` da aprire con NewPipe #2488
+• Supporta gli URL delle istanze `invidio.us` da aprire con DriftLoom #2488
 • Aggiunta del supporto per gli URL di `music.youtube.com` TeamNewPipe/NewPipeExtractor#194
 
 Fisso

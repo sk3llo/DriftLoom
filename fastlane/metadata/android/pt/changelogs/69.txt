@@ -11,7 +11,7 @@
 - Adicionar apoio à Localização #1792
 
 ### Correções
-- Fixar a análise do tempo para . formato, para que NewPipe possa ser usado na Finlândia
+- Fixar a análise do tempo para . formato, para que DriftLoom possa ser usado na Finlândia
 - Contagem fixa de assinaturas
 - Adicionar permissão de serviço em primeiro plano para dispositivos API 28+ #1830
 

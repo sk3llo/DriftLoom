@@ -12,7 +12,7 @@ Təkmilləşdirildi
 • Təkmilləşdirilmiş bir neçə ingilis mənbə sətirləri 
 
 Sabitləşdirildi 
-• Sabit pleyer "Tətbiq keçidində minimuma endirmək" seçimi aktiv edildikdə və NewPipe minimuma endirildikdə dayandırılsa da, yenidən başlayır 
+• Sabit pleyer "Tətbiq keçidində minimuma endirmək" seçimi aktiv edildikdə və DriftLoom minimuma endirildikdə dayandırılsa da, yenidən başlayır
 • Jest üçün ilkin parlaqlıq dəyərini düzəldin 
 • Sabit .srt altyazı yükləmələri bütün sətir fasilələrini ehtiva etmədi 
 • SD karta endirmənin uğursuzluğu müəyyən edildi, çünki bəzi Android 5 cihazları CTF uyğun deyil

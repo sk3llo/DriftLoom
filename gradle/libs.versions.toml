@@ -67,13 +67,13 @@ swiperefreshlayout = "1.2.0"
 # Or you can use a commit you pushed to GitHub by just replacing TeamNewPipe with your GitHub
 # name and the commit hash with the commit hash of the (pushed) commit you want to test
 # This works thanks to JitPack: https://jitpack.io/
-teamnewpipe-filepicker = "5.0.0"
-teamnewpipe-nanojson = "e9d656ddb49a412a5a0a5d5ef20ca7ef09549996"
 # WORKAROUND: if you get errors with the NewPipeExtractor dependency, replace `v0.XX.Y` with
 # the corresponding commit hash, since JitPack sometimes deletes artifacts.
 # If there’s already a git hash, just add more of it to the end (or remove a letter)
 # to cause jitpack to regenerate the artifact.
-teamnewpipe-newpipe-extractor = "v0.26.5"
+teamdriftloom-driftloom-extractor = "v0.26.5"
+teamdriftloom-filepicker = "5.0.0"
+teamdriftloom-nanojson = "e9d656ddb49a412a5a0a5d5ef20ca7ef09549996"
 viewpager2 = "1.1.0"
 webkit = "1.15.0" # New versions require minSdk 24
 work = "2.11.2"
@@ -112,6 +112,9 @@ androidx-work-rxjava3 = { module = "androidx.work:work-rxjava3", version.ref = "
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+driftloom-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "teamdriftloom-driftloom-extractor" }
+driftloom-filepicker = { module = "com.github.TeamNewPipe:NoNonsense-FilePicker", version.ref = "teamdriftloom-filepicker" }
+driftloom-nanojson = { module = "com.github.TeamNewPipe:nanojson", version.ref = "teamdriftloom-nanojson" }
 evernote-statesaver-compiler = { module = "com.evernote:android-state-processor", version.ref = "statesaver" }
 evernote-statesaver-core = { module = "com.evernote:android-state", version.ref = "statesaver" }
 facebook-stetho-core = { module = "com.facebook.stetho:stetho", version.ref = "stetho" }
@@ -152,9 +155,6 @@ lisawray-groupie-core = { module = "com.github.lisawray.groupie:groupie", versio
 lisawray-groupie-viewbinding = { module = "com.github.lisawray.groupie:groupie-viewbinding", version.ref = "groupie" }
 livefront-bridge = { module = "com.github.livefront:bridge", version.ref = "bridge" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
-newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "teamnewpipe-newpipe-extractor" }
-newpipe-filepicker = { module = "com.github.TeamNewPipe:NoNonsense-FilePicker", version.ref = "teamnewpipe-filepicker" }
-newpipe-nanojson = { module = "com.github.TeamNewPipe:nanojson", version.ref = "teamnewpipe-nanojson" }
 noties-markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon" }
 noties-markwon-linkify = { module = "io.noties.markwon:linkify", version.ref = "markwon" }
 ocpsoft-prettytime = { module = "org.ocpsoft.prettytime:prettytime", version.ref = "prettytime" }

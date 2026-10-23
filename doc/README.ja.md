@@ -1,20 +1,22 @@
-<p align="center"><a href="https://newpipe.net"><img src="../assets/new_pipe_icon_5.png" width="150"></a></p> 
-<h2 align="center"><b>NewPipe</b></h2>
+> DriftLoom is an independent fork. This translated guide was inherited from upstream; external download and community links refer to NewPipe. See the [current README](../README.md) for DriftLoom build instructions.
+
+<p align="center"><a href="https://newpipe.net"><img src="../assets/driftloom_icon_5.png" width="150"></a></p>
+<h2 align="center"><b>DriftLoom</b></h2>
 <h4 align="center">自由で軽量な Android 向けストリーミングフロントエンド</h4>
 
 <p align="center"><a href="https://f-droid.org/packages/org.schabi.newpipe/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-ja.svg" alt="Get it on F-Droid" width=206/></a></p>
 
 <p align="center">
 <a href="https://github.com/TeamNewPipe/NewPipe/releases" alt="GitHub リリース"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe.svg"></a>
-<a href="https://github.com/TeamNewPipe/NewPipe-nightly/releases" alt="GitHub NewPipe nightly releases"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe-nightly.svg?labelColor=purple&label=dev%20nightly"></a>
+<a href="https://github.com/TeamNewPipe/NewPipe-nightly/releases" alt="GitHub DriftLoom nightly releases"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe-nightly.svg?labelColor=purple&label=dev%20nightly"></a>
 <a href="https://www.gnu.org/licenses/gpl-3.0" alt="ライセンス: GPLv3"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"></a>
 <a href="https://github.com/TeamNewPipe/NewPipe/actions" alt="ビルド状態"><img src="https://github.com/TeamNewPipe/NewPipe/actions/workflows/ci.yml/badge.svg?branch=dev&event=push"></a>
 <a href="https://hosted.weblate.org/engage/newpipe/" alt="翻訳状態"><img src="https://hosted.weblate.org/widgets/newpipe/-/svg-badge.svg"></a>
 </p>
 
 <p align="center">
-<a href="https://web.libera.chat/#newpipe" alt="IRC チャンネル: #newpipe"><img src="https://img.shields.io/badge/IRC%20chat-%23newpipe-brightgreen.svg"></a>
-<a href="https://matrix.to/#/#newpipe:matrix.newpipe-ev.de" alt="Matrix channel: #newpipe"><img src="https://img.shields.io/badge/Matrix%20chat-%23newpipe-blue"></a>
+<a href="https://web.libera.chat/#newpipe" alt="IRC チャンネル: #driftloom"><img src="https://img.shields.io/badge/IRC%20chat-%23newpipe-brightgreen.svg"></a>
+<a href="https://matrix.to/#/#newpipe:matrix.newpipe-ev.de" alt="Matrix channel: #driftloom"><img src="https://img.shields.io/badge/Matrix%20chat-%23newpipe-blue"></a>
 </p>
 
 <hr>
@@ -27,7 +29,7 @@
 > [!warning]
 > <b>これはベータ版のため、バグが発生する可能性があります。もしバグが発生した場合、GitHub のリポジトリで Issue を開いてください。</b>
 >
-> <b>NewPipe 及びいずれのフォークを Google Play ストアに公開すると、Google の取引条件の違反になります。</b>
+> <b>DriftLoom 及びいずれのフォークを Google Play ストアに公開すると、Google の取引条件の違反になります。</b>
 
 <span id="screenshots"></span>
 ## スクリーンショット
@@ -48,7 +50,7 @@
 <span id="description"></span>
 ## 説明
 
-自由なコピーレフトソフトウェアの NewPipe は一切のGoogleフレームワークライブラリ及び、YouTube API を使用しません。ウェブサイトは必要な情報のためだけに読み込まれるため、このアプリはGoogleのサービスがインストールされていない端末でも使用できます。また、NewPipeの使用にYouTubeアカウントは必要ありません。
+自由なコピーレフトソフトウェアの DriftLoom は一切のGoogleフレームワークライブラリ及び、YouTube API を使用しません。ウェブサイトは必要な情報のためだけに読み込まれるため、このアプリはGoogleのサービスがインストールされていない端末でも使用できます。また、DriftLoomの使用にYouTubeアカウントは必要ありません。
 
 <span id="features"></span>
 ### 機能
@@ -83,7 +85,7 @@
 
 ### 対応しているサービス
 
-NewPipe は複数のサービスに対応しています。[ドキュメント](https://teamnewpipe.github.io/documentation/)は、どのようにしてアプリと NewPipe Extractor にサービスを追加できるかについて詳細な情報を提供しています。もし、新しいサービスを追加するならば、是非私たちに連絡をお願いします。現在対応しているサービスは：
+DriftLoom は複数のサービスに対応しています。[ドキュメント](https://teamnewpipe.github.io/documentation/)は、どのようにしてアプリと DriftLoom Extractor にサービスを追加できるかについて詳細な情報を提供しています。もし、新しいサービスを追加するならば、是非私たちに連絡をお願いします。現在対応しているサービスは：
 
 * YouTube
 * SoundCloud \[ベータ\]
@@ -96,7 +98,7 @@ NewPipe は複数のサービスに対応しています。[ドキュメント](
 
 <span id="installation-and-updates"></span>
 ## インストールと更新
-以下の方法のいずれかに従うことによって NewPipe をインストールできます。
+以下の方法のいずれかに従うことによって DriftLoom をインストールできます。
 1. カスタムリポジトリを F-Droid に追加してリリースが公開され次第インストールする。この方法の説明はこちら： https://newpipe.net/FAQ/tutorials/install-add-fdroid-repo/
 2. リリースが公開され次第[GitHub のリリース](https://github.com/TeamNewPipe/NewPipe/releases)から APK をダウンロードしてインストールする。
 3. F-Droid から更新する。これは更新を手にする上で最も遅い方法です。F-Droid が変更を検知して、APK をビルドし、署名、そしてユーザーに更新を届ける必要があるためです。
@@ -104,9 +106,9 @@ NewPipe は複数のサービスに対応しています。[ドキュメント](
 
 私たちはほとんどのユーザーに方法1を推奨します。方法1と2でインストールされた APK は互換性がありますが、方法3でインストールされたものにはありません。これは方法1と2では、同じ署名鍵 (私たちが使用するもの)が使用されますが、方法3では異なった署名鍵 (F-Droidが使用するもの)が使用されるためです。方法4を使ったデバッグ APK のビルドは根本的に署名鍵の問題を除きます。署名鍵はユーザーが騙されて悪意のある更新がアプリにインストールされないことを助けるためにあります。
 
-もし、何かしらの理由によりソースを切り替えたい場合 (例: NewPipe のコア機能が壊れてしまったが F-Droid はまだ更新をしていない) は、この手順を推奨します。
+もし、何かしらの理由によりソースを切り替えたい場合 (例: DriftLoom のコア機能が壊れてしまったが F-Droid はまだ更新をしていない) は、この手順を推奨します。
 1. 履歴や登録チャンネル、再生リストを保つために 設定 > コンテンツ > データベースをエクスポート からデータをバックアップ
-2. NewPipe をアンインストール
+2. DriftLoom をアンインストール
 3. 新しいソースから APK をダウンロードしてインストール
 4. 設定 > コンテンツ > データベースをインポート からステップ1で作ったデータベースをインポート
 
@@ -123,23 +125,23 @@ NewPipe は複数のサービスに対応しています。[ドキュメント](
 
 <span id="donate"></span>
 ## 寄付
-もし、NewPipe を気に入っていただけたら、寄付をしていただけると嬉しいです。Bitcoin または Bountysource, Liberapay から寄付をすることができます。NewPipe への寄付については、[ウェブサイト](https://newpipe.net/donate)からお願いします。
+もし、DriftLoom を気に入っていただけたら、寄付をしていただけると嬉しいです。Bitcoin または Bountysource, Liberapay から寄付をすることができます。DriftLoom への寄付については、[ウェブサイト](https://newpipe.net/donate)からお願いします。
 
 <table>
   <tr>
     <td><a href="https://liberapay.com/TeamNewPipe/"><img src="https://upload.wikimedia.org/wikipedia/commons/2/27/Liberapay_logo_v2_white-on-yellow.svg" alt="Liberapay" width="80px" ></a></td>
-    <td><a href="https://liberapay.com/TeamNewPipe/"><img src="../assets/liberapay_qr_code.png" alt="liberapay.com で NewPipe を訪れる" width="100px"></a></td>
+    <td><a href="https://liberapay.com/TeamNewPipe/"><img src="../assets/liberapay_qr_code.png" alt="liberapay.com で DriftLoom を訪れる" width="100px"></a></td>
     <td><a href="https://liberapay.com/TeamNewPipe/donate"><img src="../assets/liberapay_donate_button.svg" alt="Liberapay で寄付" height="35px"></a></td>
   </tr>
 </table>
 
 ## プライバシーポリシー
-NewPipe プロジェクトはメディアウェブサービスを使用する上でのプライベートで匿名の体験を提供することを目的としています。
-そのため、アプリはあなたの同意なしで一切のデータを収集しません。NewPipe のプライバシーポリシーはあなたがクラッシュレポートまたは、私たちのブログでコメントを送信した場合にどのようなデータが送信され、保存されるのかを詳細に説明しています。そのドキュメントは[こちら](https://newpipe.net/legal/privacy/)から見つけることができます。
+DriftLoom プロジェクトはメディアウェブサービスを使用する上でのプライベートで匿名の体験を提供することを目的としています。
+そのため、アプリはあなたの同意なしで一切のデータを収集しません。DriftLoom のプライバシーポリシーはあなたがクラッシュレポートまたは、私たちのブログでコメントを送信した場合にどのようなデータが送信され、保存されるのかを詳細に説明しています。そのドキュメントは[こちら](https://newpipe.net/legal/privacy/)から見つけることができます。
 
 <span id="license"></span>
 ## ライセンス
-[![GNU GPLv3 のロゴ](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.en.html)  
+[![GNU GPLv3 のロゴ](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-NewPipe はフリーソフトウェアなので、あなたはあなたの望むように使用、習得、共有、改善を行えます。
+DriftLoom はフリーソフトウェアなので、あなたはあなたの望むように使用、習得、共有、改善を行えます。
 具体的には、フリーソフトウェア財団により公開された [GNU General Public License](https://www.gnu.org/licenses/gpl.html) のバージョン3のライセンスもしくは、(あなたの選択で) いずれかの後継バージョンの規約の元で配布または改変を行うことができます。

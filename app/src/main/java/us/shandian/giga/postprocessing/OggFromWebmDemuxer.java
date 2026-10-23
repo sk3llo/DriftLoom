@@ -2,8 +2,8 @@ package us.shandian.giga.postprocessing;
 
 import androidx.annotation.NonNull;
 
-import org.schabi.newpipe.streams.OggFromWebMWriter;
-import org.schabi.newpipe.streams.io.SharpStream;
+import org.schabi.driftloom.streams.OggFromWebMWriter;
+import org.schabi.driftloom.streams.io.SharpStream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

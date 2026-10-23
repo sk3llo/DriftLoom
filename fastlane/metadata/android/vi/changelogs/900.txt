@@ -3,7 +3,7 @@ Mới
 • Nút tắt tiếng trong trình phát
 
 Cải thiện
-• Cho phép mở liên kết music.youtube.com và media.ccc.de trong NewPipe
+• Cho phép mở liên kết music.youtube.com và media.ccc.de trong DriftLoom
 • Di dời hai cài đặt từ Xuất hiện sang Nội dung
 • Ẩn tùy chọn tìm kiếm 5, 15, 25 giây nếu tìm kiếm không chính xác được bật
 

@@ -5,7 +5,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import org.schabi.newpipe.R;
+import org.schabi.driftloom.R;
 
 public abstract class ToolbarActivity extends AppCompatActivity {
     protected Toolbar mToolbar;

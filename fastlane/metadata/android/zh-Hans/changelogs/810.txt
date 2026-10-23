@@ -11,7 +11,7 @@
 • [YouTube] 添加对 /c/shortened_url链接的支持
 
 修复
-• 修复 将视频共享到 NewPipe 并直接下载视频时中的多个问题
+• 修复 将视频共享到 DriftLoom 并直接下载视频时中的多个问题
 • 修复 播放器无法访问其创建线程
 • 修复 搜索结果分页
 •[Youtube] 修复了在 null 上切换导致 Npe

@@ -4,7 +4,7 @@ Berria eta hobetua:
 • Errendimendu hobea zerrendak eskuratzerakoan
 
 Konponduta:
-• Hutsegitea NewPipe RAMetik kendu ondoren abiaraztean
+• Hutsegitea DriftLoom RAMetik kendu ondoren abiaraztean
 • Hutsegitea abiaraztean konexiorik ez dagoenean
 • Distira eta bolumen-keinuen ezarpenak errespetatzen dira
 • [YouTube] Erreprodukzio zerrenda luzeak konponduta

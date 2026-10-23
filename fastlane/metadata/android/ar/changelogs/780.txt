@@ -3,8 +3,8 @@
 محسّن
 • تمت إضافة خيار لمسح حالات التشغيل #2550
 • إظهار الدلائل المخفية في منتقي الملفات #2591
-• دعم عناوين URL من مثيلات "invidio.us" ليتم فتحها باستخدام NewPipe  #2488 
-• أضف دعمًا لـ `music.youtube.com` URLs TeamNewPipe/NewPipeمستخرج#194
+• دعم عناوين URL من مثيلات "invidio.us" ليتم فتحها باستخدام DriftLoom  #2488
+• أضف دعمًا لـ `music.youtube.com` URLs TeamNewPipe/DriftLoomمستخرج#194
 
 ثابت
 • [موقع YouTube] ثابت 'java.lang.IllegalArgumentException #192

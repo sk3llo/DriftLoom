@@ -9,6 +9,6 @@ Perbaikan
 • [SoundCloud] Perbaikan ekstrak id_klien #2745
 
 Pengembangan
-• Penambahan 'dependencies' dari NewPipeExtractor ke NewPipe #2535
+• Penambahan 'dependencies' dari NewPipeExtractor ke DriftLoom #2535
 • Migrasi ke AndroidX #2685
 • Permbaharuan ExoPlayer 2.10.6 #2697, #2736

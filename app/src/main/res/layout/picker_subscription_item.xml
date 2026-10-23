@@ -24,7 +24,7 @@
             app:shapeAppearance="@style/CircularImageView"
             tools:src="@drawable/placeholder_person" />
 
-        <org.schabi.newpipe.views.NewPipeTextView
+        <org.schabi.driftloom.views.DriftLoomTextView
             android:id="@+id/title_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

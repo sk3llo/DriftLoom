@@ -12,7 +12,7 @@ Poboljšano
 • Poboljšano je nekoliko izvornih nizova na engleskom jeziku
 
 Ispravljeno
-• Ispravljeno je ponovno pokretanje plejera iako je pauziran kada je omogućena opcija "minimiziraj pri prebacivanju aplikacija" i NewPipe je minimiziran
+• Ispravljeno je ponovno pokretanje plejera iako je pauziran kada je omogućena opcija "minimiziraj pri prebacivanju aplikacija" i DriftLoom je minimiziran
 • Ispravljena je početna vrijednost svjetline za gestu
 • Ispravljena su preuzimanja .srt titlova koja nisu sadržavala sve prijelome reda
 • Ispravljeno je neuspješno preuzimanje na SD karticu jer neki Android 5 uređaji nisu kompatibilni sa CTF-om

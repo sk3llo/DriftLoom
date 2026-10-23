@@ -21,7 +21,7 @@
         android:src="@drawable/ic_computer"
         tools:ignore="RtlHardcoded" />
 
-    <org.schabi.newpipe.views.NewPipeTextView
+    <org.schabi.driftloom.views.DriftLoomTextView
         android:id="@+id/itemTitleView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

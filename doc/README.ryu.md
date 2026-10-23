@@ -1,20 +1,22 @@
-<p align="center"><a href="https://newpipe.net"><img src="../assets/new_pipe_icon_5.png" width="150"></a></p> 
-<h2 align="center"><b>NewPipe</b></h2>
+> DriftLoom is an independent fork. This translated guide was inherited from upstream; external download and community links refer to NewPipe. See the [current README](../README.md) for DriftLoom build instructions.
+
+<p align="center"><a href="https://newpipe.net"><img src="../assets/driftloom_icon_5.png" width="150"></a></p>
+<h2 align="center"><b>DriftLoom</b></h2>
 <h4 align="center">じゆーいっしけいりょうなAndroidんきーストリーミングフロントエンド</h4>
 
 <p align="center"><a href="https://f-droid.org/packages/org.schabi.newpipe/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-ja.svg" alt="Get it on F-Droid" width=206/></a></p>
 
 <p align="center">
 <a href="https://github.com/TeamNewPipe/NewPipe/releases" alt="GitHub リリース"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe.svg"></a>
-<a href="https://github.com/TeamNewPipe/NewPipe-nightly/releases" alt="GitHub NewPipe nightly releases"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe-nightly.svg?labelColor=purple&label=dev%20nightly"></a>
+<a href="https://github.com/TeamNewPipe/NewPipe-nightly/releases" alt="GitHub DriftLoom nightly releases"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe-nightly.svg?labelColor=purple&label=dev%20nightly"></a>
 <a href="https://www.gnu.org/licenses/gpl-3.0" alt="ライセンス: GPLv3"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"></a>
 <a href="https://github.com/TeamNewPipe/NewPipe/actions" alt="ビルドじょうたい"><img src="https://github.com/TeamNewPipe/NewPipe/actions/workflows/ci.yml/badge.svg?branch=dev&event=push"></a>
 <a href="https://hosted.weblate.org/engage/newpipe/" alt="ふんやちゅるじょうたい"><img src="https://hosted.weblate.org/widgets/newpipe/-/svg-badge.svg"></a>
 </p>
 
 <p align="center">
-<a href="https://web.libera.chat/#newpipe" alt="IRC チャンネル: #newpipe"><img src="https://img.shields.io/badge/IRC%20chat-%23newpipe-brightgreen.svg"></a>
-<a href="https://matrix.to/#/#newpipe:matrix.newpipe-ev.de" alt="Matrix channel: #newpipe"><img src="https://img.shields.io/badge/Matrix%20chat-%23newpipe-blue"></a>
+<a href="https://web.libera.chat/#newpipe" alt="IRC チャンネル: #driftloom"><img src="https://img.shields.io/badge/IRC%20chat-%23newpipe-brightgreen.svg"></a>
+<a href="https://matrix.to/#/#newpipe:matrix.newpipe-ev.de" alt="Matrix channel: #driftloom"><img src="https://img.shields.io/badge/Matrix%20chat-%23newpipe-blue"></a>
 </p>
 
 <hr>
@@ -27,7 +29,7 @@
 > [!warning]
 > <b>くれーベータばんぬたみ、バグぬはっせいすがのうゆいがあいびーん。むしバグぬはっせいさーあい、GitHubぬリポジトリっしIssueふぃらちくぃみそーれー。</b>
 >
-> <b>NewPipeうゆびいじりぬフォークGoogle Playストアんかいかんかいしーねー、Googleぬとぅいふぃちじょうきんぬいはんになります。</b>
+> <b>DriftLoomうゆびいじりぬフォークGoogle Playストアんかいかんかいしーねー、Googleぬとぅいふぃちじょうきんぬいはんになります。</b>
 
 <span id="screenshots"></span>
 ## スクリーンショット
@@ -48,7 +50,7 @@
 <span id="description"></span>
 ## しちめい
 
-じゆうなコピーレフトソフトウェアぬNewPipeーいっさいぬGoogleフレームワークライブラリうゆび、YouTube APIさしましん。ウェブサイトーふぃちぐとーるじょうほうぬたみてーぬんかいゆみくまりーるたみ、くぬアプレーGoogleぬサービスぬインストールさりてぃうぅらんたんまちっししようぬなやびーん。また、NewPipeぬしようんかいYouTubeアカウントーふぃちようとぅなやびらん。
+じゆうなコピーレフトソフトウェアぬDriftLoomーいっさいぬGoogleフレームワークライブラリうゆび、YouTube APIさしましん。ウェブサイトーふぃちぐとーるじょうほうぬたみてーぬんかいゆみくまりーるたみ、くぬアプレーGoogleぬサービスぬインストールさりてぃうぅらんたんまちっししようぬなやびーん。また、DriftLoomぬしようんかいYouTubeアカウントーふぃちようとぅなやびらん。
 
 <span id="features"></span>
 ### ちぬー
@@ -83,7 +85,7 @@
 
 ### たいおうそーるサービス
 
-NewPipeーふくすんぬサービスんかいたいおうそーいびーん。[ドキュメント](https://teamnewpipe.github.io/documentation/)ー、ちゃぬぐとぅしアプリとぅNewPipe Extractorんかいサービス追加ないがにちいてぃしーょうさいなじょうほうていきょうそーいびーん。むし、みーさるサービスちいかすいらー、じふぃわったーんかいりんらくうにげーさびら。ぎんじぇーたいおうそーるサービスー：
+DriftLoomーふくすんぬサービスんかいたいおうそーいびーん。[ドキュメント](https://teamnewpipe.github.io/documentation/)ー、ちゃぬぐとぅしアプリとぅDriftLoom Extractorんかいサービス追加ないがにちいてぃしーょうさいなじょうほうていきょうそーいびーん。むし、みーさるサービスちいかすいらー、じふぃわったーんかいりんらくうにげーさびら。ぎんじぇーたいおうそーるサービスー：
 
 * YouTube
 * SoundCloud \[ベータ\]
@@ -96,7 +98,7 @@ NewPipeーふくすんぬサービスんかいたいおうそーいびーん。[
 
 <span id="installation-and-updates"></span>
 ## インストールとぅこうしん
-いかぬほうほうぬいじりがんかいしたがいるくとぅにゆってぃNewPipeインストールなやびーん。
+いかぬほうほうぬいじりがんかいしたがいるくとぅにゆってぃDriftLoomインストールなやびーん。
 1. カスタムリポジトリF-Droidんかいちいからちリリースぬかんかいされいしだいインストールすん。くぬほうほうぬしちめえーくちら： https://newpipe.net/FAQ/tutorials/install-add-fdroid-repo/
 2. リリースぬかんかいされいしだい[GitHubぬリリース](https://github.com/TeamNewPipe/NewPipe/releases)からAPKダウンロードしインストールすん。
 3. F-Droidからこうしんすん。くれーこうしんてぃなするういっしむっとぅむにーさるほうほうやいびーん。F-Droidがへいるかんきんちし、APKビルドしー、しょめい、あんしユーザーんかいこうしんとぅどぅきーるふぃちようがあるたみやいびーん。
@@ -104,9 +106,9 @@ NewPipeーふくすんぬサービスんかいたいおうそーいびーん。[
 
 わったーやふとぅんどぅぬユーザーんかいほうほう1すいしょうさびーん。ほうほう1んでぃ2っしインストールさったん APKーぐかんせいがあいびーしが、ほうほう3っしインストールさったるむぬんかえーあいびらん。くれーほうほう1んでぃ2っしぇー、いぬしょめいかぎ（わったーがしようすし）がささりやびーしが、ほうほう3っしぇーくとぅなたしょめいかぎ（F-Droidがしようすし）がささりーるたみやいびーん。ほうほう4ちかたるデバッグAPKぬビルドーくでぃぷんてぃきなしょめいかぎぬむんだいをぬずきます。しーょめいかぎはユーザーぬだまさってぃあくいぬあるこうしんぬアプリんかいインストールさりらんくとぅたしきーんでぃあいびーん。
 
-むし、ぬーやいびーがやーぬいゆーいんにゆりソースきりけーたるいばあい（れい： NewPipeぬコアちぬーがやんでぃてぃねーんしがF-Droidーなーらこうしんしうぅらん）ー、くぬてぃじゅんをすいしょうさびーん。
+むし、ぬーやいびーがやーぬいゆーいんにゆりソースきりけーたるいばあい（れい： DriftLoomぬコアちぬーがやんでぃてぃねーんしがF-Droidーなーらこうしんしうぅらん）ー、くぬてぃじゅんをすいしょうさびーん。
 1. りりきやとぅいるるいちゅるチャンネル、さいせいリストたむちゅんでぃ しってい > コンテンツ > データベースエクスポートからデータバックアップ
-2. NewPipeアンインストール
+2. DriftLoomアンインストール
 3. みーさるソースからAPKダウンロードしインストール
 4. しってい > コンテンツ > データベースインポートからステップ1っしちゅくたるデータベースインポート
 
@@ -123,23 +125,23 @@ NewPipeーふくすんぬサービスんかいたいおうそーいびーん。[
 
 <span id="donate"></span>
 ## ちーふ
-むし、NewPipeちーがんじいただけいねー、ちーふしいただけいねーうっさいびーん。BitcoinあらんでぃBountysource,Liberapayからちーふするくとぅがなやびーん。NewPipeんかいどぅちふにちいてー、[ウェブサイト](https://newpipe.net/donate)からうにげーさびら。
+むし、DriftLoomちーがんじいただけいねー、ちーふしいただけいねーうっさいびーん。BitcoinあらんでぃBountysource,Liberapayからちーふするくとぅがなやびーん。DriftLoomんかいどぅちふにちいてー、[ウェブサイト](https://newpipe.net/donate)からうにげーさびら。
 
 <table>
   <tr>
     <td><a href="https://liberapay.com/TeamNewPipe/"><img src="https://upload.wikimedia.org/wikipedia/commons/2/27/Liberapay_logo_v2_white-on-yellow.svg" alt="Liberapay" width="80px" ></a></td>
-    <td><a href="https://liberapay.com/TeamNewPipe/"><img src="../assets/liberapay_qr_code.png" alt="liberapay.comっしNewPipeちゅーん" width="100px"></a></td>
+    <td><a href="https://liberapay.com/TeamNewPipe/"><img src="../assets/liberapay_qr_code.png" alt="liberapay.comっしDriftLoomちゅーん" width="100px"></a></td>
     <td><a href="https://liberapay.com/TeamNewPipe/donate"><img src="../assets/liberapay_donate_button.svg" alt="Liberapayなちーふ" height="35px"></a></td>
   </tr>
 </table>
 
 ## プライバシーポリシー
-NewPipeプロジェクトーメディアウェブサービスしようするういっしぬプライベートっしとぅくめいぬたいきんてぃいちょうするくとぅをむくてぃきとぅそーいびーん。
-うぬたみ、アプリーうんじゅがちゃーいなしっしいっさいぬデータしゅうしゅうさびらん。NewPipeぬプライバシーポリシーやうんじゅがクラッシュレポートあらんでぃ、わったーがブログっしコメントあんしんさーあいんかいちゃぬぐとーるデータぬあんしんされい、ふずんさりーるぬがしーょうさいにしちめいそーいびーん。うぬドキュメントー[くちら](https://newpipe.net/legal/privacy/)からみーちきーるくとぅがなやびーん。
+DriftLoomプロジェクトーメディアウェブサービスしようするういっしぬプライベートっしとぅくめいぬたいきんてぃいちょうするくとぅをむくてぃきとぅそーいびーん。
+うぬたみ、アプリーうんじゅがちゃーいなしっしいっさいぬデータしゅうしゅうさびらん。DriftLoomぬプライバシーポリシーやうんじゅがクラッシュレポートあらんでぃ、わったーがブログっしコメントあんしんさーあいんかいちゃぬぐとーるデータぬあんしんされい、ふずんさりーるぬがしーょうさいにしちめいそーいびーん。うぬドキュメントー[くちら](https://newpipe.net/legal/privacy/)からみーちきーるくとぅがなやびーん。
 
 <span id="license"></span>
 ## ライセンス
-[![GNU GPLv3ぬロゴ](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.en.html)  
+[![GNU GPLv3ぬロゴ](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-NewPipeーフリーソフトウェアやくとぅ、うんじょーうんじゅがぬじゅむるぐとぅさ、しゅうとぅく、きょうゆう、かいじんうくねーやびーん。
+DriftLoomーフリーソフトウェアやくとぅ、うんじょーうんじゅがぬじゅむるぐとぅさ、しゅうとぅく、きょうゆう、かいじんうくねーやびーん。
 ぐたちちーがー、フリーソフトウェアじぇーやんんにゆりかんかいさったん [GNU General Public License](https://www.gnu.org/licenses/gpl.html) ぬバージョン3ぬライセンスあらんでぃ、（うんじゅがしんたくでぃ）いじりがぬこうけいバージョンぬきやくぬむとぅっしはいふあらんでぃかいんかいんうくないるくとぅがなやびーん。

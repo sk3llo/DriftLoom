@@ -6,4 +6,4 @@ Amélioré
 • Suppression du menu à points au profit du tiroir et du bouton Masquer l'historique lorsque l'historique de visionnage n'est pas activé dans les paramètres
 
 Corrigé
-• Correction du redémarrage du lecteur bien qu'il soit en pause lorsque l'option « Réduire au changement d'application » est activée et que NewPipe est réduit
+• Correction du redémarrage du lecteur bien qu'il soit en pause lorsque l'option « Réduire au changement d'application » est activée et que DriftLoom est réduit

@@ -11,7 +11,7 @@
 - Dodana podrška za lokalizaciju #1792
 
 ### Ispravke
-- Ispravljeno raščlanjivanje vremena za . format, tako da se NewPipe može koristiti u Finskoj
+- Ispravljeno raščlanjivanje vremena za . format, tako da se DriftLoom može koristiti u Finskoj
 - Ispravljen broj pretplata
 - Dodana dozvola za uslugu u prvom planu za API 28+ uređaje #1830
 

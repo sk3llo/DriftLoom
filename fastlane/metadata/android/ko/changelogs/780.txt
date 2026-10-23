@@ -3,7 +3,7 @@
 향상
 • 재생 상태를 지우는 옵션 추가 #2550
 • 파일 선택기에 숨겨진 디렉터리 표시 #2591
-• `invidio.us` 인스턴스의 URL이 NewPipe #2488로 열리도록 지원합니다.
+• `invidio.us` 인스턴스의 URL이 DriftLoom #2488로 열리도록 지원합니다.
 • 'music.youtube.com' URL에 대한 지원 추가 TeamNewPipe/NewPipeExtractor#194
 
 결정된

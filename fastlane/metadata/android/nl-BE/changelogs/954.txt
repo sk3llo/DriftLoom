@@ -1,6 +1,6 @@
 • nieuwe applicatieflow: speel video af op detailpagina, swipe naar beneden om speler te minimaliseren
 • MediaStyle notificaties: personaliseerbare acties in meldingen, performantieverbeteringen
-• basis herschalen voor NewPipe als bureaublad-app
+• basis herschalen voor DriftLoom als bureaublad-app
 
 • toon dialoog met opties om te openen na niet-ondersteunde URL melding
 • Verbeter zoeksuggestie-ervaring wanneer externe niet opgehaald kunnen worden

@@ -1,5 +1,5 @@
 Novità
-• Ora NewPipe funziona su Android Auto
+• Ora DriftLoom funziona su Android Auto
 • Aggiungi feed di gruppi di canali nella schermata principale
 • [YouTube] Condividi come playlist temporanea
 • [SoundCloud] Mi piace nei canali

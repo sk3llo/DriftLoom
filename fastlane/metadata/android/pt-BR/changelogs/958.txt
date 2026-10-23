@@ -4,7 +4,7 @@ Novo e melhorado:
 • Melhor desempenho ao buscar listas locais
 
 Corrigido:
-• Crash ao iniciar o NewPipe depois de ser removido da RAM
+• Crash ao iniciar o DriftLoom depois de ser removido da RAM
 • Crash na inicialização quando não há conexão com a internet
 • Respeitando as configurações de brilho e gestos de volume
 • [YouTube] longas listas de reprodução

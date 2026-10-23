@@ -12,7 +12,7 @@ Migliorato
 • Migliorate diverse stringhe di origine in inglese
 
 Fisso
-• Risolto il problema con il riavvio del lettore anche se è stato messo in pausa quando l'opzione "riduci a icona al passaggio dell'app" è abilitata e NewPipe è ridotto a icona
+• Risolto il problema con il riavvio del lettore anche se è stato messo in pausa quando l'opzione "riduci a icona al passaggio dell'app" è abilitata e DriftLoom è ridotto a icona
 • Correzione del valore di luminosità iniziale per i gesti
 • Risolti i download di sottotitoli .srt contenenti non tutte le interruzioni di riga
 • Risolto il problema con il download su scheda SD non riuscito perché alcuni dispositivi Android 5 non sono compatibili con CTF

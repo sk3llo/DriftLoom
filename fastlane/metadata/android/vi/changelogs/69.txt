@@ -11,7 +11,7 @@
 - Thêm hỗ trợ Bản địa hóa #1792
 
 ### Sửa lỗi
-- Sửa lỗi phân tích thời gian cho . định dạng, vì vậy NewPipe có thể được sử dụng ở Phần Lan
+- Sửa lỗi phân tích thời gian cho . định dạng, vì vậy DriftLoom có thể được sử dụng ở Phần Lan
 - Sửa số lượng đăng ký
 - Thêm quyền dịch vụ nền trước cho các thiết bị API 28+ #1830
 

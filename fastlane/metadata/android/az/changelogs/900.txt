@@ -3,7 +3,7 @@ Yeni
 • Pleyerlərdə səssiz düyməsi 
 
 Təkmilləşdirilmiş
- • NewPipe-də music.youtube.com və media.ccc.de linklərinin açılmasına icazə verin
+ • DriftLoom-də music.youtube.com və media.ccc.de linklərinin açılmasına icazə verin
  • Görünüşdən Məzmuna iki parametrin yerini dəyişin 
 • Dəqiq olduqda 5, 15, 25 saniyəlik axtarış seçimlərini gizlədin. axtarış aktivləşdirildi 
 

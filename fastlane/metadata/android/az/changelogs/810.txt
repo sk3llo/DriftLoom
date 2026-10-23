@@ -10,7 +10,7 @@ Təkmilləşdirilmiş
  • [YouTube] /c/shortened_url kanal linklərinə dəstək əlavə edin 
 
 Düzəltildi 
-• Videonu NewPipe-da paylaşarkən və onun axınlarını birbaşa endirərkən bir çox problem həll edildi 
+• Videonu DriftLoom-da paylaşarkən və onun axınlarını birbaşa endirərkən bir çox problem həll edildi
 • Yaradılan mövzudan oyunçu girişi düzəldildi
  • Sabit axtarış nəticəsi səhifələnməsi 
 • [YouTube] NPE-yə səbəb olan null-un işə salınması düzəldildi 

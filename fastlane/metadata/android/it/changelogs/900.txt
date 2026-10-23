@@ -3,7 +3,7 @@ Nuovo
 • Pulsante muto nei giocatori
 
 Migliorato
-• Consenti l'apertura di collegamenti music.youtube.com e media.ccc.de in NewPipe
+• Consenti l'apertura di collegamenti music.youtube.com e media.ccc.de in DriftLoom
 • Riposizionare due impostazioni da Aspetto a Contenuto
 • Nascondi le opzioni di ricerca di 5, 15, 25 secondi se è abilitata la ricerca inesatta
 

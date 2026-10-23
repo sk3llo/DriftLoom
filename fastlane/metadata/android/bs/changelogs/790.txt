@@ -9,6 +9,6 @@ Ispravljeno
 • [SoundCloud] Ispravljanje ekstrakcije client_id-a #2745
 
 Razvoj
-• Dodavanje nedostajućih zavisnosti naslijeđenih iz NewPipeExtractor-a u NewPipe #2535
+• Dodavanje nedostajućih zavisnosti naslijeđenih iz NewPipeExtractor-a u DriftLoom #2535
 • Migracija na AndroidX #2685
 • Ažuriranje na ExoPlayer 2.10.6 #2697, #2736

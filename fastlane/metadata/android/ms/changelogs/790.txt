@@ -9,6 +9,6 @@ Dibaiki
 • [SoundCloud] Baiki penyarian client_id #2745
 
 Pembangunan
-• Tambah tanggungan yang hilang diwarisi daripada NewPipeExtractor kepada NewPipe #2535
+• Tambah tanggungan yang hilang diwarisi daripada NewPipeExtractor kepada DriftLoom #2535
 • Berhijrah ke AndroidX #2685
 • Kemas kini kepada ExoPlayer 2.10.6 #2697, #2736

@@ -10,7 +10,7 @@
  - Lokallaşdırma üçün dəstək əlavə edin #1792
 
  ### Düzəlişlər
- -vaxt təhlilini düzəldin. format, beləliklə, NewPipe Finlandiyada istifadə oluna bilər
+ -vaxt təhlilini düzəldin. format, beləliklə, DriftLoom Finlandiyada istifadə oluna bilər
  - Abunəlik sayını düzəldin 
 - API 28+ cihazları üçün ön plana xidmət icazəsi əlavə edin #1830
 

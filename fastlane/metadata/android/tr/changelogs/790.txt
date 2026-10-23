@@ -9,6 +9,6 @@ Sabit
 - [SoundCloud] Client_id çıkarma işlemini düzeltin #2745
 
 Geliştirme
-- NewPipeExtractor'dan miras alınan eksik bağımlılıkları NewPipe'a ekleyin #2535
+- NewPipeExtractor'dan miras alınan eksik bağımlılıkları DriftLoom'a ekleyin #2535
 - AndroidX'e geçiş #2685
 - ExoPlayer 2.10.6 #2697, #2736 için güncelleme

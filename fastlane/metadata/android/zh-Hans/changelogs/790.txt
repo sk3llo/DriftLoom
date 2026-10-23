@@ -9,6 +9,6 @@
 - [SoundCloud]修复 client_ID 解析#2745。
 
 开发
-- NewPipeExtractor的缺失依赖添加到NewPipe #2535中。
+- NewPipeExtractor的缺失依赖添加到DriftLoom #2535中。
 - 迁移到AndroidX #2685
 - 更新至 ExoPlayer 2.10.6 #2697, #2736

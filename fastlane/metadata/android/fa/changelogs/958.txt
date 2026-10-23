@@ -4,7 +4,7 @@
 • Improved performance when fetching local lists
 
 رفع شده:
-• Fixed crash when starting NewPipe after it was removed from RAM
+• Fixed crash when starting DriftLoom after it was removed from RAM
 • Fixed crash on startup when there is no internet connection
 • Fixed respecting brightness- and volume-gesture settings
 • [YouTube] Fixed long playlists

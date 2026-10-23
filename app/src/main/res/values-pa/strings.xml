@@ -818,7 +818,7 @@
     <string name="migration_info_6_7_title">SoundCloud ਟੌਪ 50 ਪੰਨਾ ਹਟਾ ਦਿੱਤਾ ਗਿਆ</string>
     <string name="migration_info_6_7_message">SoundCloud ਨੇ ਮੂਲ ਟੌਪ 50 ਚਾਰਟਾਂ ਨੂੰ ਬੰਦ ਕਰ ਦਿੱਤਾ ਹੈ। ਸੰਬੰਧਿਤ ਟੈਬ ਨੂੰ ਤੁਹਾਡੇ ਮੁੱਖ ਪੰਨੇ ਤੋਂ ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਹੈ।</string>
     <string name="migration_info_7_8_title">YouTube ਸੰਯੁਕਤ ਰੁਝਾਨ ਹਟਾਇਆ ਗਿਆ</string>
-    <string name="migration_info_7_8_message">YouTube ਨੇ 21 ਜੁਲਾਈ 2025 ਤੋਂ ਸੰਯੁਕਤ \"ਰੁਝਾਨ ਵਿੱਚ\" ਪੰਨੇ ਨੂੰ ਬੰਦ ਕਰ ਦਿੱਤਾ ਹੈ। NewPipe ਨੇ ਡਿਫ਼ਾਲਟ \"ਰੁਝਾਨ ਵਿੱਚ\" ਪੰਨੇ ਨੂੰ ਟ੍ਰੈਂਡਿੰਗ ਲਾਈਵਸਟ੍ਰੀਮਾਂ ਨਾਲ ਬਦਲ ਦਿੱਤਾ ਹੈ।\n\nਤੁਸੀਂ \"ਸੈਟਿੰਗਾਂ &gt; ਸਮੱਗਰੀ &gt; ਮੁੱਖ ਪੰਨੇ ਦੀ ਸਮੱਗਰੀ\" ਵਿੱਚ ਵੱਖ-ਵੱਖ ਟ੍ਰੈਂਡਿੰਗ ਪੰਨਿਆਂ ਨੂੰ ਵੀ ਚੁਣ ਸਕਦੇ ਹੋ।</string>
+    <string name="migration_info_7_8_message">YouTube ਨੇ 21 ਜੁਲਾਈ 2025 ਤੋਂ ਸੰਯੁਕਤ \"ਰੁਝਾਨ ਵਿੱਚ\" ਪੰਨੇ ਨੂੰ ਬੰਦ ਕਰ ਦਿੱਤਾ ਹੈ। DriftLoom ਨੇ ਡਿਫ਼ਾਲਟ \"ਰੁਝਾਨ ਵਿੱਚ\" ਪੰਨੇ ਨੂੰ ਟ੍ਰੈਂਡਿੰਗ ਲਾਈਵਸਟ੍ਰੀਮਾਂ ਨਾਲ ਬਦਲ ਦਿੱਤਾ ਹੈ।\n\nਤੁਸੀਂ \"ਸੈਟਿੰਗਾਂ &gt; ਸਮੱਗਰੀ &gt; ਮੁੱਖ ਪੰਨੇ ਦੀ ਸਮੱਗਰੀ\" ਵਿੱਚ ਵੱਖ-ਵੱਖ ਟ੍ਰੈਂਡਿੰਗ ਪੰਨਿਆਂ ਨੂੰ ਵੀ ਚੁਣ ਸਕਦੇ ਹੋ।</string>
     <string name="trending_gaming">ਗੇਮਿੰਗ ਟ੍ਰੈਂਡਸ</string>
     <string name="trending_podcasts">ਟ੍ਰੈਂਡਿੰਗ ਪੌਡਕਾਸਟ</string>
     <string name="trending_movies">ਟਰੈਂਡਿੰਗ ਫ਼ਿਲਮਾਂ ਅਤੇ ਸ਼ੋਅ</string>
@@ -849,6 +849,6 @@
     <string name="export_subscriptions_summary">ਆਪਣੀਆਂ ਸਬਸਕ੍ਰਿਪਸ਼ਨਾਂ ਨੂੰ .json ਫਾਈਲ ਵਿੱਚ ਐਕਸਪੋਰਟ ਕਰੋ</string>
     <string name="import_from_previous_export">ਪਹਿਲਾਂ ਕੀਤੇ ਐਕਸਪੋਰਟ ਤੋਂ ਇੰਪੋਰਟ ਕਰੋ</string>
     <string name="api23_requirement_dialog_title">ਨਿਊਪਾਈਪ ਐਂਡਰਾਇਡ 5 ਲਈ ਸਮਰਥਨ ਬੰਦ ਕਰ ਰਿਹਾ ਹੈ</string>
-    <string name="api23_requirement_dialog_message">ਬਦਕਿਸਮਤੀ ਨਾਲ NewPipe ਕੁਝ ਲਾਇਬ੍ਰੇਰੀਆਂ \'ਤੇ ਨਿਰਭਰ ਕਰਦਾ ਹੈ ਜਿਨ੍ਹਾਂ ਨੇ Android 5.0 ਅਤੇ 5.1 ਲਈ ਸਮਰਥਨ ਛੱਡ ਦਿੱਤਾ ਹੈ। ਇਸ ਲਈ, ਅਗਲੀ NewPipe ਰੀਲੀਜ਼ ਸਿਰਫ਼ Android 6 ਜਾਂ ਇਸ ਤੋਂ ਉੱਚੇ ਵਰਜਨ ਵਾਲੇ ਡਿਵਾਈਸਾਂ \'ਤੇ ਕੰਮ ਕਰੇਗੀ। ਬਲੌਗਪੋਸਟ ਵਿੱਚ ਹੋਰ ਪੜ੍ਹੋ।</string>
+    <string name="api23_requirement_dialog_message">ਬਦਕਿਸਮਤੀ ਨਾਲ DriftLoom ਕੁਝ ਲਾਇਬ੍ਰੇਰੀਆਂ \'ਤੇ ਨਿਰਭਰ ਕਰਦਾ ਹੈ ਜਿਨ੍ਹਾਂ ਨੇ Android 5.0 ਅਤੇ 5.1 ਲਈ ਸਮਰਥਨ ਛੱਡ ਦਿੱਤਾ ਹੈ। ਇਸ ਲਈ, ਅਗਲੀ DriftLoom ਰੀਲੀਜ਼ ਸਿਰਫ਼ Android 6 ਜਾਂ ਇਸ ਤੋਂ ਉੱਚੇ ਵਰਜਨ ਵਾਲੇ ਡਿਵਾਈਸਾਂ \'ਤੇ ਕੰਮ ਕਰੇਗੀ। ਬਲੌਗਪੋਸਟ ਵਿੱਚ ਹੋਰ ਪੜ੍ਹੋ।</string>
     <string name="api23_requirement_dialog_blogpost">ਬਲੌਗਪੋਸਟ</string>
 </resources>

@@ -11,7 +11,7 @@
 - Aggiungi il supporto per la localizzazione #1792
 
 ### Correzioni
-- Risolto il problema con l'analisi del tempo per . formato, quindi NewPipe può essere utilizzato in Finlandia
+- Risolto il problema con l'analisi del tempo per . formato, quindi DriftLoom può essere utilizzato in Finlandia
 - Risolto il conteggio degli abbonamenti
 - Aggiungi l'autorizzazione al servizio in primo piano per i dispositivi API 28+ #1830
 

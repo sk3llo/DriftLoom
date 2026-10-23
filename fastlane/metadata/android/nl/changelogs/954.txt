@@ -1,6 +1,6 @@
 - nieuwe applicatie-workflow: video's afspelen op detailpagina, omlaag vegen om speler te minimaliseren
 - MediaStyle meldingen: aanpasbare acties in meldingen, prestaties verbeterd 
-- basisgrootte aanpassen bij NewPipe als desktop-app
+- basisgrootte aanpassen bij DriftLoom als desktop-app
 
 - dialoog met open opties tonen bij een niet-ondersteunde URL-toast
 - Verbeterde zoeksuggestie-ervaring als externe niet kunnen worden opgehaald

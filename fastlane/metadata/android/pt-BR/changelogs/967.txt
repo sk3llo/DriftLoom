@@ -1,1 +1,1 @@
-Corrigido o YouTube que não funcionava corretamente na UE. Foi causado por um novo cookie e sistema de consentimento de privacidade que requer que a NewPipe configure um cookie CONSENT.
+Corrigido o YouTube que não funcionava corretamente na UE. Foi causado por um novo cookie e sistema de consentimento de privacidade que requer que a DriftLoom configure um cookie CONSENT.

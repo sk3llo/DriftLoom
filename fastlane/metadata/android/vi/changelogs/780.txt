@@ -3,7 +3,7 @@ Các thay đổi trong 0.17.3
 Cải tiến
 • Thêm tùy chọn để xóa trạng thái phát lại #2550
 • Hiển thị các thư mục ẩn trong bộ chọn tệp #2591
-• Hỗ trợ các URL từ các phiên bản `invidio.us` sẽ được mở bằng NewPipe #2488
+• Hỗ trợ các URL từ các phiên bản `invidio.us` sẽ được mở bằng DriftLoom #2488
 • Thêm hỗ trợ cho các URL `music.youtube.com` TeamNewPipe/NewPipeExtractor#194
 
 Đã sửa

@@ -9,6 +9,6 @@
 • [SoundCloud] إصلاح استخراج client_id #2745
 
 تطوير
-• أضف التبعيات المفقودة الموروثة من NewPipeExtractor إلى NewPipe #2535
+• أضف التبعيات المفقودة الموروثة من NewPipeExtractor إلى DriftLoom #2535
 • الانتقال إلى AndroidX #2685
 • تحديث ل ExoPlayer 2.10.6 #2697, #2736

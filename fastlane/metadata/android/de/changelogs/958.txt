@@ -4,8 +4,8 @@ Neu und verbessert:
 • Verbesserte Leistung beim Abruf lokaler Listen
 
 Behoben:
-• Absturz, NewPipe-Start nachdem es aus dem RAM entfernt wurde
-• Absturz, NewPipe-Start ohne Internetverbindung
+• Absturz, DriftLoom-Start nachdem es aus dem RAM entfernt wurde
+• Absturz, DriftLoom-Start ohne Internetverbindung
 • Einstellungen Helligkeits- und Lautstärkegesten
 • [YT] Lange Wiedergabelisten
 

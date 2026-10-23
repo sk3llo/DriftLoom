@@ -78,7 +78,7 @@
         app:iconSpaceReserved="false"/>
 
     <PreferenceScreen
-        android:fragment="org.schabi.newpipe.settings.ExoPlayerSettingsFragment"
+        android:fragment="org.schabi.driftloom.settings.ExoPlayerSettingsFragment"
         android:key="@string/exoplayer_settings_key"
         android:summary="@string/settings_category_exoplayer_summary"
         android:title="@string/settings_category_exoplayer_title"

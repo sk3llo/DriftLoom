@@ -8,6 +8,6 @@ Behoben
 • [SoundCloud] Client_id Extraktion fix #2745
 
 Entwicklung
-• Hinzufügen fehlender Abhängigkeiten von NewPipeExtractor in NewPipe #2535
+• Hinzufügen fehlender Abhängigkeiten von NewPipeExtractor in DriftLoom #2535
 • Migration auf AndroidX #2685
 • Update auf ExoPlayer 2.10.6 #2697, #2736

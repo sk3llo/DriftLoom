@@ -18,5 +18,5 @@ Corrigido
 • Não trave quando a verificação da atualização do aplicativo falhar (versão do GitHub) #2423 
 • Corrigido ownloads presos em 99,9% #2440
 • Atualizar meta dados da fila de reprodução #2453 
-• [SoundCloud] corrigida a falha ao carregar listas de reprodução Team New Pipe / New Pipe Extractor#170
-• [YouTube] A duração fixa não pode ser analisada Team New Pipe / New Pipe Extractor#177
+• [SoundCloud] corrigida a falha ao carregar listas de reprodução Team DriftLoom / DriftLoom Extractor#170
+• [YouTube] A duração fixa não pode ser analisada Team DriftLoom / DriftLoom Extractor#177

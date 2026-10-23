@@ -32,25 +32,25 @@ kotlin {
 
 configure<ApplicationExtension> {
     compileSdk {
-        version = release(NEWPIPE_VERSION_SDK_COMPILE_MAJOR) {
-            minorApiLevel = NEWPIPE_VERSION_SDK_COMPILE_MINOR
+        version = release(DRIFTLOOM_VERSION_SDK_COMPILE_MAJOR) {
+            minorApiLevel = DRIFTLOOM_VERSION_SDK_COMPILE_MINOR
         }
     }
-    namespace = NEWPIPE_APPLICATION_ID_OLD
+    namespace = DRIFTLOOM_APPLICATION_ID_OLD
 
     defaultConfig {
-        applicationId = NEWPIPE_APPLICATION_ID_OLD
-        resValue("string", "app_name", "NewPipe")
+        applicationId = DRIFTLOOM_APPLICATION_ID_OLD
+        resValue("string", "app_name", "DriftLoom")
         minSdk {
-            version = release(NEWPIPE_VERSION_SDK_MIN)
+            version = release(DRIFTLOOM_VERSION_SDK_MIN)
         }
         targetSdk {
-            version = release(NEWPIPE_VERSION_SDK_TARGET)
+            version = release(DRIFTLOOM_VERSION_SDK_TARGET)
         }
 
-        versionCode = System.getProperty("versionCodeOverride")?.toInt() ?: NEWPIPE_VERSION_CODE
+        versionCode = System.getProperty("versionCodeOverride")?.toInt() ?: DRIFTLOOM_VERSION_CODE
 
-        versionName = NEWPIPE_VERSION_NAME
+        versionName = DRIFTLOOM_VERSION_NAME
         System.getProperty("versionNameSuffix")?.let { versionNameSuffix = it }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -63,17 +63,17 @@ configure<ApplicationExtension> {
             // suffix the app id and the app name with git branch name
             if (normalizedWorkingBranch.isEmpty() || workingBranch in defaultBranches) {
                 applicationIdSuffix = ".debug"
-                resValue("string", "app_name", "NewPipe Debug")
+                resValue("string", "app_name", "DriftLoom Debug")
             } else {
                 applicationIdSuffix = ".debug.$normalizedWorkingBranch"
-                resValue("string", "app_name", "NewPipe $workingBranch")
+                resValue("string", "app_name", "DriftLoom $workingBranch")
             }
         }
 
         release {
             System.getProperty("packageSuffix")?.let { suffix ->
                 applicationIdSuffix = suffix
-                resValue("string", "app_name", "NewPipe $suffix")
+                resValue("string", "app_name", "DriftLoom $suffix")
             }
             isMinifyEnabled = true
             isShrinkResources = true
@@ -91,10 +91,10 @@ configure<ApplicationExtension> {
             // suffix the app id and the app name with git branch name
             if (normalizedWorkingBranch.isEmpty() || workingBranch in defaultBranches) {
                 applicationIdSuffix = ".continuous"
-                resValue("string", "app_name", "NewPipe Continuous")
+                resValue("string", "app_name", "DriftLoom Continuous")
             } else {
                 applicationIdSuffix = ".continuous.$normalizedWorkingBranch"
-                resValue("string", "app_name", "NewPipe $workingBranch")
+                resValue("string", "app_name", "DriftLoom $workingBranch")
             }
         }
     }
@@ -209,8 +209,8 @@ afterEvaluate {
 
 sonar {
     properties {
-        property("sonar.projectKey", "TeamNewPipe_NewPipe")
-        property("sonar.organization", "teamnewpipe")
+        property("sonar.projectKey", "sk3llo_DriftLoom")
+        property("sonar.organization", "sk3llo")
         property("sonar.host.url", "https://sonarcloud.io")
     }
 }
@@ -219,11 +219,11 @@ dependencies {
     // Desugaring
     coreLibraryDesugaring(libs.android.desugar)
 
-    // NewPipe libraries
+    // DriftLoom libraries
     implementation(projects.shared)
-    implementation(libs.newpipe.nanojson)
-    implementation(libs.newpipe.extractor)
-    implementation(libs.newpipe.filepicker)
+    implementation(libs.driftloom.nanojson)
+    implementation(libs.driftloom.extractor)
+    implementation(libs.driftloom.filepicker)
 
     // Checkstyle
     checkstyle(libs.puppycrawl.checkstyle)

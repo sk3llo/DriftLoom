@@ -57,16 +57,16 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import org.schabi.newpipe.BuildConfig;
-import org.schabi.newpipe.R;
-import org.schabi.newpipe.error.ErrorInfo;
-import org.schabi.newpipe.error.ErrorUtil;
-import org.schabi.newpipe.error.UserAction;
+import org.schabi.driftloom.BuildConfig;
+import org.schabi.driftloom.R;
+import org.schabi.driftloom.error.ErrorInfo;
+import org.schabi.driftloom.error.ErrorUtil;
+import org.schabi.driftloom.error.UserAction;
 import org.schabi.newpipe.extractor.NewPipe;
-import org.schabi.newpipe.streams.io.StoredFileHelper;
-import org.schabi.newpipe.util.Localization;
-import org.schabi.newpipe.util.NavigationHelper;
-import org.schabi.newpipe.util.external_communication.ShareUtils;
+import org.schabi.driftloom.streams.io.StoredFileHelper;
+import org.schabi.driftloom.util.Localization;
+import org.schabi.driftloom.util.NavigationHelper;
+import org.schabi.driftloom.util.external_communication.ShareUtils;
 
 import java.io.File;
 import java.net.URI;
@@ -695,7 +695,7 @@ public class MissionAdapter extends Adapter<ViewHolder> implements Handler.Callb
                     = new NotificationCompat.Builder(mContext,
                     mContext.getString(R.string.hash_channel_id))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setSmallIcon(R.drawable.ic_newpipe_triangle_white)
+                    .setSmallIcon(R.drawable.ic_driftloom_triangle_white)
                     .setContentTitle(mContext.getString(R.string.msg_calculating_hash))
                     .setContentText(mContext.getString(R.string.msg_wait))
                     .setProgress(0, 0, true)

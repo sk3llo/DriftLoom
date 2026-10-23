@@ -1,1 +1,1 @@
-Adatbázis migráció fixálva, mely megakadályozta a NewPipe elindulását egyes esetekben.
+Adatbázis migráció fixálva, mely megakadályozta a DriftLoom elindulását egyes esetekben.

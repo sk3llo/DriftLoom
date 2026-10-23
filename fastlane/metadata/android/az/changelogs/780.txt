@@ -3,7 +3,7 @@
  Təkmilləşdi 
 • Oxutma vəziyyətlərini silmək üçün seçim əlavə edildi #2550 
 • Fayl seçicidə gizli kataloqları göstərin #2591 
-• NewPipe #2488 ilə açılacaq `invidio.us` instansiyalarından URL-ləri dəstəkləyin
+• DriftLoom #2488 ilə açılacaq `invidio.us` instansiyalarından URL-ləri dəstəkləyin
  • `music.youtube üçün dəstək əlavə edin .com` URL'ləri TeamNewPipe/NewPipeExtractor#194
 
 Düzəltildi 

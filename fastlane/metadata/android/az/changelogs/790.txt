@@ -9,6 +9,6 @@ Düzəltildi
 • [SoundCloud] Client_id hasilatı #2745 
 
 İnkişafını düzəldin
- • NewPipeExtractor-dan NewPipe #2535-ə miras qalmış çatışmayan asılılıqları əlavə edin 
+ • NewPipeExtractor-dan DriftLoom #2535-ə miras qalmış çatışmayan asılılıqları əlavə edin
 • AndroidX #2685-ə köçürün
  • ExoPlayer 2.10.6 #2736-a yeniləyin, #2

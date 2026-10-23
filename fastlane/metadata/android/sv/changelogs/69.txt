@@ -8,5 +8,5 @@
 - Lägg till stöd för lokalisering #1792
 
 #### Fixat
-- Fixa tidsparsning för . format, så att NewPipe kan användas i Finland.
+- Fixa tidsparsning för . format, så att DriftLoom kan användas i Finland.
 - Fixa antalet prenumerationer

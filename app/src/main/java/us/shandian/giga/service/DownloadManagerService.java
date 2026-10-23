@@ -1,7 +1,7 @@
 package us.shandian.giga.service;
 
-import static org.schabi.newpipe.BuildConfig.APPLICATION_ID;
-import static org.schabi.newpipe.BuildConfig.DEBUG;
+import static org.schabi.driftloom.BuildConfig.APPLICATION_ID;
+import static org.schabi.driftloom.BuildConfig.DEBUG;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -38,13 +38,13 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.IntentCompat;
 import androidx.preference.PreferenceManager;
 
-import org.schabi.newpipe.R;
-import org.schabi.newpipe.download.DownloadActivity;
+import org.schabi.driftloom.R;
+import org.schabi.driftloom.download.DownloadActivity;
 import org.schabi.newpipe.extractor.stream.StreamInfo;
-import org.schabi.newpipe.player.helper.LockManager;
-import org.schabi.newpipe.streams.io.StoredDirectoryHelper;
-import org.schabi.newpipe.streams.io.StoredFileHelper;
-import org.schabi.newpipe.util.Localization;
+import org.schabi.driftloom.player.helper.LockManager;
+import org.schabi.driftloom.streams.io.StoredDirectoryHelper;
+import org.schabi.driftloom.streams.io.StoredFileHelper;
+import org.schabi.driftloom.util.Localization;
 
 import java.io.File;
 import java.io.IOException;
@@ -230,7 +230,7 @@ public class DownloadManagerService extends Service {
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
 
         if (mNotificationManager != null && downloadDoneNotification != null) {
-            downloadDoneNotification.setDeleteIntent(null);// prevent NewPipe running when is killed, cleared from recent, etc
+            downloadDoneNotification.setDeleteIntent(null);// prevent DriftLoom running when is killed, cleared from recent, etc
             mNotificationManager.notify(DOWNLOADS_NOTIFICATION_ID, downloadDoneNotification.build());
         }
 

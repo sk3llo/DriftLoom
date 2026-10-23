@@ -4,8 +4,8 @@ Verbeteringen:
 • Verbeterd ophalen van lokale lijsten
 
 Gemaakt:
-• Crash bij start van NewPipe nadat verwijdering uit RAM geheugen
-• Crash bij start van NewPipe zonder internetverbinding
+• Crash bij start van DriftLoom nadat verwijdering uit RAM geheugen
+• Crash bij start van DriftLoom zonder internetverbinding
 • Helderheid- en volume-instellingen worden beter gerespecteerd
 • [YouTube] Lange speellijst hersteld
 

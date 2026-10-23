@@ -11,7 +11,7 @@ Mejorado
 - [YouTube] Añadir soporte a los enlaces de canal /c/shortened_url
 
 Corregidos
-- Corregidos múltiples problemas al compartir un video a NewPipe y al descargar sus secuencias directamente
+- Corregidos múltiples problemas al compartir un video a DriftLoom y al descargar sus secuencias directamente
 - Corregido el acceso al reproductor fuera de su hilo de creación
 - Corregida la paginación de resultados de búsqueda
 - [YouTube] Corregido el cambio a nulo que causaba NPE

@@ -9,6 +9,6 @@ Fisso
 • [SoundCloud] Correzione dell'estrazione client_id #2745
 
 Sviluppo
-• Aggiungere le dipendenze mancanti ereditate da NewPipeExtractor in NewPipe #2535
+• Aggiungere le dipendenze mancanti ereditate da NewPipeExtractor in DriftLoom #2535
 • Migra ad AndroidX #2685
 • Aggiorna a ExoPlayer 2.10.6 #2697, #2736

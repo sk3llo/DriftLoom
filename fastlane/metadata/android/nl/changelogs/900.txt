@@ -3,7 +3,7 @@ Nieuw
 • Mute-knop in spelers
 
 Verbeterd
-• Sta het openen van music.youtube.com en media.ccc.de links toe in NewPipe
+• Sta het openen van music.youtube.com en media.ccc.de links toe in DriftLoom
 • Verplaats twee instellingen van Uiterlijk naar Inhoud
 • Verberg zoekopties van 5, 15, 25 seconden als onnauwkeurig zoeken is ingeschakeld
 

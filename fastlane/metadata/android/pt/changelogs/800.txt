@@ -19,7 +19,7 @@ Fixa
 - Corrigido um bug que não podia mover o leitor de popup se outro dedo fosse colocado enquanto se movia o leitor de popup #2772 
 - Permitir listas de reprodução sem um carregador e corrigir falhas relacionadas com este problema #2724, TeamNewPipe/NewPipeExtractor#219
 - Habilitação de TLS1.1/1.2 em dispositivos Android 4.4 (API 19/KitKat) para corrigir o aperto de mão de TLS com MediaCCC e algumas instâncias PeerTube #2792
-- [SoundCloud] Equipa fixa de extracção client_idNewPipe/NewPipeExtractor#217
+- [SoundCloud] Equipa fixa de extracção client_idDriftLoom/NewPipeExtractor#217
 - Fixar a extracção do fluxo de áudio
 
 Desenvolvimento

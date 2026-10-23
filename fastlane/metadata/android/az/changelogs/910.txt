@@ -1,1 +1,1 @@
-Bəzi nadir hallarda NewPipe-ın başlamasına mane olan sabit məlumatlar bazası miqrasiyası.
+Bəzi nadir hallarda DriftLoom-ın başlamasına mane olan sabit məlumatlar bazası miqrasiyası.

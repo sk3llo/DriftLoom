@@ -3,7 +3,7 @@ Ajouts
 - Bouton "Mute" dans les lecteurs
 
 Améliorations
-- Ouverture des liens music.youtube.com et media.ccc.de dans NewPipe
+- Ouverture des liens music.youtube.com et media.ccc.de dans DriftLoom
 - Déplacement de deux paramètres de Apparence vers Contenu
 - Cacher les options 5,15,25 secs si la recherche inexacte est activée
 

@@ -9,6 +9,6 @@ Fixa
 - Fixar extracção client_id #2745
 
 Desenvolvimento
-- Adicionar dependências em falta herdadas de NewPipeExtractor em NewPipe #2535
+- Adicionar dependências em falta herdadas de NewPipeExtractor em DriftLoom #2535
 - Migrar para AndroidX #2685
 - Actualização para ExoPlayer 2.10.6 #2697, #2736

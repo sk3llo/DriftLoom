@@ -3,7 +3,7 @@ Novo
 - Botão de mudo nos reprodutores
 
 Melhorado
-- Permitir a abertura de ligações music.youtube.com e media.ccc.de em NewPipe
+- Permitir a abertura de ligações music.youtube.com e media.ccc.de em DriftLoom
 - Mudar duas configurações do Appearance para o Content
 - Esconder 5, 15, 25 segundos de opções de busca se a busca inexata estiver ativada
 

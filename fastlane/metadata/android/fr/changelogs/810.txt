@@ -6,4 +6,4 @@ Améliorations :
 • Possibilité de faire défiler les onglets de la page principale et les masquent lorsqu'il n'y a qu'un seul onglet
 
 Corrections :
-• Correction de plusieurs problèmes lors du partage d'une vidéo sur NewPipe et du téléchargement direct de ses flux
+• Correction de plusieurs problèmes lors du partage d'une vidéo sur DriftLoom et du téléchargement direct de ses flux

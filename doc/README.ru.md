@@ -1,20 +1,22 @@
-<p align="center"><a href="https://newpipe.net"><img src="assets/new_pipe_icon_5.png" width="150"></a></p> 
-<h2 align="center"><b>NewPipe</b></h2>
+> DriftLoom is an independent fork. This translated guide was inherited from upstream; external download and community links refer to NewPipe. See the [current README](../README.md) for DriftLoom build instructions.
+
+<p align="center"><a href="https://newpipe.net"><img src="assets/driftloom_icon_5.png" width="150"></a></p>
+<h2 align="center"><b>DriftLoom</b></h2>
 <h4 align="center">Свободный и легковесный клиент потоковых сервисов для Android.</h4>
 
 <p align="center"><a href="https://f-droid.org/packages/org.schabi.newpipe/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-en.svg" alt="Скачать на F-Droid" width=206/></a></p>
 
 <p align="center">
 <a href="https://github.com/TeamNewPipe/NewPipe/releases" alt="GitHub release"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe.svg"></a>
-<a href="https://github.com/TeamNewPipe/NewPipe-nightly/releases" alt="GitHub NewPipe nightly releases"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe-nightly.svg?labelColor=purple&label=dev%20nightly"></a>
+<a href="https://github.com/TeamNewPipe/NewPipe-nightly/releases" alt="GitHub DriftLoom nightly releases"><img src="https://img.shields.io/github/release/TeamNewPipe/NewPipe-nightly.svg?labelColor=purple&label=dev%20nightly"></a>
 <a href="https://www.gnu.org/licenses/gpl-3.0" alt="Лицензия: GPLv3"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"></a>
 <a href="https://github.com/TeamNewPipe/NewPipe/actions" alt="Состояние сборки"><img src="https://github.com/TeamNewPipe/NewPipe/actions/workflows/ci.yml/badge.svg?branch=dev&event=push"></a>
 <a href="https://hosted.weblate.org/engage/newpipe/" alt="Состояние перевода"><img src="https://hosted.weblate.org/widgets/newpipe/-/svg-badge.svg"></a>
 </p>
 
 <p align="center">
-<a href="https://web.libera.chat/#newpipe" alt="Канал IRC: #newpipe"><img src="https://img.shields.io/badge/IRC%20chat-%23newpipe-brightgreen.svg"></a>
-<a href="https://matrix.to/#/#newpipe:matrix.newpipe-ev.de" alt="Matrix channel: #newpipe"><img src="https://img.shields.io/badge/Matrix%20chat-%23newpipe-blue"></a>
+<a href="https://web.libera.chat/#newpipe" alt="Канал IRC: #driftloom"><img src="https://img.shields.io/badge/IRC%20chat-%23newpipe-brightgreen.svg"></a>
+<a href="https://matrix.to/#/#newpipe:matrix.newpipe-ev.de" alt="Matrix channel: #driftloom"><img src="https://img.shields.io/badge/Matrix%20chat-%23newpipe-blue"></a>
 </p>
 
 <hr>
@@ -27,7 +29,7 @@
 > [!warning]
 > <b>ЭТО ПРИЛОЖЕНИЕ НАХОДИТСЯ В СТАДИИ БЕТА, ПОЭТОМУ ВЫ МОЖЕТЕ ОБНАРУЖИТЬ ОШИБКИ. ЕСЛИ ЭТО СЛУЧИТСЯ, ОТКРОЙТЕ ВОПРОС В НАШЕМ РЕПОЗИТОРИИ GITHUB, ЗАПОЛНЯ ЕГО ПО ШАБЛОНУ.</b>
 >
-> <b>РАЗМЕЩЕНИЕ NEWPIPE ИЛИ ЕГО ОТВЕТВЛЕНИЙ В МАГАЗИНЕ GOOGLE PLAY НАРУШАЕТ ИХ УСЛОВИЯ И ПОЛОЖЕНИЯ.</b>
+> <b>РАЗМЕЩЕНИЕ DRIFTLOOM ИЛИ ЕГО ОТВЕТВЛЕНИЙ В МАГАЗИНЕ GOOGLE PLAY НАРУШАЕТ ИХ УСЛОВИЯ И ПОЛОЖЕНИЯ.</b>
 
 ## Скриншоты
 
@@ -47,7 +49,7 @@
 
 ### Поддерживаемые сервисы
 
-NewPipe на данный момент поддерживает эти сервисы:
+DriftLoom на данный момент поддерживает эти сервисы:
 
 <!-- We link to the service websites separately to avoid people accidentally opening a website they didn't want to. -->
 * YouTube ([сайт](https://www.youtube.com/)) и YouTube Music ([сайт](https://music.youtube.com/)) ([Вики](https://en.wikipedia.org/wiki/YouTube))
@@ -56,17 +58,17 @@ NewPipe на данный момент поддерживает эти серв�
 * SoundCloud ([сайт](https://soundcloud.com/)) ([Вики](https://en.wikipedia.org/wiki/SoundCloud))
 * media.ccc.de ([сайт](https://media.ccc.de/)) ([Вики](https://en.wikipedia.org/wiki/Chaos_Computer_Club))
 
-Как видите, NewPipe поддерживает несколько видео- и аудиосервисов. Хотя все началось с YouTube, с годами люди добавляли новые сервисы, делая NewPipe все более и более универсальным!
+Как видите, DriftLoom поддерживает несколько видео- и аудиосервисов. Хотя все началось с YouTube, с годами люди добавляли новые сервисы, делая DriftLoom все более и более универсальным!
 
 Частично из-за обстоятельств, а частично из-за своей популярности лучше всего из этих сервисов поддерживается YouTube. Если вы используете какие-либо из них или знакомы с ними, помогите нам улучшить их поддержку! Мы ищем сопровождающих для SoundCloud и PeerTube.
 
-Если вы хотите добавить новый сервис, сначала свяжитесь с нами! В нашей [документации](https://teamnewpipe.github.io/documentation/) содержится дополнительная информация о том, как можно добавить новый сервис в приложение и в [NewPipe Extractor](https://github.com/TeamNewPipe/NewPipeExtractor).
+Если вы хотите добавить новый сервис, сначала свяжитесь с нами! В нашей [документации](https://teamnewpipe.github.io/documentation/) содержится дополнительная информация о том, как можно добавить новый сервис в приложение и в [DriftLoom Extractor](https://github.com/TeamNewPipe/NewPipeExtractor).
 
 ## Описание
 
-NewPipe работает, извлекая необходимые данные из официального API (например, PeerTube) сервиса, который вы используете. Если официальный API ограничен (например, YouTube) для наших целей или является проприетарным, приложение анализирует веб-сайт или использует вместо этого внутренний API. Это означает, что вам не нужна учетная запись в этих сервисах для использования NewPipe.
+DriftLoom работает, извлекая необходимые данные из официального API (например, PeerTube) сервиса, который вы используете. Если официальный API ограничен (например, YouTube) для наших целей или является проприетарным, приложение анализирует веб-сайт или использует вместо этого внутренний API. Это означает, что вам не нужна учетная запись в этих сервисах для использования DriftLoom.
 
-Кроме того, поскольку это бесплатное и открытое программное обеспечение, ни приложение, ни Extractor не используют какие-либо проприетарные библиотеки или платформы, такие как Google Play Services. Это означает, что вы можете использовать NewPipe на устройствах или пользовательских ROM, на которых не установлены приложения Google.
+Кроме того, поскольку это бесплатное и открытое программное обеспечение, ни приложение, ни Extractor не используют какие-либо проприетарные библиотеки или платформы, такие как Google Play Services. Это означает, что вы можете использовать DriftLoom на устройствах или пользовательских ROM, на которых не установлены приложения Google.
 
 ### Возможности
 
@@ -94,18 +96,18 @@ NewPipe работает, извлекая необходимые данные �
 * Смотрите/блокируйте материалы с возрастным ограничением
 
 ## Установка и обновления
-Вы можете установить NewPipe одним из следующих способов:
+Вы можете установить DriftLoom одним из следующих способов:
  1. Добавьте наш пользовательский репозиторий в F-Droid и установите его оттуда. Инструкции находятся здесь: https://newpipe.net/FAQ/tutorials/install-add-fdroid-repo/
  2. Скачайте APK из [GitHub Releases](https://github.com/TeamNewPipe/NewPipe/releases) и установите его.
  3. Обновите через F-Droid. Это самый медленный способ получения обновлений, так как F-Droid должен распознавать изменения, создавать сам APK, подписывать его, а затем отправлять обновления пользователям.
  4. Создайте отладочный APK самостоятельно. Это самый быстрый способ получить новые функции на вашем устройстве, но он намного сложнее, поэтому мы рекомендуем использовать другие способы.
  5. Если вас интересует конкретная функция или исправление ошибки, предоставленные в пул реквесте в этом репозитории, вы также можете скачать файл APK из PR. Прочтите описание PR для получения инструкций. Отличительной особенностью APK-файлов из PR является то, что они устанавливаются рядом с официальным приложением, поэтому вам не нужно беспокоиться о потере ваших данных или о том, что возникнет путаница.
 
-Мы рекомендуем 1 способ для большинства пользователей. APK, установленные 1 или 2 способом, совместимы друг с другом (это означает, что если вы установили NewPipe с помощью способа 1 или 2, вы также можете обновить NewPipe с помощью другого), но не с теми APK, которые были установлены с помощью способа 3. Это потому, что для 1 и 2 способа используется один и тот же ключ подписи (наш), но для способа 3 используется другой ключ подписи (F-Droid). Создание отладочного APK с использованием 4 способа полностью исключает ключ. Ключи подписи помогают гарантировать, что пользователь не будет обманут установкой вредоносного обновления для приложения. При использовании 5 способа каждый APK подписывается разными случайными ключами, предоставляемыми GitHub Actions, поэтому вы даже не сможете его обновить. Вам придется делать резервную копию и восстанавливать данные приложения каждый раз, когда захотите использовать новый APK.
+Мы рекомендуем 1 способ для большинства пользователей. APK, установленные 1 или 2 способом, совместимы друг с другом (это означает, что если вы установили DriftLoom с помощью способа 1 или 2, вы также можете обновить DriftLoom с помощью другого), но не с теми APK, которые были установлены с помощью способа 3. Это потому, что для 1 и 2 способа используется один и тот же ключ подписи (наш), но для способа 3 используется другой ключ подписи (F-Droid). Создание отладочного APK с использованием 4 способа полностью исключает ключ. Ключи подписи помогают гарантировать, что пользователь не будет обманут установкой вредоносного обновления для приложения. При использовании 5 способа каждый APK подписывается разными случайными ключами, предоставляемыми GitHub Actions, поэтому вы даже не сможете его обновить. Вам придется делать резервную копию и восстанавливать данные приложения каждый раз, когда захотите использовать новый APK.
 
-Между тем, если вы хотите по какой-то причине сменить источник (например, основные функции NewPipe не работают, а для F-Droid ещё нет последнего обновления), мы рекомендуем выполнить следующую процедуру:
+Между тем, если вы хотите по какой-то причине сменить источник (например, основные функции DriftLoom не работают, а для F-Droid ещё нет последнего обновления), мы рекомендуем выполнить следующую процедуру:
 1. Создайте резервную копию своих данных через «Настройки» > «Контент» > «Экспортировать базу данных», чтобы сохранить историю, подписки и плейлисты.
-2. Удалите NewPipe
+2. Удалите DriftLoom
 3. Загрузите APK из нового источника и установите его.
 4. Импортируйте данные из шага 1 через «Настройки» > «Содержимое» > «Импортировать базу данных».
 
@@ -119,21 +121,21 @@ NewPipe работает, извлекая необходимые данные �
 </a>
 
 ## Пожертвование
-Если вам нравится NewPipe, вы можете отправить пожертвование. Мы предпочитаем Liberapay, так как это открытая и некоммерческая платформа. Для получения дополнительной информации о пожертвовании NewPipe посетите наш [сайт](https://newpipe.net/donate).
+Если вам нравится DriftLoom, вы можете отправить пожертвование. Мы предпочитаем Liberapay, так как это открытая и некоммерческая платформа. Для получения дополнительной информации о пожертвовании DriftLoom посетите наш [сайт](https://newpipe.net/donate).
 
 <table>
   <tr>
     <td><a href="https://liberapay.com/TeamNewPipe/"><img src="https://upload.wikimedia.org/wikipedia/commons/2/27/Liberapay_logo_v2_white-on-yellow.svg" alt="Liberapay" width="80px" ></a></td>
-    <td><a href="https://liberapay.com/TeamNewPipe/"><img src="assets/liberapay_qr_code.png" alt="Посетите NewPipe на liberapay.com" width="100px"></a></td>
+    <td><a href="https://liberapay.com/TeamNewPipe/"><img src="assets/liberapay_qr_code.png" alt="Посетите DriftLoom на liberapay.com" width="100px"></a></td>
     <td><a href="https://liberapay.com/TeamNewPipe/donate"><img src="assets/liberapay_donate_button.svg" alt="Пожертвование через Liberapay" height="35px"></a></td>
   </tr>
 </table>
 
 ## Политика конфиденциальности
 
-Целью проекта NewPipe является предоставление конфиденциального анонимного доступа к мультимедийным веб-сервисам. Поэтому приложение не собирает никаких данных без вашего согласия. Политика конфиденциальности NewPipe подробно объясняет, какие данные отправляются и сохраняются, когда вы отправляете отчёт о сбое или оставляете комментарий в нашем блоге. Вы можете найти документ [здесь](https://newpipe.net/legal/privacy/).
+Целью проекта DriftLoom является предоставление конфиденциального анонимного доступа к мультимедийным веб-сервисам. Поэтому приложение не собирает никаких данных без вашего согласия. Политика конфиденциальности DriftLoom подробно объясняет, какие данные отправляются и сохраняются, когда вы отправляете отчёт о сбое или оставляете комментарий в нашем блоге. Вы можете найти документ [здесь](https://newpipe.net/legal/privacy/).
 
 ## Лицензия
-[![Изображение GNU GPLv3](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.ru.html)  
+[![Изображение GNU GPLv3](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.ru.html)
 
-NewPipe — это бесплатное программное обеспечение: вы можете использовать, изучать, делиться и улучшать его по своему усмотрению. В частности, вы можете распространять и/или изменять ее в соответствии с условиями [Стандартной общественной лицензии GNU](https://www.gnu.org/licenses/gpl.html) (GPL-3.0), опубликованной Free Software Foundation, либо версии 3 Лицензии или (на ваш выбор) любая более поздняя версия.
+DriftLoom — это бесплатное программное обеспечение: вы можете использовать, изучать, делиться и улучшать его по своему усмотрению. В частности, вы можете распространять и/или изменять ее в соответствии с условиями [Стандартной общественной лицензии GNU](https://www.gnu.org/licenses/gpl.html) (GPL-3.0), опубликованной Free Software Foundation, либо версии 3 Лицензии или (на ваш выбор) любая более поздняя версия.

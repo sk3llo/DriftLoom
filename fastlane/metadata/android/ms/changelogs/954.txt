@@ -1,6 +1,6 @@
 • Aliran kerja aplikasi yang baharu: Mainkan video di laman butiran, leret ke bawah untuk mengecilkan pemain
 • Pemberitahuan MediaStyle: Tindakan boleh suai pada pemberitahuan, peningkatan prestasi
-• Ubah saiz asas apabila menggunakan NewPipe sebagai aplikasi atas meja
+• Ubah saiz asas apabila menggunakan DriftLoom sebagai aplikasi atas meja
 
 • Tunjukkan dialog dengan pilihan terbuka sekiranya pemberitahuan URL tidak disokong
 • Tingkatkan pengalaman cadangan carian apabila yang jauh tidak dapat diambil
