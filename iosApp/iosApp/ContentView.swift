@@ -13,24 +13,36 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     @StateObject private var playback = PlaybackSession()
+    @StateObject private var library = makeLibraryStore()
+    @State private var historyRecorder: LibraryPlaybackRecorder?
     @State private var selectedTab = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            SearchView { videoID in
-                selectedTab = 1
-                playback.open(videoID)
-            }
+            SearchView(onPlay: play)
                 .tabItem { Label("Discover", systemImage: "magnifyingglass") }.tag(0)
             PlaybackView(playback: playback)
                 .tabItem { Label("Watch", systemImage: "play.rectangle") }.tag(1)
+            LibraryView(onPlay: play)
+                .tabItem { Label("Library", systemImage: "books.vertical") }.tag(2)
             ComposeView()
                 .ignoresSafeArea(edges: .top)
-                .tabItem { Label("About", systemImage: "info.circle") }.tag(2)
+                .tabItem { Label("About", systemImage: "info.circle") }.tag(3)
         }
+        .environmentObject(library)
         .tint(.teal)
+        .alert("Library", isPresented: Binding(get: { library.lastError != nil }, set: {
+            if !$0 { library.dismissError() }
+        })) {
+            Button("OK") { library.dismissError() }
+        } message: { Text(library.lastError ?? "") }
         .task {
+            if historyRecorder == nil { historyRecorder = LibraryPlaybackRecorder(playback: playback, library: library) }
 #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--library-smoke-run") {
+                selectedTab = 2
+                runLibrarySmokeSetup(library)
+            }
             if ProcessInfo.processInfo.arguments.contains("--playback-smoke-url") { selectedTab = 1 }
             await runPlaybackSmokeCheck(playback)
 #endif
@@ -40,9 +52,15 @@ struct ContentView: View {
             playback.open(url.absoluteString)
         }
     }
+
+    private func play(_ item: BrowseItem) {
+        selectedTab = 1
+        playback.open(item)
+    }
 }
 
 private struct PlaybackView: View {
+    @EnvironmentObject private var library: LibraryStore
     @ObservedObject var playback: PlaybackSession
     @State private var input = ""
     @State private var showsLicenses = false
@@ -78,6 +96,14 @@ private struct PlaybackView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                             .accessibilityIdentifier("videoPlayer")
                         Text(playback.title).font(.headline)
+                        if let item = playback.currentItemMetadata {
+                            Button(library.isSaved(item.contentID) ? "Saved" : "Save video",
+                                   systemImage: library.isSaved(item.contentID) ? "bookmark.fill" : "bookmark") {
+                                library.toggleSaved(item)
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(!library.isWritable)
+                        }
                     }
                     status
                     if playback.didRecover {
@@ -100,7 +126,7 @@ private struct PlaybackView: View {
                 if !navigationPath.isEmpty { navigationPath.removeAll() }
             }
             .navigationDestination(for: BrowseRoute.self) { route in
-                BrowsePageView(route: route) { videoID in playback.open(videoID) }
+                BrowsePageView(route: route) { item in playback.open(item) }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -135,7 +161,7 @@ private struct PlaybackView: View {
                 Label(message, systemImage: "exclamationmark.circle")
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("playbackError")
-                Button("Try again", action: openVideo).buttonStyle(.bordered)
+                Button("Try again", action: playback.retry).buttonStyle(.bordered)
             }
         case .playing: Label("Playing", systemImage: "play.fill").foregroundStyle(.secondary)
         case .paused: Label("Paused", systemImage: "pause.fill").foregroundStyle(.secondary)
@@ -162,7 +188,7 @@ private struct PlaybackView: View {
 
 private struct RelatedVideosView: View {
     let videoID: String
-    let onPlay: (String) -> Void
+    let onPlay: (BrowseItem) -> Void
     @StateObject private var related = BrowseStore()
 
     var body: some View {
@@ -170,8 +196,9 @@ private struct RelatedVideosView: View {
             if !related.items.isEmpty {
                 Text("More to explore").font(.title3.weight(.semibold))
                 ForEach(related.items.filter { $0.kind == .video }.prefix(5)) { item in
-                    Button { onPlay(item.contentID) } label: { BrowseRow(item: item) }
+                    Button { onPlay(item) } label: { BrowseRow(item: item) }
                         .buttonStyle(.plain)
+                        .contextMenu { LibraryItemActions(item: item) }
                 }
                 NavigationLink("See all related videos", value: BrowseRoute.related(videoID))
             } else if related.isLoading {

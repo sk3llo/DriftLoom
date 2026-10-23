@@ -3,7 +3,7 @@ import DriftLoomPlayback
 import SwiftUI
 
 struct SearchView: View {
-    let onPlay: (String) -> Void
+    let onPlay: (BrowseItem) -> Void
     @StateObject private var results = BrowseStore()
     @State private var query = ""
     @State private var submittedQuery = ""
@@ -55,14 +55,24 @@ struct SearchView: View {
 }
 
 struct BrowsePageView: View {
+    @EnvironmentObject private var library: LibraryStore
     let route: BrowseRoute
-    let onPlay: (String) -> Void
+    let onPlay: (BrowseItem) -> Void
     @StateObject private var store = BrowseStore()
 
     var body: some View {
         BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(route) } })
             .navigationTitle(store.title.isEmpty ? fallbackTitle : store.title)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if case let .channel(id) = route, store.hasLoaded {
+                    Button(library.isSubscribed(id) ? "Subscribed" : "Subscribe",
+                           systemImage: library.isSubscribed(id) ? "person.crop.circle.badge.checkmark" : "person.crop.circle.badge.plus") {
+                        library.toggleSubscription(BrowseItem(contentID: id, kind: .channel, title: store.title))
+                    }
+                    .disabled(!library.isWritable)
+                }
+            }
             .task(id: route) { await store.load(route) }
     }
 
@@ -79,7 +89,7 @@ struct BrowsePageView: View {
 
 private struct BrowseResults: View {
     @ObservedObject var store: BrowseStore
-    let onPlay: (String) -> Void
+    let onPlay: (BrowseItem) -> Void
     let retry: () -> Void
 
     var body: some View {
@@ -102,7 +112,7 @@ private struct BrowseResults: View {
                             if let destination = item.destination {
                                 NavigationLink(value: destination) { BrowseRow(item: item) }
                             } else {
-                                Button { onPlay(item.contentID) } label: { BrowseRow(item: item) }
+                                Button { onPlay(item) } label: { BrowseRow(item: item) }
                                     .buttonStyle(.plain)
                                     .accessibilityIdentifier("searchVideo-\(item.contentID)")
                             }
@@ -113,6 +123,7 @@ private struct BrowseResults: View {
                                 }
                             }
                         }
+                        .contextMenu { LibraryItemActions(item: item) }
                         .listRowSeparator(.hidden)
                         .padding(.vertical, 4)
                     }

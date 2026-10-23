@@ -14,7 +14,9 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   preserving playback position. The shared Compose settings/about foundation is retained.
 - iOS Discover: direct YouTube search for videos, Shorts, channels, and playlists; channel uploads,
   playlist and Mix contents, related videos, and paginated results. Results open in the native player.
-- iOS subscriptions, downloads, queues, and background/lock-screen controls are not yet ported.
+- iOS Library: saved videos, channel subscriptions, and watch history survive app restarts.
+  Save from the player or a result menu, subscribe from a channel page, and reopen items from Library.
+- iOS downloads, queues, subscription feeds, and background/lock-screen controls are not yet ported.
 
 The earlier playback fix was verified on an Android phone before this rebrand.
 The rename itself does not imply a new device test or an installed update.
@@ -63,6 +65,14 @@ in the results, Mix playlists, related-video pagination, and optionally native p
 store tests cover current/legacy renderer shapes, Shorts, unavailable pages, deduplication,
 repeated continuation tokens, retry, and stale search/pagination responses.
 
+The library stores versioned JSON locally in `Application Support/DriftLoom/library.json`.
+Writes are atomic; corrupt or newer documents are preserved and block edits until reloaded.
+History records playback once it starts, keeps the latest 500 distinct videos, and can be disabled,
+removed individually, or cleared. Saved metadata contains no resolved stream URLs. Subscriptions
+open the channel's uploads; there is no merged subscription feed, account sync, or backup import yet.
+Library tests cover persistence, deletion, history limits and preferences, invalid documents,
+write rollback, and real local-media playback recording.
+
 For an app-level simulator smoke check, launch a Debug build with
 `--playback-smoke-url https://www.youtube.com/watch?v=11-9ZaYiTPE` and inspect the
 `DriftLoomSmoke` log result. This path is compiled out of Release builds and does not activate
@@ -71,6 +81,13 @@ without the flag. To check the Discover screen, use
 open a result through the same callback as a row tap, then verify playback past 65 seconds.
 Inspect the `DriftLoomBrowseSmoke` and `DriftLoomSmoke` log results. Normal startup performs
 no browsing or playback requests until the user searches or opens a video.
+
+To verify library persistence in Debug without touching the normal library, use
+`--library-smoke-run UNIQUE_NAME --library-smoke-seed` with the playback smoke URL above.
+After playback passes, terminate and relaunch with the same run name and
+`--library-smoke-verify`; inspect `DriftLoomLibrarySmoke` for the cold-launch result.
+Optional `--library-smoke-section History` or `Subscriptions` selects that Library screen.
+These flags and fixtures are excluded from Release builds.
 
 The iOS resolver uses [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit), pinned to a
 specific revision in `Package.swift` and the lockfiles. Only local extraction is enabled;

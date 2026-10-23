@@ -7,8 +7,8 @@ public enum BrowseRoute: Hashable, Sendable {
     case mix(playlist: String, seed: String)
 }
 
-public struct BrowseItem: Identifiable, Equatable, Sendable {
-    public enum Kind: String, Sendable { case video, channel, playlist }
+public struct BrowseItem: Identifiable, Equatable, Codable, Sendable {
+    public enum Kind: String, Codable, Sendable { case video, channel, playlist }
     public let contentID: String
     public let kind: Kind
     public let title: String

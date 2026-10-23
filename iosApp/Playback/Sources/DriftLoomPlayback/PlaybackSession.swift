@@ -15,6 +15,7 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var video: ResolvedVideo?
     @Published public private(set) var didRecover = false
     @Published public private(set) var videoID: String?
+    @Published public private(set) var sourceItem: BrowseItem?
 
     private let resolver: any StreamResolving
     private var currentRequest: VideoRequest?
@@ -61,9 +62,25 @@ public final class PlaybackSession: ObservableObject {
         } catch { phase = .failed(error.localizedDescription) }
     }
 
+    public func open(_ item: BrowseItem) {
+        guard item.kind == .video else { open(""); return }
+        open(item.contentID)
+        if videoID == item.contentID { sourceItem = item }
+    }
+
+    public var currentItemMetadata: BrowseItem? {
+        guard let videoID else { return nil }
+        return BrowseItem(contentID: videoID, kind: .video,
+                          title: title == "YouTube video" ? (sourceItem?.title ?? title) : title,
+                          subtitle: sourceItem?.subtitle ?? "",
+                          thumbnail: sourceItem?.thumbnail ?? URL(string: "https://i.ytimg.com/vi/\(videoID)/hqdefault.jpg"),
+                          duration: sourceItem?.duration, channelID: sourceItem?.channelID)
+    }
+
     public func retry() {
         guard let currentRequest else { return }
-        open(currentRequest.watchURL.absoluteString)
+        if let sourceItem { open(sourceItem) }
+        else { open(currentRequest.watchURL.absoluteString) }
     }
 
     public func stop() {
@@ -78,6 +95,7 @@ public final class PlaybackSession: ObservableObject {
 #endif
         currentRequest = nil
         videoID = nil
+        sourceItem = nil
         title = "DriftLoom"
         didRecover = false
         video = nil

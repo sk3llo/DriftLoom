@@ -33,7 +33,7 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
 }
 
 @MainActor
-func runBrowseSmokeCheck(_ store: BrowseStore, onPlay: (String) -> Void) async {
+func runBrowseSmokeCheck(_ store: BrowseStore, onPlay: (BrowseItem) -> Void) async {
     let arguments = ProcessInfo.processInfo.arguments
     guard arguments.contains("--browse-smoke-query"), !Task.isCancelled, !store.isLoading else { return }
     guard store.error == nil, !store.items.isEmpty else {
@@ -51,7 +51,7 @@ func runBrowseSmokeCheck(_ store: BrowseStore, onPlay: (String) -> Void) async {
             NSLog("DriftLoomBrowseSmoke: FAIL no video")
             return
         }
-        onPlay(video.contentID)
+        onPlay(video)
     }
 }
 #endif
