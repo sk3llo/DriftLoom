@@ -32,3 +32,8 @@ node_modules/
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+
+# Swift package and Xcode build products
+.build/
+DerivedData/
+.swiftpm/
