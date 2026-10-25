@@ -77,7 +77,13 @@ enum BrowseParser {
         let next = continuation.flatMap { token in
             clientVersion.map { BrowseCursor(token: token, clientVersion: $0, isSearch: isSearch, isRelated: isRelated || isMix) }
         }
-        return BrowsePage(title: title, items: items, next: next)
+        let browseContents = ((root["contents"] as? Object)?["twoColumnBrowseResultsRenderer"] as? Object)
+        let tabs = (browseContents?["tabs"] as? [Object] ?? []).compactMap {
+            (($0["tabRenderer"] as? Object)?["title"] as? String).flatMap(ChannelTab.init(rawValue:))
+        }
+        let header = channel.map { BrowseHeader(description: $0["description"] as? String ?? "",
+                                               thumbnail: image(in: $0["avatar"] ?? [:]), tabs: tabs) }
+        return BrowsePage(title: title, items: items, next: next, header: header)
     }
 
     private static func walk(_ value: Any, items: inout [BrowseItem], continuation: inout String?) {

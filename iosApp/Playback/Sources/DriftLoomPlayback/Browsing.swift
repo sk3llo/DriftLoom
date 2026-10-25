@@ -4,7 +4,34 @@ import Foundation
 
 public enum BrowseRoute: Hashable, Sendable {
     case search(String), channel(String), playlist(String), related(String)
+    case filteredSearch(String, SearchFilter), channelTab(String, ChannelTab)
     case mix(playlist: String, seed: String)
+}
+
+public enum SearchFilter: String, CaseIterable, Sendable {
+    case all = "All", videos = "Videos", channels = "Channels", playlists = "Playlists"
+    var parameter: String? {
+        switch self {
+        case .all: return nil
+        case .videos: return "EgIQAQ=="
+        case .channels: return "EgIQAg=="
+        case .playlists: return "EgIQAw=="
+        }
+    }
+}
+
+public enum ChannelTab: String, CaseIterable, Sendable {
+    case videos = "Videos", shorts = "Shorts", streams = "Live", playlists = "Playlists"
+    var path: String { self == .streams ? "streams" : rawValue.lowercased() }
+}
+
+public struct BrowseHeader: Sendable {
+    public let description: String
+    public let thumbnail: URL?
+    public let tabs: [ChannelTab]
+    public init(description: String = "", thumbnail: URL? = nil, tabs: [ChannelTab] = []) {
+        self.description = description; self.thumbnail = thumbnail; self.tabs = tabs
+    }
 }
 
 public struct BrowseItem: Identifiable, Equatable, Codable, Sendable {
@@ -51,8 +78,9 @@ public struct BrowsePage: Sendable {
     public let title: String
     public let items: [BrowseItem]
     public let next: BrowseCursor?
-    public init(title: String, items: [BrowseItem], next: BrowseCursor? = nil) {
-        self.title = title; self.items = items; self.next = next
+    public let header: BrowseHeader?
+    public init(title: String, items: [BrowseItem], next: BrowseCursor? = nil, header: BrowseHeader? = nil) {
+        self.title = title; self.items = items; self.next = next; self.header = header
     }
 }
 
@@ -90,15 +118,20 @@ public actor YouTubeBrowsingClient: Browsing {
         var isMix = false
         var query = [URLQueryItem(name: "hl", value: "en"), URLQueryItem(name: "gl", value: "PT")]
         switch route {
-        case let .search(value):
+        case let .search(value), let .filteredSearch(value, _):
             let value = value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !value.isEmpty, value.count <= 500 else { throw BrowseError.invalidInput }
             components.path = "/results"
             query.append(URLQueryItem(name: "search_query", value: value))
+            if case let .filteredSearch(_, filter) = route, let parameter = filter.parameter {
+                query.append(URLQueryItem(name: "sp", value: parameter))
+            }
             title = value; isSearch = true
-        case let .channel(id):
-            guard id.hasPrefix("UC"), Self.validID(id) else { throw BrowseError.invalidInput }
-            components.path = "/channel/\(id)/videos"
+        case let .channel(id), let .channelTab(id, _):
+            guard id.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil else { throw BrowseError.invalidInput }
+            let tab: ChannelTab
+            if case let .channelTab(_, selected) = route { tab = selected } else { tab = .videos }
+            components.path = "/channel/\(id)/\(tab.path)"
             title = "Channel"; isSearch = false
         case let .mix(playlist, seed):
             guard Self.validID(playlist), (try? VideoRequest(input: seed)) != nil else { throw BrowseError.invalidInput }
@@ -172,6 +205,7 @@ public actor YouTubeBrowsingClient: Browsing {
 public final class BrowseStore: ObservableObject {
     @Published public private(set) var items: [BrowseItem] = []
     @Published public private(set) var title = ""
+    @Published public private(set) var header: BrowseHeader?
     @Published public private(set) var isLoading = false
     @Published public private(set) var isLoadingMore = false
     @Published public private(set) var error: String?
@@ -188,6 +222,7 @@ public final class BrowseStore: ObservableObject {
         generation = UUID()
         let token = generation
         title = ""
+        header = nil
         items = []; cursor = nil; canLoadMore = false; hasLoaded = false
         error = nil; paginationError = nil; isLoading = true; isLoadingMore = false
         do {
@@ -195,6 +230,7 @@ public final class BrowseStore: ObservableObject {
             try Task.checkCancellation()
             guard generation == token else { return }
             title = page.title
+            header = page.header
             append(page)
             hasLoaded = true
         } catch {

@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Keep app information available without linking a higher-minimum-OS UI framework.
 struct AboutView: View {
+    @Environment(\.dismiss) private var dismiss
     var body: some View {
         AppNavigation {
             List {
@@ -27,6 +28,8 @@ struct AboutView: View {
                 }
             }
             .navigationTitle("About")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { Button("Done") { dismiss() } }
         }
     }
     private var notices: String {

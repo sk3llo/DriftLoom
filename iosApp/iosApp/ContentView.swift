@@ -1,201 +1,149 @@
-import AVKit
+// SPDX-License-Identifier: GPL-3.0-or-later
+import AVFoundation
 import DriftLoomPlayback
 import SwiftUI
 import UIKit
 
-struct ContentView: View {
-    @StateObject private var playback = PlaybackSession()
-    @StateObject private var library = makeLibraryStore()
-    @State private var historyRecorder: LibraryPlaybackRecorder?
-    @State private var selectedTab = 0
-
-    var body: some View {
-        TabView(selection: $selectedTab) {
-            SearchView(onPlay: play)
-                .tabItem { Label("Discover", systemImage: "magnifyingglass") }.tag(0)
-            PlaybackView(playback: playback)
-                .tabItem { Label("Watch", systemImage: "play.rectangle") }.tag(1)
-            LibraryView(onPlay: play)
-                .tabItem { Label("Library", systemImage: "books.vertical") }.tag(2)
-            AboutView()
-                .tabItem { Label("About", systemImage: "info.circle") }.tag(3)
-        }
-        .environmentObject(library)
-        .tint(.teal)
-        .accentColor(.teal)
-        .alert("Library", isPresented: Binding(get: { library.lastError != nil }, set: {
-            if !$0 { library.dismissError() }
-        })) {
-            Button("OK") { library.dismissError() }
-        } message: { Text(library.lastError ?? "") }
-        .task {
-            if historyRecorder == nil { historyRecorder = LibraryPlaybackRecorder(playback: playback, library: library) }
-#if DEBUG || DRIFTLOOM_DEVICE_TESTING
-            if ProcessInfo.processInfo.arguments.contains("--library-smoke-run") {
-                if !ProcessInfo.processInfo.arguments.contains("--browse-smoke-query") { selectedTab = 2 }
-                runLibrarySmokeSetup(library)
-            }
-            if ProcessInfo.processInfo.arguments.contains("--playback-smoke-url") { selectedTab = 1 }
-            await runPlaybackSmokeCheck(playback)
-#endif
-        }
-        .onOpenURL { url in
-            selectedTab = 1
-            playback.open(url.absoluteString)
-        }
-    }
-
-    private func play(_ item: BrowseItem) {
-        selectedTab = 1
-        playback.open(item)
-    }
+extension Notification.Name {
+    static let driftLoomExpandPlayer = Notification.Name("DriftLoom.expandPlayer")
+    static let driftLoomAddToPlaylist = Notification.Name("DriftLoom.addToPlaylist")
 }
 
-private struct PlaybackView: View {
-    @EnvironmentObject private var library: LibraryStore
-    @ObservedObject var playback: PlaybackSession
-    @State private var input = ""
-    @State private var showsLicenses = false
+struct ContentView: View {
+    @StateObject private var playback: PlaybackSession
+    @StateObject private var queue: PlaybackQueue
+    @StateObject private var positions: PlaybackPositions
+    @StateObject private var library = makeLibraryStore()
+    @StateObject private var playlists = makePlaylistStore()
+    @StateObject private var preferences = makePreferences()
+    @State private var historyRecorder: LibraryPlaybackRecorder?
+    @State private var nowPlaying: NowPlayingController?
+    @State private var selectedSection = HomeSection.subscriptions
+    @State private var searching = false
+    @State private var expanded = false
+    @State private var addingToPlaylist: BrowseItem?
 
+    init() {
+        let positions = PlaybackPositions(defaults: makeAppDefaults())
+        let playback = PlaybackSession(positions: positions)
+        _positions = StateObject(wrappedValue: positions)
+        _playback = StateObject(wrappedValue: playback)
+        _queue = StateObject(wrappedValue: PlaybackQueue(playback: playback))
+    }
     var body: some View {
-        AppNavigation {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("A little room to explore.")
-                        .font(.title2.weight(.semibold))
-                    Text("Paste a YouTube link to start watching.")
-                        .foregroundStyle(.secondary)
-                    HStack(alignment: .top) {
-                        TextField("YouTube video link", text: $input)
-                            .textContentType(.URL)
-                            .keyboardType(.URL)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .textFieldStyle(.roundedBorder)
-                            .submitLabel(.go)
-                            .onSubmit(openVideo)
-                            .accessibilityIdentifier("videoURL")
-                        Button(action: openVideo) { Image(systemName: "arrow.right") }
-                            .buttonStyle(.borderedProminent)
-                            .accessibilityLabel("Open video")
-                            .accessibilityIdentifier("openVideo")
-                            .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                    if playback.player.currentItem != nil {
-                        VideoPlayer(player: playback.player)
-                            .aspectRatio(16 / 9, contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .accessibilityIdentifier("videoPlayer")
-                        Text(playback.title).font(.headline)
-                        if let item = playback.currentItemMetadata {
-                            IconButton(library.isSaved(item.contentID) ? "Saved" : "Save video",
-                                   systemImage: library.isSaved(item.contentID) ? "bookmark.fill" : "bookmark") {
-                                library.toggleSaved(item)
-                            }
-                            .buttonStyle(.bordered)
-                            .disabled(!library.isWritable)
-                        }
-                    }
-                    status
-                    if playback.didRecover {
-                        Label("Stream refreshed. Continuing playback.", systemImage: "arrow.clockwise")
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                    if let videoID = playback.videoID {
-                        RelatedVideosView(videoID: videoID, onPlay: playback.open)
-                    }
-                    if playback.phase == .idle {
-                        EmptyStateView("Your next discovery starts here",
-                                               systemImage: "play.rectangle.on.rectangle",
-                                               message: "Videos open in the built-in player.")
-                    }
+        ZStack {
+            VStack(spacing: 0) {
+                ZStack {
+                    HomeView(selection: $selectedSection, onSearch: { searching = true }, onPlay: play)
+                        .opacity(searching ? 0 : 1).allowsHitTesting(!searching).accessibilityHidden(searching)
+                    // Keep the search hierarchy mounted so player dismissal restores its results and scroll.
+                    SearchView(onPlay: play, onClose: closeSearch)
+                        .opacity(searching ? 1 : 0).allowsHitTesting(searching).accessibilityHidden(!searching)
                 }
-                .padding()
-            }
-            .navigationTitle("DriftLoom")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if playback.phase != .idle {
-                        IconButton("Stop", systemImage: "stop.circle", action: playback.stop)
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showsLicenses = true } label: { Image(systemName: "doc.text") }
-                        .accessibilityLabel("Open-source licenses")
+                if playback.videoID != nil, !expanded {
+                    MiniPlayer(playback: playback, onExpand: { expanded = true }, onStop: queue.stop)
                 }
             }
-            .sheet(isPresented: $showsLicenses) {
-                AppNavigation {
-                    ScrollView {
-                        Text(licenseText)
-                            .font(.footnote).padding()
-                    }
-                    .navigationTitle("Open-source licenses")
-                    .toolbar { Button("Done") { showsLicenses = false } }
-                }
+            if expanded {
+                VideoDetailView(playback: playback, onCollapse: { expanded = false }, onPlay: play)
+                    .background(Color(.systemBackground)).transition(.move(edge: .bottom)).zIndex(2)
             }
         }
-        .id(playback.videoID)
-    }
-
-    @ViewBuilder private var status: some View {
-        switch playback.phase {
-        case .resolving: ProgressView("Opening video…")
-        case .loading: ProgressView("Loading stream…")
-        case let .failed(message):
-            VStack(alignment: .leading, spacing: 12) {
-                Label(message, systemImage: "exclamationmark.circle")
-                    .foregroundStyle(.secondary)
-                    .accessibilityIdentifier("playbackError")
-                Button("Try again", action: playback.retry).buttonStyle(.bordered)
+        .background(Color(.systemBackground))
+        .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists)
+        .tint(AppStyle.accent).accentColor(AppStyle.accent)
+        .preferredColorScheme(preferences.appearance == "Dark" ? .dark : preferences.appearance == "Light" ? .light : nil)
+        .alert("Library", isPresented: Binding(get: { library.lastError != nil || playlists.lastError != nil }, set: {
+            if !$0 { library.dismissError(); playlists.dismissError() }
+        })) { Button("OK") { library.dismissError(); playlists.dismissError() } } message: { Text(library.lastError ?? playlists.lastError ?? "") }
+        .sheet(item: $addingToPlaylist) { item in PlaylistPickerView(item: item).environmentObject(playlists) }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomAddToPlaylist)) { addingToPlaylist = $0.object as? BrowseItem }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomExpandPlayer)) { _ in expanded = true }
+        .onOpenURL { url in openLink(url.absoluteString) }
+        .onChange(of: preferences.homeSections) { values in
+            if !values.contains(selectedSection), let first = values.first { selectedSection = first }
+        }
+        .onChange(of: preferences.resumesPlayback) { playback.resumesPositions = $0 }
+        .onChange(of: library.historyEnabled) { playback.remembersPositions = $0 && library.isWritable }
+        .onChange(of: library.isWritable) { playback.remembersPositions = $0 && library.historyEnabled }
+        .onChange(of: library.history.map { $0.item.contentID }) { ids in
+            if library.isWritable { positions.retainOnly(Set(ids)) }
+        }
+        .task {
+            playback.remembersPositions = library.historyEnabled && library.isWritable
+            playback.resumesPositions = preferences.resumesPlayback
+            if library.isWritable { positions.retainOnly(Set(library.history.map { $0.item.contentID })) }
+            selectedSection = preferences.homeSections.first ?? .subscriptions
+            if historyRecorder == nil { historyRecorder = LibraryPlaybackRecorder(playback: playback, library: library) }
+            if nowPlaying == nil { nowPlaying = NowPlayingController(playback: playback, queue: queue) }
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+            let arguments = ProcessInfo.processInfo.arguments
+            searching = arguments.contains("--browse-smoke-query")
+            if arguments.contains("--library-smoke-run") {
+                runLibrarySmokeSetup(library)
+                if let flag = arguments.firstIndex(of: "--library-smoke-section"), arguments.indices.contains(flag + 1) {
+                    selectedSection = arguments[flag + 1] == "History" ? .history : arguments[flag + 1] == "Subscriptions" ? .subscriptions : .bookmarks
+                } else if !searching { selectedSection = .bookmarks }
             }
-        case .playing: Label("Playing", systemImage: "play.fill").foregroundStyle(.secondary)
-        case .paused: Label("Paused", systemImage: "pause.fill").foregroundStyle(.secondary)
-        case .idle: EmptyView()
+            if arguments.contains("--playback-smoke-url") { expanded = true }
+            await runPlaybackSmokeCheck(playback)
+            await runBackgroundSmokeCheck(playback)
+#endif
         }
     }
-
-    private var licenseText: String {
-        Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt")
-            .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? "License information is unavailable."
+    private func play(_ item: BrowseItem) {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        queue.start([item]); expanded = true
     }
-
-    private func openVideo() {
-        guard !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        dismissKeyboard()
-        playback.open(input)
+    private func openLink(_ input: String) {
+        guard let request = try? VideoRequest(input: input) else { return }
+        play(BrowseItem(contentID: request.videoID, kind: .video, title: "YouTube video"))
     }
-
-    private func dismissKeyboard() {
+    private func closeSearch() {
+        searching = false
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 
+@MainActor
+private func makePreferences() -> AppPreferences {
+    AppPreferences(defaults: makeAppDefaults())
+}
 
-private struct RelatedVideosView: View {
-    let videoID: String
-    let onPlay: (BrowseItem) -> Void
-    @StateObject private var related = BrowseStore()
+@MainActor
+private func makeAppDefaults() -> UserDefaults {
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+    let arguments = ProcessInfo.processInfo.arguments
+    if let flag = arguments.firstIndex(of: "--library-smoke-run"), arguments.indices.contains(flag + 1),
+       arguments[flag + 1].range(of: "^[A-Za-z0-9_-]{1,64}$", options: .regularExpression) != nil,
+       let defaults = UserDefaults(suiteName: "DriftLoom.Smoke." + arguments[flag + 1]) { return defaults }
+#endif
+    return .standard
+}
 
+struct MiniPlayer: View {
+    @ObservedObject var playback: PlaybackSession
+    let onExpand: () -> Void
+    let onStop: () -> Void
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if !related.items.isEmpty {
-                Text("More to explore").font(.title3.weight(.semibold))
-                ForEach(related.items.filter { $0.kind == .video }.prefix(5)) { item in
-                    Button { onPlay(item) } label: { BrowseRow(item: item) }
-                        .buttonStyle(.plain)
-                        .contextMenu { LibraryItemActions(item: item) }
-                }
-                BrowseLink(route: .related(videoID), onPlay: onPlay) { Text("See all related videos") }
-            } else if related.isLoading {
-                ProgressView("Finding related videos…").font(.footnote)
-            } else if related.error != nil {
-                Button("Try loading related videos again") {
-                    Task { await related.load(.related(videoID)) }
-                }
-                .font(.footnote)
-            }
+        VStack(spacing: 0) {
+            Divider()
+            HStack(spacing: 4) {
+                Button(action: onExpand) {
+                    HStack(spacing: 10) {
+                        AsyncImage(url: playback.currentItemMetadata?.thumbnail) { $0.resizable().scaledToFill() } placeholder: { Color.gray.opacity(0.2) }
+                            .frame(width: 72, height: 42).clipped().accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(playback.title).font(.subheadline.weight(.medium)).foregroundStyle(.primary).lineLimit(1)
+                            Text(playback.sourceItem?.subtitle ?? "YouTube").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }.buttonStyle(.plain).accessibilityIdentifier("expandMiniPlayer")
+                Button(action: playback.togglePlayPause) {
+                    Image(systemName: playback.phase == .playing ? "pause.fill" : "play.fill").frame(width: 44, height: 52)
+                }.accessibilityLabel(playback.phase == .playing ? "Pause" : "Play")
+                Button(action: onStop) { Image(systemName: "xmark").frame(width: 40, height: 52) }.accessibilityLabel("Close player")
+            }.padding(.leading, 8).background(Color(.secondarySystemBackground))
         }
-        .task(id: videoID) { await related.load(.related(videoID)) }
     }
 }

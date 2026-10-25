@@ -9,18 +9,23 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Android app rebranded as DriftLoom, including application IDs, resources, and source namespaces.
 - YouTube HTTP 403 recovery: retry eligible videos with the available HLS stream once per queue item.
 - Regression coverage for the playback recovery is included in the Android instrumentation tests.
-- Initial iOS playback: paste a YouTube URL, resolve streams locally, and play HLS or a compatible
-  combined audio/video stream through AVPlayer. A forbidden stream can be refreshed once while
-  preserving playback position. Native SwiftUI navigation and About screens support iOS 15 onward.
-- iOS Discover: direct YouTube search for videos, Shorts, channels, and playlists; channel uploads,
-  playlist and Mix contents, related videos, and paginated results. Results open in the native player.
-- iOS Library: saved videos, channel subscriptions, and watch history survive app restarts.
-  Save from the player or a result menu, subscribe from a channel page, and reopen items from Library.
-- iOS downloads, queues, subscription feeds, and background/lock-screen controls are not yet ported.
+- iOS 15+ native app with NewPipe-style main menu, configurable home tabs, compact rows, and search history.
+- YouTube browsing: server-side video/channel/playlist filters, channel tabs exposed by the channel,
+  playlist/Mix contents, related videos, and pagination. Subscription feeds use dated channel RSS entries.
+- Video details, description, persistent mini-player, editable queue, play-next/enqueue, finite shuffle,
+  repeat, playback speed, maximum-resolution caps, and captions exposed by the current media asset.
+- Background-audio configuration, Now Playing/remote command integration, and AVKit Picture in Picture support.
+  Physical background playback has been verified; not every system control or PiP scenario has been tested.
+- Saved videos, subscriptions, history, local playlists, and remote playlist bookmarks persist locally.
+  Resume positions are bounded, tied to history recording, and removed with deleted history.
+- Appearance, home-tab ordering/visibility, search/watch history controls, and resume preferences are implemented.
+- This is an incremental parity rework, not a complete NewPipe port. Downloads, comments, full format/caption
+  extraction, subscription groups, backup migration, extra services, and remaining settings are still pending.
+  See [the rework checklist](docs/ios-newpipe-parity.md).
 
 The earlier playback fix was verified on an Android phone before this rebrand.
 The rename itself does not imply a new device test or an installed update.
-The initial iOS implementation is tested separately as described below.
+The iOS implementation is tested separately as described below.
 
 ## Build Android
 
@@ -75,29 +80,45 @@ The library stores versioned JSON locally in `Application Support/DriftLoom/libr
 Writes are atomic; corrupt or newer documents are preserved and block edits until reloaded.
 History records playback once it starts, keeps the latest 500 distinct videos, and can be disabled,
 removed individually, or cleared. Saved metadata contains no resolved stream URLs. Subscriptions
-open the channel's uploads; there is no merged subscription feed, account sync, or backup import yet.
+open the channel's available tabs; What's New merges their RSS feeds by publication date.
+Account sync and backup import remain unimplemented.
 Library tests cover persistence, deletion, history limits and preferences, invalid documents,
 write rollback, and real local-media playback recording.
 
 For an app-level simulator smoke check, launch a Debug build with
 `--playback-smoke-url https://www.youtube.com/watch?v=11-9ZaYiTPE` and inspect the
 `DriftLoomSmoke` log result. This path is compiled out of Release builds and does not activate
-without the flag. To check the Discover screen, use
+without the flag. To check the search screen, use
 `--browse-smoke-query 'NDLS404 SENSOJI'`. Add `--browse-smoke-play` to load another page and
 open a result through the same callback as a row tap, then verify playback past 65 seconds.
-Inspect the `DriftLoomBrowseSmoke` and `DriftLoomSmoke` log results. Normal startup performs
-no browsing or playback requests until the user searches or opens a video.
+Inspect the `DriftLoomBrowseSmoke` and `DriftLoomSmoke` log results. Browsing and playback start through user actions. Opening the subscription-feed home tab also
+refreshes subscribed channels; background scheduled feed refresh is not implemented.
 
 To verify library persistence in Debug without touching the normal library, use
 `--library-smoke-run UNIQUE_NAME --library-smoke-seed` with the playback smoke URL above.
 After playback passes, terminate and relaunch with the same run name and
 `--library-smoke-verify`; inspect `DriftLoomLibrarySmoke` for the cold-launch result.
-Optional `--library-smoke-section History` or `Subscriptions` selects that Library screen.
+Optional `--library-smoke-section History` or `Subscriptions` selects that home section.
 These flags and fixtures are excluded from normal Release builds. For automated physical-device
 verification of optimized code, explicitly pass
 `SWIFT_ACTIVE_COMPILATION_CONDITIONS=DRIFTLOOM_DEVICE_TESTING` to a Release build. This opts
 in to the same isolated checks without enabling DEBUG. Rebuild and install a normal Release
 without that condition after verification. Never distribute the verification variant.
+
+Add --background-smoke to a playback smoke run, wait for DriftLoomBackgroundSmoke: READY,
+bring another app forward, and check that playback advances in the background. This is an explicit
+test operation and is also excluded from normal Release builds.
+
+The shared iosApp scheme includes DriftLoomUITests. Run UI tests on an available simulator
+with an isolated library and opt-in checks, for example:
+
+```sh
+xcodebuild test -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Release \
+  -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation),OS=17.5' \
+  CODE_SIGNING_ALLOWED=NO SWIFT_ACTIVE_COMPILATION_CONDITIONS=DRIFTLOOM_DEVICE_TESTING
+```
+
+Each UI journey uses its own test library and preferences; it never edits the normal library.
 
 The iOS resolver uses [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit), pinned to a
 specific revision in `Package.swift` and the lockfiles. Only local extraction is enabled;
@@ -108,13 +129,15 @@ keeps continuation context in memory; it does not use a third-party browsing ser
 hard-coded web client version. Metadata currently uses English with Portugal as its content
 region. Full localization and user-selectable regions remain future work.
 
-Physical-device verification on 25 October 2026: a signed, optimized Release verification build
-ran on an iPhone 7 with iOS 15.8.2. Live search, pagination, HLS playback, seeking past 65 seconds,
-and saved-video/subscription/history persistence across restart passed. The normal Release build
-excludes the opt-in checks. All 30 package tests pass in Debug and Release. Normal Release startup
-was also checked on iPhone SE (3rd generation)/iOS 17.5 and iPhone 17 Pro/iOS 26.5 simulators.
-Other supported models have not been individually tested; iOS 15.0 simulator execution is
-unavailable on this Mac's current macOS version.
+Verification on 25 October 2026: all 43 package tests pass in Debug and Release. Three optimized
+UI journeys pass on iPhone SE (3rd generation)/iOS 17.5: drawer/settings/subscriptions; search,
+video, minimize/reopen, and returning to search; playlist creation, restart persistence, and play-all.
+Live probes verified search filters, channel feeds, playlists, Mixes, and related pagination.
+On a physical iPhone 7/iOS 15.8.2, optimized playback advanced past 65 seconds, and advanced for
+eight seconds while another app was foreground. All three core tap-based UI journeys also passed on
+that physical device. The normal signed Release build was installed in place after testing.
+Portrait and landscape were checked on the SE simulator. Broader parity and device coverage remain work
+in progress. iOS 15.0 simulator execution is unavailable on this Mac's current macOS version.
 
 ## Development
 

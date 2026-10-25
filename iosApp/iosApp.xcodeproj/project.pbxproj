@@ -6,6 +6,40 @@
 	objectVersion = 77;
 	objects = {
 
+        E00000000000000000000001 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = DriftLoomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+        E00000000000000000000002 = {isa = PBXFileSystemSynchronizedRootGroup; path = iosAppUITests; sourceTree = "<group>"; };
+        E00000000000000000000004 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+        E00000000000000000000005 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+        E00000000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+        E00000000000000000000011 = {isa = PBXContainerItemProxy; containerPortal = CE9DC708D8CDDFF57F3EFEE0; proxyType = 1; remoteGlobalIDString = CB7D703B7BE102A8C9442815; remoteInfo = iosApp; };
+        E00000000000000000000010 = {isa = PBXTargetDependency; target = CB7D703B7BE102A8C9442815; targetProxy = E00000000000000000000011; };
+        E00000000000000000000003 = {
+            isa = PBXNativeTarget; buildConfigurationList = E00000000000000000000007;
+            buildPhases = (E00000000000000000000004, E00000000000000000000005, E00000000000000000000006); buildRules = (); dependencies = (E00000000000000000000010);
+            fileSystemSynchronizedGroups = (E00000000000000000000002); name = DriftLoomUITests; productName = DriftLoomUITests;
+            productReference = E00000000000000000000001; productType = "com.apple.product-type.bundle.ui-testing";
+        };
+        E00000000000000000000007 = {isa = XCConfigurationList; buildConfigurations = (E00000000000000000000008, E00000000000000000000009); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+
+        E00000000000000000000008 = {
+            isa = XCBuildConfiguration; name = Debug;
+            buildSettings = {
+                CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = "$(TEAM_ID)"; GENERATE_INFOPLIST_FILE = YES;
+                IPHONEOS_DEPLOYMENT_TARGET = 15.0; PRODUCT_BUNDLE_IDENTIFIER = net.driftloom.app.DriftLoomUITests;
+                PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = iosApp;
+            };
+        };
+
+        E00000000000000000000009 = {
+            isa = XCBuildConfiguration; name = Release;
+            buildSettings = {
+                CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = "$(TEAM_ID)"; GENERATE_INFOPLIST_FILE = YES;
+                IPHONEOS_DEPLOYMENT_TARGET = 15.0; PRODUCT_BUNDLE_IDENTIFIER = net.driftloom.app.DriftLoomUITests;
+                PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = iosApp;
+            };
+        };
+
+
 /* Begin PBXBuildFile section */
         D11111111111111111111111 /* DriftLoomPlayback in Frameworks */ = {isa = PBXBuildFile; productRef = D22222222222222222222222 /* DriftLoomPlayback */; };
 /* End PBXBuildFile section */
@@ -65,6 +99,7 @@
 			children = (
 				F0463985A41AA4941DD32D9F /* Configuration */,
 				ABCCA30A0B282AA0C430F5BD /* iosApp */,
+                E00000000000000000000002 /* UI tests */,
 				80BC5A75E8EEBCC3CC64764B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */,
+                E00000000000000000000001 /* DriftLoomUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -113,6 +149,7 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+E00000000000000000000003 = { CreatedOnToolsVersion = 26.6; TestTargetID = CB7D703B7BE102A8C9442815; };
 					CB7D703B7BE102A8C9442815 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -134,6 +171,7 @@
 			projectRoot = "";
 			targets = (
 				CB7D703B7BE102A8C9442815 /* iosApp */,
+                E00000000000000000000003 /* DriftLoomUITests */,
 			);
 		};
 /* End PBXProject section */

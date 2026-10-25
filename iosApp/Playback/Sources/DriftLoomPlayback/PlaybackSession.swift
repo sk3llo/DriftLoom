@@ -16,6 +16,12 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var didRecover = false
     @Published public private(set) var videoID: String?
     @Published public private(set) var sourceItem: BrowseItem?
+    @Published public private(set) var playbackRate: Float = 1
+    @Published public private(set) var maximumHeight = 0
+    public var remembersPositions = true
+    public var resumesPositions = true
+    private let positions: PlaybackPositions?
+    private var positionObserver: Any?
 
     private let resolver: any StreamResolving
     private var currentRequest: VideoRequest?
@@ -27,8 +33,15 @@ public final class PlaybackSession: ObservableObject {
     private var playerObservation: NSKeyValueObservation?
     private var failureObserver: NSObjectProtocol?
 
-    public init(resolver: any StreamResolving = YouTubeStreamResolver()) {
+    public init(resolver: any StreamResolving = YouTubeStreamResolver(), positions: PlaybackPositions? = nil) {
         self.resolver = resolver
+        self.positions = positions
+        player.audiovisualBackgroundPlaybackPolicy = .continuesIfPossible
+        if positions != nil {
+            positionObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 5, preferredTimescale: 1), queue: .main) { [weak self] _ in
+                Task { @MainActor [weak self] in self?.rememberPosition() }
+            }
+        }
         playerObservation = player.observe(\.timeControlStatus, options: [.new]) { [weak self] _, _ in
             Task { @MainActor [weak self] in
                 guard let self, self.player.currentItem?.status == .readyToPlay else { return }
@@ -43,6 +56,7 @@ public final class PlaybackSession: ObservableObject {
     }
 
     deinit {
+        if let positionObserver { player.removeTimeObserver(positionObserver) }
         resolveTask?.cancel()
         failureTask?.cancel()
         if let failureObserver { NotificationCenter.default.removeObserver(failureObserver) }
@@ -58,7 +72,8 @@ public final class PlaybackSession: ObservableObject {
             recoveryPolicy = PlaybackRecoveryPolicy()
             didRecover = false
             title = "YouTube video"
-            resolve(request, position: .zero)
+            let saved = remembersPositions && resumesPositions ? positions?.seconds(for: request.videoID) ?? 0 : 0
+            resolve(request, position: CMTime(seconds: saved, preferredTimescale: 600))
         } catch { phase = .failed(error.localizedDescription) }
     }
 
@@ -83,7 +98,29 @@ public final class PlaybackSession: ObservableObject {
         else { open(currentRequest.watchURL.absoluteString) }
     }
 
+    public func resume() {
+        guard player.currentItem != nil else { return }
+        player.playImmediately(atRate: playbackRate)
+    }
+    public func togglePlayPause() {
+        if phase == .playing { player.pause() } else { resume() }
+    }
+    public func setPlaybackRate(_ value: Float) {
+        guard [Float(0.25), 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].contains(value) else { return }
+        playbackRate = value
+        if phase == .playing { player.rate = value }
+    }
+    public func setMaximumHeight(_ height: Int) {
+        guard [0, 360, 480, 720, 1080].contains(height) else { return }
+        maximumHeight = height
+        player.currentItem?.preferredMaximumResolution = resolutionLimit
+    }
+    private var resolutionLimit: CGSize {
+        maximumHeight == 0 ? .zero : CGSize(width: Double(maximumHeight) * 16 / 9, height: Double(maximumHeight))
+    }
+
     public func stop() {
+        rememberPosition()
         generation = UUID()
         resolveTask?.cancel()
         resolveTask = nil
@@ -100,6 +137,11 @@ public final class PlaybackSession: ObservableObject {
         didRecover = false
         video = nil
         phase = .idle
+    }
+
+    private func rememberPosition() {
+        guard remembersPositions, let id = videoID, let item = player.currentItem, item.status == .readyToPlay else { return }
+        positions?.record(id: id, seconds: player.currentTime().seconds, duration: item.duration.seconds)
     }
 
     private func resolve(_ request: VideoRequest, position: CMTime) {
@@ -132,6 +174,7 @@ public final class PlaybackSession: ObservableObject {
         title = video.title
         phase = .loading
         let item = AVPlayerItem(url: video.streamURL)
+        item.preferredMaximumResolution = resolutionLimit
         itemObservation = item.observe(\.status, options: [.new]) { [weak self, weak item] _, _ in
             Task { @MainActor [weak self, weak item] in
                 guard let self, let item, self.player.currentItem === item else { return }
@@ -142,7 +185,7 @@ public final class PlaybackSession: ObservableObject {
                         await self.player.seek(to: position)
                     }
                     guard self.player.currentItem === item else { return }
-                    self.player.play()
+                    self.resume()
                 }
             }
         }

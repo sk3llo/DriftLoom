@@ -23,6 +23,21 @@ struct BrowseProbe {
             let channelPage = try await client.page(for: .channel(channel))
             guard !channelPage.items.isEmpty else { throw BrowseError.unavailable("Channel returned no videos") }
             print("PASS: channel returned \(channelPage.items.count) results")
+            if CommandLine.arguments.contains("--feed") {
+                let feed = try await YouTubeFeedClient().videos(channelID: channel)
+                guard !feed.isEmpty else { throw BrowseError.unavailable("Channel feed returned no videos") }
+                print("PASS: subscription feed returned \(feed.count) dated videos")
+            }
+        }
+        if CommandLine.arguments.contains("--filters") {
+            for filter in SearchFilter.allCases where filter != .all {
+                let filtered = try await client.page(for: .filteredSearch(query, filter))
+                let expected: BrowseItem.Kind = filter == .videos ? .video : filter == .channels ? .channel : .playlist
+                guard !filtered.items.isEmpty, filtered.items.allSatisfy({ $0.kind == expected }) else {
+                    throw BrowseError.unavailable("Search filter did not return the expected result kind: \(filter.rawValue)")
+                }
+                print("PASS: \(filter.rawValue) filter returned \(filtered.items.count) matching items")
+            }
         }
         if let playlist = page.items.first(where: { $0.kind == .playlist && $0.contentID.hasPrefix("PL") }) {
             let playlistPage = try await client.page(for: .playlist(playlist.contentID))

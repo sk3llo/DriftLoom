@@ -6,11 +6,13 @@ public struct ResolvedVideo: Sendable {
     public let title: String
     public let streamURL: URL
     public let usesHLS: Bool
+    public let description: String
 
-    public init(title: String, streamURL: URL, usesHLS: Bool) {
+    public init(title: String, streamURL: URL, usesHLS: Bool, description: String = "") {
         self.title = title
         self.streamURL = streamURL
         self.usesHLS = usesHLS
+        self.description = description
     }
 }
 
@@ -25,10 +27,11 @@ public struct YouTubeStreamResolver: StreamResolving {
         // A new instance for every resolution avoids reusing expired signed URLs.
         // Explicitly disable the library's optional third-party remote extraction.
         let video = YouTube(videoID: request.videoID, methods: [.local])
-        let title = (try? await video.metadata)?.title ?? "YouTube video"
+        let metadata = try? await video.metadata
+        let title = metadata?.title ?? "YouTube video"
         try Task.checkCancellation()
         if let stream = try? await video.livestreams.first(where: { $0.streamType == .hls }) {
-            return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: true)
+            return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: true, description: metadata?.description ?? "")
         }
         try Task.checkCancellation()
         let streams = try await video.streams
@@ -36,7 +39,7 @@ public struct YouTubeStreamResolver: StreamResolving {
             .filter({ $0.isNativelyPlayable }).highestResolutionStream() else {
             throw PlaybackError.noPlayableStream
         }
-        return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: false)
+        return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: false, description: metadata?.description ?? "")
     }
 }
 

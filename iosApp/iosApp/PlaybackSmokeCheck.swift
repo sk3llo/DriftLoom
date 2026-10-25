@@ -2,6 +2,7 @@
 import AVFoundation
 import DriftLoomPlayback
 import Foundation
+import UIKit
 
 /// Opt-in device/simulator check. Compiled out of normal Release builds.
 @MainActor
@@ -53,5 +54,25 @@ func runBrowseSmokeCheck(_ store: BrowseStore, onPlay: (BrowseItem) -> Void) asy
         }
         onPlay(video)
     }
+}
+
+@MainActor
+func runBackgroundSmokeCheck(_ session: PlaybackSession) async {
+    guard ProcessInfo.processInfo.arguments.contains("--background-smoke"), session.phase == .playing else { return }
+    NSLog("DriftLoomBackgroundSmoke: READY send app to background")
+    var started: Double?
+    for _ in 0..<60 {
+        do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
+        if UIApplication.shared.applicationState == .background {
+            let seconds = session.player.currentTime().seconds
+            guard seconds.isFinite else { continue }
+            if let start = started, seconds - start >= 8 {
+                NSLog("DriftLoomBackgroundSmoke: PASS playback advanced for eight seconds in background")
+                return
+            }
+            if started == nil { started = seconds }
+        } else { started = nil }
+    }
+    NSLog("DriftLoomBackgroundSmoke: FAIL playback did not advance in background")
 }
 #endif

@@ -4,6 +4,16 @@ import Foundation
 
 @MainActor
 func makeLibraryStore() -> LibraryStore {
+    LibraryStore(fileURL: libraryFileURL())
+}
+
+@MainActor
+func makePlaylistStore() -> PlaylistStore {
+    PlaylistStore(fileURL: libraryFileURL().deletingLastPathComponent().appendingPathComponent("playlists.json"))
+}
+
+@MainActor
+private func libraryFileURL() -> URL {
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
     let arguments = ProcessInfo.processInfo.arguments
     if let flag = arguments.firstIndex(of: "--library-smoke-run"), arguments.indices.contains(flag + 1),
@@ -12,10 +22,10 @@ func makeLibraryStore() -> LibraryStore {
             .appendingPathComponent("SmokeTests", isDirectory: true)
             .appendingPathComponent(arguments[flag + 1], isDirectory: true)
             .appendingPathComponent("library.json")
-        return LibraryStore(fileURL: url)
+        return url
     }
 #endif
-    return LibraryStore()
+    return LibraryStore.defaultFileURL
 }
 
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
