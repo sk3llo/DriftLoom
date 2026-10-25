@@ -9,11 +9,11 @@ struct SearchView: View {
     @State private var submittedQuery = ""
 
     var body: some View {
-        NavigationStack {
+        AppNavigation {
             Group {
                 if submittedQuery.isEmpty {
-                    ContentUnavailableView("Find your next discovery", systemImage: "magnifyingglass",
-                                           description: Text("Search YouTube for videos, channels, and playlists."))
+                    EmptyStateView("Find your next discovery", systemImage: "magnifyingglass",
+                                           message: "Search YouTube for videos, channels, and playlists.")
                 } else {
                     BrowseResults(store: results, onPlay: onPlay, retry: {
                         Task { await results.load(.search(submittedQuery)) }
@@ -24,7 +24,7 @@ struct SearchView: View {
             .searchable(text: $query, prompt: "Search YouTube")
             .onSubmit(of: .search, submit)
             .task {
-#if DEBUG
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
                 let arguments = ProcessInfo.processInfo.arguments
                 if submittedQuery.isEmpty, let flag = arguments.firstIndex(of: "--browse-smoke-query"), arguments.indices.contains(flag + 1) {
                     query = arguments[flag + 1]
@@ -32,13 +32,10 @@ struct SearchView: View {
                 }
 #endif
             }
-            .navigationDestination(for: BrowseRoute.self) { route in
-                BrowsePageView(route: route, onPlay: onPlay)
-            }
             .task(id: submittedQuery) {
                 guard !submittedQuery.isEmpty else { return }
                 await results.load(.search(submittedQuery))
-#if DEBUG
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
                 await runBrowseSmokeCheck(results, onPlay: onPlay)
 #endif
             }
@@ -66,7 +63,7 @@ struct BrowsePageView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if case let .channel(id) = route, store.hasLoaded {
-                    Button(library.isSubscribed(id) ? "Subscribed" : "Subscribe",
+                    IconButton(library.isSubscribed(id) ? "Subscribed" : "Subscribe",
                            systemImage: library.isSubscribed(id) ? "person.crop.circle.badge.checkmark" : "person.crop.circle.badge.plus") {
                         library.toggleSubscription(BrowseItem(contentID: id, kind: .channel, title: store.title))
                     }
@@ -97,27 +94,26 @@ private struct BrowseResults: View {
             if store.isLoading {
                 ProgressView("Loading…").frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let error = store.error {
-                ContentUnavailableView {
-                    Label("Couldn't load this page", systemImage: "wifi.exclamationmark")
-                } description: { Text(error) } actions: {
+                VStack(spacing: 16) {
+                    EmptyStateView("Couldn't load this page", systemImage: "wifi.exclamationmark", message: error)
                     Button("Try again", action: retry).buttonStyle(.bordered)
-                }
+                }.padding()
             } else if store.hasLoaded && store.items.isEmpty {
-                ContentUnavailableView("No results", systemImage: "magnifyingglass",
-                                       description: Text("Try a different search, or explore another page."))
+                EmptyStateView("No results", systemImage: "magnifyingglass",
+                                       message: "Try a different search, or explore another page.")
             } else {
                 List {
                     ForEach(store.items) { item in
                         VStack(alignment: .leading, spacing: 8) {
                             if let destination = item.destination {
-                                NavigationLink(value: destination) { BrowseRow(item: item) }
+                                BrowseLink(route: destination, onPlay: onPlay) { BrowseRow(item: item) }
                             } else {
                                 Button { onPlay(item) } label: { BrowseRow(item: item) }
                                     .buttonStyle(.plain)
                                     .accessibilityIdentifier("searchVideo-\(item.contentID)")
                             }
                             if item.kind == .video, let channelID = item.channelID, !item.subtitle.isEmpty {
-                                NavigationLink(value: BrowseRoute.channel(channelID)) {
+                                BrowseLink(route: .channel(channelID), onPlay: onPlay) {
                                     Label(item.subtitle, systemImage: "person.crop.circle")
                                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                 }
@@ -145,7 +141,7 @@ private struct BrowseResults: View {
                     }
                 }
                 .listStyle(.plain)
-                .scrollDismissesKeyboard(.interactively)
+                .dismissKeyboardOnScroll()
             }
         }
     }

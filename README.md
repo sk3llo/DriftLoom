@@ -11,7 +11,7 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Regression coverage for the playback recovery is included in the Android instrumentation tests.
 - Initial iOS playback: paste a YouTube URL, resolve streams locally, and play HLS or a compatible
   combined audio/video stream through AVPlayer. A forbidden stream can be refreshed once while
-  preserving playback position. The shared Compose settings/about foundation is retained.
+  preserving playback position. Native SwiftUI navigation and About screens support iOS 15 onward.
 - iOS Discover: direct YouTube search for videos, Shorts, channels, and playlists; channel uploads,
   playlist and Mix contents, related videos, and paginated results. Results open in the native player.
 - iOS Library: saved videos, channel subscriptions, and watch history survive app restarts.
@@ -39,13 +39,19 @@ for locally signed DriftLoom builds.
 
 ## Build and test iOS
 
-Use Xcode 26.6 or a compatible newer version, JDK 21, and the Android SDK required to configure
-this multiplatform Gradle project. Open `iosApp/iosApp.xcodeproj`, select the `iosApp` scheme,
-and choose an iPhone simulator. The host requires iOS 18.5 or later to match the bundled native
-framework. A physical-device build also needs your Apple development team and signing setup.
+Use Xcode 26.6 or a compatible newer version. Open `iosApp/iosApp.xcodeproj`, select the
+`iosApp` scheme, and choose an iPhone or simulator. The app and playback package target
+**iOS 15.0 or later**: iPhone 6s/6s Plus, all iPhone SE generations, iPhone 7, and newer models
+running a supported OS. Older iPhones that cannot run iOS 15 are unsupported; this is not a
+claim of support for every iPhone ever made. Availability of individual videos still depends on
+YouTube and its stream formats.
 
-Xcode builds `:shared:embedAndSignAppleFrameworkForXcode` and links the local
-`iosApp/Playback` Swift package. The first build downloads Kotlin/Native dependencies.
+The iOS app links the local `iosApp/Playback` Swift package directly. It no longer embeds the
+Compose framework, whose bundled OS requirement blocked older phones. Android and desktop
+retain the shared Kotlin module. Building iOS does not require Gradle, Java, or an Android SDK.
+Navigation uses NavigationStack on iOS 16+ and NavigationView on iOS 15. Empty/error screens
+and labeled buttons use iOS 15 APIs. A physical-device build needs your Apple development team
+and signing setup; supply these locally rather than committing account identifiers or profiles.
 
 ```sh
 swift test --package-path iosApp/Playback
@@ -87,7 +93,11 @@ To verify library persistence in Debug without touching the normal library, use
 After playback passes, terminate and relaunch with the same run name and
 `--library-smoke-verify`; inspect `DriftLoomLibrarySmoke` for the cold-launch result.
 Optional `--library-smoke-section History` or `Subscriptions` selects that Library screen.
-These flags and fixtures are excluded from Release builds.
+These flags and fixtures are excluded from normal Release builds. For automated physical-device
+verification of optimized code, explicitly pass
+`SWIFT_ACTIVE_COMPILATION_CONDITIONS=DRIFTLOOM_DEVICE_TESTING` to a Release build. This opts
+in to the same isolated checks without enabling DEBUG. Rebuild and install a normal Release
+without that condition after verification. Never distribute the verification variant.
 
 The iOS resolver uses [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit), pinned to a
 specific revision in `Package.swift` and the lockfiles. Only local extraction is enabled;
@@ -97,6 +107,14 @@ Browsing is a separate `Browsing` interface. Its client reads YouTube page data 
 keeps continuation context in memory; it does not use a third-party browsing server or a
 hard-coded web client version. Metadata currently uses English with Portugal as its content
 region. Full localization and user-selectable regions remain future work.
+
+Physical-device verification on 25 October 2026: a signed, optimized Release verification build
+ran on an iPhone 7 with iOS 15.8.2. Live search, pagination, HLS playback, seeking past 65 seconds,
+and saved-video/subscription/history persistence across restart passed. The normal Release build
+excludes the opt-in checks. All 30 package tests pass in Debug and Release. Normal Release startup
+was also checked on iPhone SE (3rd generation)/iOS 17.5 and iPhone 17 Pro/iOS 26.5 simulators.
+Other supported models have not been individually tested; iOS 15.0 simulator execution is
+unavailable on this Mac's current macOS version.
 
 ## Development
 

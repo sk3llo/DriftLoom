@@ -8,13 +8,13 @@ struct LibraryItemActions: View {
     var body: some View {
         Group {
             if item.kind == .video {
-                Button(library.isSaved(item.contentID) ? "Remove saved video" : "Save video",
+                IconButton(library.isSaved(item.contentID) ? "Remove saved video" : "Save video",
                        systemImage: library.isSaved(item.contentID) ? "bookmark.slash" : "bookmark") {
                     library.toggleSaved(item)
                 }
             }
             if let channel = channel {
-                Button(library.isSubscribed(channel.contentID) ? "Unsubscribe" : "Subscribe",
+                IconButton(library.isSubscribed(channel.contentID) ? "Unsubscribe" : "Subscribe",
                        systemImage: "person.crop.circle.badge.plus") {
                     library.toggleSubscription(channel)
                 }
@@ -47,7 +47,7 @@ struct LibraryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        AppNavigation {
             VStack(spacing: 0) {
                 Picker("Library section", selection: $section) {
                     ForEach(Section.allCases, id: \.self) { Text($0.rawValue).tag($0) }
@@ -69,12 +69,12 @@ struct LibraryView: View {
                     .padding(.bottom, 8)
                 }
                 if records.isEmpty {
-                    ContentUnavailableView(emptyTitle, systemImage: symbol, description: Text(emptyMessage))
+                    EmptyStateView(emptyTitle, systemImage: symbol, message: emptyMessage)
                 } else {
                     List(records) { record in
                         VStack(alignment: .leading, spacing: 8) {
                             if section == .subscriptions {
-                                NavigationLink(value: BrowseRoute.channel(record.item.contentID)) {
+                                BrowseLink(route: .channel(record.item.contentID), onPlay: onPlay) {
                                     BrowseRow(item: record.item)
                                 }
                             } else {
@@ -100,12 +100,9 @@ struct LibraryView: View {
                 }
             }
             .navigationTitle("Library")
-            .navigationDestination(for: BrowseRoute.self) { route in
-                BrowsePageView(route: route, onPlay: onPlay)
-            }
             .toolbar {
                 if section == .history, !records.isEmpty {
-                    Button("Clear history", systemImage: "trash") { confirmsClearHistory = true }
+                    IconButton("Clear history", systemImage: "trash") { confirmsClearHistory = true }
                         .disabled(!library.isWritable)
                 }
             }
@@ -116,7 +113,7 @@ struct LibraryView: View {
                 Text("Saved videos and subscriptions will stay in your library.")
             }
         }
-#if DEBUG
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
         .task {
             let arguments = ProcessInfo.processInfo.arguments
             if arguments.contains("--library-smoke-run"),

@@ -1,15 +1,7 @@
 import AVKit
-import ComposeApp
 import DriftLoomPlayback
 import SwiftUI
 import UIKit
-
-struct ComposeView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.mainViewController()
-    }
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-}
 
 struct ContentView: View {
     @StateObject private var playback = PlaybackSession()
@@ -25,12 +17,12 @@ struct ContentView: View {
                 .tabItem { Label("Watch", systemImage: "play.rectangle") }.tag(1)
             LibraryView(onPlay: play)
                 .tabItem { Label("Library", systemImage: "books.vertical") }.tag(2)
-            ComposeView()
-                .ignoresSafeArea(edges: .top)
+            AboutView()
                 .tabItem { Label("About", systemImage: "info.circle") }.tag(3)
         }
         .environmentObject(library)
         .tint(.teal)
+        .accentColor(.teal)
         .alert("Library", isPresented: Binding(get: { library.lastError != nil }, set: {
             if !$0 { library.dismissError() }
         })) {
@@ -38,9 +30,9 @@ struct ContentView: View {
         } message: { Text(library.lastError ?? "") }
         .task {
             if historyRecorder == nil { historyRecorder = LibraryPlaybackRecorder(playback: playback, library: library) }
-#if DEBUG
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
             if ProcessInfo.processInfo.arguments.contains("--library-smoke-run") {
-                selectedTab = 2
+                if !ProcessInfo.processInfo.arguments.contains("--browse-smoke-query") { selectedTab = 2 }
                 runLibrarySmokeSetup(library)
             }
             if ProcessInfo.processInfo.arguments.contains("--playback-smoke-url") { selectedTab = 1 }
@@ -64,10 +56,9 @@ private struct PlaybackView: View {
     @ObservedObject var playback: PlaybackSession
     @State private var input = ""
     @State private var showsLicenses = false
-    @State private var navigationPath: [BrowseRoute] = []
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        AppNavigation {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("A little room to explore.")
@@ -97,7 +88,7 @@ private struct PlaybackView: View {
                             .accessibilityIdentifier("videoPlayer")
                         Text(playback.title).font(.headline)
                         if let item = playback.currentItemMetadata {
-                            Button(library.isSaved(item.contentID) ? "Saved" : "Save video",
+                            IconButton(library.isSaved(item.contentID) ? "Saved" : "Save video",
                                    systemImage: library.isSaved(item.contentID) ? "bookmark.fill" : "bookmark") {
                                 library.toggleSaved(item)
                             }
@@ -114,33 +105,27 @@ private struct PlaybackView: View {
                         RelatedVideosView(videoID: videoID, onPlay: playback.open)
                     }
                     if playback.phase == .idle {
-                        ContentUnavailableView("Your next discovery starts here",
+                        EmptyStateView("Your next discovery starts here",
                                                systemImage: "play.rectangle.on.rectangle",
-                                               description: Text("Videos open in the built-in player."))
+                                               message: "Videos open in the built-in player.")
                     }
                 }
                 .padding()
             }
             .navigationTitle("DriftLoom")
-            .onReceive(playback.$videoID) { _ in
-                if !navigationPath.isEmpty { navigationPath.removeAll() }
-            }
-            .navigationDestination(for: BrowseRoute.self) { route in
-                BrowsePageView(route: route) { item in playback.open(item) }
-            }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     if playback.phase != .idle {
-                        Button("Stop", systemImage: "stop.circle", action: playback.stop)
+                        IconButton("Stop", systemImage: "stop.circle", action: playback.stop)
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button { showsLicenses = true } label: { Image(systemName: "doc.text") }
                         .accessibilityLabel("Open-source licenses")
                 }
             }
             .sheet(isPresented: $showsLicenses) {
-                NavigationStack {
+                AppNavigation {
                     ScrollView {
                         Text(licenseText)
                             .font(.footnote).padding()
@@ -150,6 +135,7 @@ private struct PlaybackView: View {
                 }
             }
         }
+        .id(playback.videoID)
     }
 
     @ViewBuilder private var status: some View {
@@ -200,7 +186,7 @@ private struct RelatedVideosView: View {
                         .buttonStyle(.plain)
                         .contextMenu { LibraryItemActions(item: item) }
                 }
-                NavigationLink("See all related videos", value: BrowseRoute.related(videoID))
+                BrowseLink(route: .related(videoID), onPlay: onPlay) { Text("See all related videos") }
             } else if related.isLoading {
                 ProgressView("Finding related videos…").font(.footnote)
             } else if related.error != nil {

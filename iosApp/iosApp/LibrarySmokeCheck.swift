@@ -4,7 +4,7 @@ import Foundation
 
 @MainActor
 func makeLibraryStore() -> LibraryStore {
-#if DEBUG
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
     let arguments = ProcessInfo.processInfo.arguments
     if let flag = arguments.firstIndex(of: "--library-smoke-run"), arguments.indices.contains(flag + 1),
        arguments[flag + 1].range(of: "^[A-Za-z0-9_-]{1,64}$", options: .regularExpression) != nil {
@@ -18,7 +18,7 @@ func makeLibraryStore() -> LibraryStore {
     return LibraryStore()
 }
 
-#if DEBUG
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
 @MainActor
 func runLibrarySmokeSetup(_ library: LibraryStore) {
     let arguments = ProcessInfo.processInfo.arguments

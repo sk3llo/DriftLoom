@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "DriftLoomPlayback",
-    platforms: [.iOS("18.2"), .macOS(.v14)],
+    platforms: [.iOS(.v15), .macOS(.v14)],
     products: [
         .library(name: "DriftLoomPlayback", targets: ["DriftLoomPlayback"]),
         .executable(name: "PlaybackProbe", targets: ["PlaybackProbe"]),

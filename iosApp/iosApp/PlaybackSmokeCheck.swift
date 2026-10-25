@@ -1,9 +1,9 @@
-#if DEBUG
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
 import AVFoundation
 import DriftLoomPlayback
 import Foundation
 
-/// Opt-in simulator smoke check. No network traffic occurs unless the launch flag is supplied.
+/// Opt-in device/simulator check. Compiled out of normal Release builds.
 @MainActor
 func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
     let arguments = ProcessInfo.processInfo.arguments
@@ -13,7 +13,7 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
     if let flag, arguments.indices.contains(flag + 1) { session.open(arguments[flag + 1]) }
     var hasSeeked = false
     for _ in 0..<90 {
-        do { try await Task.sleep(for: .seconds(1)) } catch { return }
+        do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
         if case .failed = session.phase {
             NSLog("DriftLoomSmoke: FAIL playback error")
             return
