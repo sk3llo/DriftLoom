@@ -43,6 +43,22 @@ struct SettingsView: View {
                     Text("Playback continues in the mini-player while you browse. Close it to stop playback.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
+                Section("Subtitles") {
+                    Picker("Show subtitles in", selection: Binding(get: { preferences.subtitleLanguage }, set: preferences.setSubtitleLanguage)) {
+                        Text("Off").tag(String?.none)
+                        ForEach(Locale.isoLanguageCodes.sorted(), id: \.self) { code in
+                            Text(Locale.current.localizedString(forLanguageCode: code) ?? code).tag(Optional(code))
+                        }
+                    }.accessibilityIdentifier("subtitleLanguage")
+                    Picker("Text size", selection: Binding(get: { preferences.subtitleSize }, set: preferences.setSubtitleSize)) {
+                        ForEach(SubtitleSize.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    Text("YouTube subtitles in this language turn on automatically, preferring ones written by the uploader over auto-generated ones. Choosing subtitles in the player updates this setting.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section("Downloads") {
+                    NavigationLink("Downloads and storage") { DownloadSettingsView() }
+                }
                 Section("Your data") {
                     NavigationLink("Backup and import") { LibraryTransferView() }
                 }
@@ -68,24 +84,33 @@ struct SettingsView: View {
 private struct HomeTabsSettings: View {
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
+    @EnvironmentObject private var playlists: PlaylistStore
+    private var arrangement: [HomeTabKey] {
+        pinnedTabs.arrangement(sections: preferences.homeSections, localPlaylistIDs: Set(playlists.playlists.map(\.id)))
+    }
     var body: some View {
         List {
-            Section("Visible tabs · drag to reorder") {
-                ForEach(preferences.homeSections) { section in Label(section.rawValue, systemImage: section.symbol) }
+            Section {
+                ForEach(arrangement, id: \.self) { key in row(key).deleteDisabled(isSection(key)) }
                     .onMove { offsets, destination in
-                        var sections = preferences.homeSections
-                        sections.move(fromOffsets: offsets, toOffset: destination)
-                        preferences.setHomeSections(sections)
+                        var keys = arrangement
+                        keys.move(fromOffsets: offsets, toOffset: destination)
+                        pinnedTabs.setOrder(keys)
+                        // Keep the section preference in the same relative order for the drawer and backups.
+                        preferences.setHomeSections(keys.compactMap { if case let .section(section) = $0 { return section }; return nil })
                     }
-            }
-            Section("Pinned channels and playlists") {
-                if pinnedTabs.tabs.isEmpty { Text("Use Add to home in a channel or playlist menu.").font(.footnote).foregroundStyle(.secondary) }
-                ForEach(pinnedTabs.tabs) { tab in Label(tab.item.title, systemImage: tab.item.kind == .channel ? "person.crop.circle" : "rectangle.stack") }
-                    .onMove(perform: pinnedTabs.move)
                     .onDelete { offsets in
-                        let ids = offsets.filter { pinnedTabs.tabs.indices.contains($0) }.map { pinnedTabs.tabs[$0].id }
-                        ids.forEach(pinnedTabs.remove)
+                        for key in offsets.filter({ arrangement.indices.contains($0) }).map({ arrangement[$0] }) {
+                            switch key {
+                            case let .pinned(id): pinnedTabs.remove(id)
+                            case let .local(id): pinnedTabs.removeLocal(id)
+                            case .section: break
+                            }
+                        }
                     }
+                    .moveDisabled(!pinnedTabs.isWritable)
+            } header: { Text("Home tabs · drag to reorder") } footer: {
+                Text("Pin channels and online playlists with Add to home in their menu, and local playlists from the playlist's options. Swipe to remove a pinned tab.")
             }
             Section("Show on home") {
                 ForEach(HomeSection.allCases) { section in
@@ -99,5 +124,17 @@ private struct HomeTabsSettings: View {
         }
         .environment(\.editMode, .constant(.active))
         .navigationTitle("Home tabs").navigationBarTitleDisplayMode(.inline)
+    }
+    private func isSection(_ key: HomeTabKey) -> Bool { if case .section = key { return true }; return false }
+    @ViewBuilder private func row(_ key: HomeTabKey) -> some View {
+        switch key {
+        case let .section(section): Label(section.rawValue, systemImage: section.symbol).accessibilityIdentifier("homeTab-" + key.rawValue)
+        case let .pinned(id):
+            if let tab = pinnedTabs.tabs.first(where: { $0.id == id }) {
+                Label(tab.item.title, systemImage: tab.item.kind == .channel ? "person.crop.circle" : "rectangle.stack").accessibilityIdentifier("homeTab-" + key.rawValue)
+            }
+        case let .local(id):
+            Label(playlists.playlists.first { $0.id == id }?.name ?? "Playlist", systemImage: "music.note.list").accessibilityIdentifier("homeTab-local")
+        }
     }
 }

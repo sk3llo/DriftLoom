@@ -92,12 +92,15 @@ struct PlaylistPickerView: View {
     }
 }
 
-private struct LocalPlaylistView: View {
+struct LocalPlaylistView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var playlists: PlaylistStore
     @EnvironmentObject private var queue: PlaybackQueue
+    @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
     let id: UUID
     let onPlay: (BrowseItem) -> Void
+    /// Shown as a home tab: no navigation bar, so the actions live in the header row.
+    var embedded = false
     @State private var renaming = false
     @State private var deleting = false
     private var playlist: LocalPlaylist? { playlists.playlists.first { $0.id == id } }
@@ -106,10 +109,12 @@ private struct LocalPlaylistView: View {
             if let playlist {
                 List {
                     HStack {
-                        Button { play(playlist, at: 0) } label: { Label("Play all", systemImage: "play.fill") }
+                        Button { play(playlist, at: 0) } label: { Label("Play all", systemImage: "play.fill") }.disabled(playlist.entries.isEmpty)
                         Spacer()
                         Button { for entry in playlist.entries { queue.enqueue(entry.item) } } label: { Label("Enqueue", systemImage: "text.badge.plus") }
-                    }.disabled(playlist.entries.isEmpty)
+                            .disabled(playlist.entries.isEmpty)
+                        if embedded { Spacer(); actions.accessibilityLabel("Playlist options") }
+                    }.buttonStyle(.borderless)
                     if playlist.entries.isEmpty { Text("Add videos from a result menu or the video detail screen.").font(.footnote).foregroundStyle(.secondary) }
                     ForEach(Array(playlist.entries.enumerated()), id: \.element.id) { index, entry in
                         Button { play(playlist, at: index) } label: { BrowseRow(item: entry.item) }.buttonStyle(.plain)
@@ -121,22 +126,22 @@ private struct LocalPlaylistView: View {
                 }.listStyle(.plain)
             } else { EmptyStateView("Playlist unavailable", systemImage: "music.note.list", message: "This playlist is no longer in your library.") }
         }
-        .navigationBarHidden(false)
-        .navigationTitle(playlist?.name ?? "Playlist").navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            EditButton().disabled(!playlists.isWritable)
-            Menu {
-                Button("Rename") { renaming = true }
-                Button("Delete playlist", role: .destructive) { deleting = true }
-            } label: { Image(systemName: "ellipsis") }.disabled(!playlists.isWritable)
-        }
+        .modifier(PlaylistChrome(embedded: embedded, title: playlist?.name ?? "Playlist", writable: playlists.isWritable, actions: actions))
         .confirmationDialog("Delete this playlist?", isPresented: $deleting, titleVisibility: .visible) {
-            Button("Delete playlist", role: .destructive) { playlists.remove(id); dismiss() }
+            Button("Delete playlist", role: .destructive) { playlists.remove(id); if !embedded { dismiss() } }
             Button("Cancel", role: .cancel) {}
         } message: { Text("Saved videos and other playlists will stay in your library.") }
         .sheet(isPresented: $renaming) {
             if let playlist { RenamePlaylistView(id: id, originalName: playlist.name) }
         }
+    }
+    private var actions: some View {
+        Menu {
+            Button(pinnedTabs.containsLocal(id) ? "Remove from home" : "Add to home") { pinnedTabs.toggleLocal(id) }
+                .disabled(!pinnedTabs.isWritable)
+            Button("Rename") { renaming = true }.disabled(!playlists.isWritable)
+            Button("Delete playlist", role: .destructive) { deleting = true }.disabled(!playlists.isWritable)
+        } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }.accessibilityIdentifier("localPlaylistOptions")
     }
     private func play(_ playlist: LocalPlaylist, at index: Int) {
         queue.start(playlist.entries.map(\.item), at: index)
@@ -160,6 +165,21 @@ private struct RenamePlaylistView: View {
             }
             .navigationTitle("Rename playlist").navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Cancel") { dismiss() } }
+        }
+    }
+}
+
+private struct PlaylistChrome<Actions: View>: ViewModifier {
+    let embedded: Bool
+    let title: String
+    let writable: Bool
+    let actions: Actions
+    func body(content: Content) -> some View {
+        if embedded { content }
+        else {
+            content.navigationBarHidden(false)
+                .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+                .toolbar { EditButton().disabled(!writable); actions }
         }
     }
 }

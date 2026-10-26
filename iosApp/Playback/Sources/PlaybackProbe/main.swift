@@ -8,9 +8,13 @@ struct PlaybackProbe {
     @MainActor
     static func main() async throws {
         let input = CommandLine.arguments.dropFirst().first ?? "https://www.youtube.com/watch?v=11-9ZaYiTPE"
-        let session = PlaybackSession()
+        let arguments = CommandLine.arguments
+        let subtitleLanguage = arguments.firstIndex(of: "--subtitles").flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
+        let session = PlaybackSession(subtitles: subtitleLanguage == nil ? nil : YouTubeSubtitleClient())
+        session.preferredSubtitleLanguage = subtitleLanguage
         session.player.isMuted = true
         session.open(input)
+        var shownSubtitle: String?
         let checksSeek = CommandLine.arguments.contains("--seek-60")
         var hasSeeked = false
         for _ in 0..<120 {
@@ -31,7 +35,15 @@ struct PlaybackProbe {
                 session.player.play()
                 continue
             }
+            if let text = session.subtitleText { shownSubtitle = text }
+            if let error = session.subtitleError {
+                throw NSError(domain: "DriftLoomProbe", code: 4, userInfo: [NSLocalizedDescriptionKey: "Subtitles failed: " + error])
+            }
+            if subtitleLanguage != nil, shownSubtitle == nil { continue }
             if seconds.isFinite, seconds >= (checksSeek ? 65 : 3) {
+                if let track = session.selectedSubtitle, let shownSubtitle {
+                    print("PASS: subtitles \(track.id) of \(session.subtitleTracks.count) tracks; shown: \(shownSubtitle.replacingOccurrences(of: "\n", with: " / "))")
+                }
                 print("PASS: native playback advanced to \(seconds)s; HLS=\(session.video?.usesHLS == true)")
                 session.stop()
                 return

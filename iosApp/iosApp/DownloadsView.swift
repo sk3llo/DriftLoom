@@ -9,15 +9,30 @@ struct DownloadPicker: View {
     @State private var choices: [DownloadChoice] = []
     @State private var loading = true
     @State private var error: String?
+    @State private var subtitleTracks: [SubtitleTrack] = []
+    @State private var subtitleLanguage: String?
+    @EnvironmentObject private var preferences: AppPreferences
+    private var subtitleLanguages: [String] {
+        var seen = Set<String>()
+        return subtitleTracks.map { SubtitleSelection.baseLanguage($0.languageCode) }.filter { seen.insert($0).inserted }
+    }
     var body: some View {
         AppNavigation {
             List {
                 Text(item.title).font(.headline)
+                if !subtitleLanguages.isEmpty {
+                    Picker("Subtitles", selection: $subtitleLanguage) {
+                        Text("None").tag(String?.none)
+                        ForEach(subtitleLanguages, id: \.self) { code in
+                            Text(Locale.current.localizedString(forLanguageCode: code) ?? code).tag(Optional(code))
+                        }
+                    }.accessibilityIdentifier("downloadSubtitles")
+                }
                 if loading { ProgressView("Finding download formats…") }
                 if let error { Text(error).foregroundStyle(.secondary) }
                 ForEach(choices) { choice in
                     Button(choice.name) {
-                        if manager.start(item: item, choice: choice) != nil { dismiss() }
+                        if manager.start(item: item, choice: choice, subtitleLanguage: subtitleLanguage) != nil { dismiss() }
                         else { error = manager.library.error ?? "Downloads are reconnecting. Try again shortly." }
                     }.disabled(manager.reconnecting || !manager.library.isWritable)
                 }
@@ -26,6 +41,13 @@ struct DownloadPicker: View {
             }
             .navigationTitle("Download").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { dismiss() } } }
+            .task {
+                if let tracks = try? await YouTubeSubtitleClient().tracks(videoID: item.contentID) {
+                    subtitleTracks = tracks
+                    subtitleLanguage = SubtitleSelection.preferred(tracks, language: preferences.subtitleLanguage)
+                        .map { SubtitleSelection.baseLanguage($0.languageCode) }
+                }
+            }
             .task {
                 do { choices = try await YouTubeDownloadResolver().choices(videoID: item.contentID) }
                 catch { self.error = error.localizedDescription }
@@ -41,15 +63,23 @@ struct DownloadsView: View {
     @State private var deleting: DownloadRecord?
     var body: some View {
         List {
+            NavigationLink("Downloads and storage") { DownloadSettingsView() }
+            if let error = manager.operationError { Text(error).font(.footnote).foregroundStyle(.secondary) }
             if let error = manager.library.error { Text(error).foregroundStyle(.secondary) }
             if manager.records.isEmpty { Text("Download a video from its playback options to watch it offline.").foregroundStyle(.secondary) }
             ForEach(manager.records) { record in
                 VStack(alignment: .leading, spacing: 8) {
                     Text(record.item.title).font(.headline)
                     Text(record.choice.name).font(.caption).foregroundStyle(.secondary)
+                    if let network = record.network { Text(network.rawValue).font(.caption2).foregroundStyle(.secondary) }
+                    if let language = record.subtitleLanguage {
+                        let name = Locale.current.localizedString(forLanguageCode: language) ?? language
+                        Text(record.subtitlePath != nil ? "Subtitles: \(name)" : record.subtitleError.map { "Subtitles unavailable: \($0)" } ?? "Subtitles: \(name) (pending)")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
                     if record.state == .downloading || record.state == .preparing {
                         ProgressView(value: record.progress)
-                        Text(record.state == .preparing ? "Preparing…" : "\(Int(record.progress * 100))%").font(.caption)
+                        Text(record.waitingForNetwork == true ? (record.network == .wifiOnly ? "Waiting for Wi-Fi…" : "Waiting for a connection…") : record.state == .preparing ? "Preparing…" : "\(Int(record.progress * 100))%").font(.caption)
                         Button("Cancel download") { manager.cancel(record.id) }
                     } else if record.state == .completed {
                         if manager.localURL(record) != nil {

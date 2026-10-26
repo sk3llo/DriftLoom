@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Foundation
+import YouTubeKit
 
 public struct VideoRequest: Equatable, Sendable {
     public let videoID: String
@@ -33,12 +34,25 @@ public struct VideoRequest: Equatable, Sendable {
 }
 
 public enum PlaybackError: LocalizedError {
-    case invalidURL, noPlayableStream
+    case invalidURL, noPlayableStream, extractionRefused
 
     public var errorDescription: String? {
         switch self {
         case .invalidURL: return "Enter a YouTube video link or video ID."
         case .noPlayableStream: return "No stream supported by this device is available for this video."
+        case .extractionRefused:
+            return "YouTube didn't provide this video's streams. It may need a signed-in account, or YouTube may be limiting requests from this network. Try again later or on another network."
+        }
+    }
+
+    /// Replace extractor errors that have no description with an explanation people can act on.
+    static func readable(_ error: Error) -> Error {
+        guard let kit = error as? YouTubeKitError else { return error }
+        switch kit {
+        case .extractError, .htmlParseError, .regexMatchError, .maxRetriesExceeded: return PlaybackError.extractionRefused
+        case .videoRegionBlocked: return BrowseError.unavailable("This video isn't available in your region.")
+        case .recordingUnavailable: return BrowseError.unavailable("This live recording isn't available.")
+        default: return kit
         }
     }
 }

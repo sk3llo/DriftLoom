@@ -28,10 +28,15 @@ struct ContentView: View {
 
     init() {
         let positions = PlaybackPositions(defaults: makeAppDefaults())
-        let playback = PlaybackSession(positions: positions)
+        let playback = PlaybackSession(positions: positions, subtitles: YouTubeSubtitleClient())
         playback.localMedia = { id in
             let manager = DownloadManager.shared
             return manager.records.first(where: { $0.item.contentID == id && manager.localURL($0) != nil }).flatMap(manager.localURL)
+        }
+        // Saved subtitles are used only when this video plays from its download.
+        playback.localSubtitles = { [weak playback] id in
+            guard playback?.video?.streamURL.isFileURL == true || playback?.localMedia?(id) != nil else { return nil }
+            return DownloadManager.shared.localSubtitles(videoID: id)
         }
         _positions = StateObject(wrappedValue: positions)
         _playback = StateObject(wrappedValue: playback)
@@ -72,6 +77,7 @@ struct ContentView: View {
             if !values.contains(selectedSection), let first = values.first { selectedSection = first }
         }
         .onChange(of: preferences.resumesPlayback) { playback.resumesPositions = $0 }
+        .onChange(of: preferences.subtitleLanguage) { playback.preferredSubtitleLanguage = $0 }
         .onChange(of: library.historyEnabled) { playback.remembersPositions = $0 && library.isWritable }
         .onChange(of: library.isWritable) { playback.remembersPositions = $0 && library.historyEnabled }
         .onChange(of: library.history.map { $0.item.contentID }) { ids in
@@ -80,6 +86,8 @@ struct ContentView: View {
         .task {
             playback.remembersPositions = library.historyEnabled && library.isWritable
             playback.resumesPositions = preferences.resumesPlayback
+            playback.preferredSubtitleLanguage = preferences.subtitleLanguage
+            playback.onSubtitleChoice = { [weak preferences] in preferences?.setSubtitleLanguage($0) }
             if library.isWritable { positions.retainOnly(Set(library.history.map { $0.item.contentID })) }
             selectedSection = preferences.homeSections.first ?? .subscriptions
             if historyRecorder == nil { historyRecorder = LibraryPlaybackRecorder(playback: playback, library: library) }
@@ -120,7 +128,7 @@ private func makePreferences() -> AppPreferences {
 }
 
 @MainActor
-private func makeAppDefaults() -> UserDefaults {
+func makeAppDefaults() -> UserDefaults {
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
     let arguments = ProcessInfo.processInfo.arguments
     if let flag = arguments.firstIndex(of: "--library-smoke-run"), arguments.indices.contains(flag + 1),

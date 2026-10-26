@@ -2,7 +2,7 @@
 import Combine
 import Foundation
 
-public enum HomeSection: String, CaseIterable, Identifiable, Codable {
+public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
     case subscriptions = "Subscriptions", feed = "What's new", bookmarks = "Bookmarked", history = "History", trending = "Trending music"
     public var id: String { rawValue }
     public var symbol: String {
@@ -27,9 +27,16 @@ public final class AppPreferences: ObservableObject {
     @Published public private(set) var resumesPlayback: Bool
     @Published public private(set) var feedPeriod: FeedPeriod
     @Published public private(set) var hidesWatchedFeed: Bool
+    @Published public private(set) var downloadNetwork: DownloadNetwork
+    /// Base language for automatic subtitles; nil means subtitles start off.
+    @Published public private(set) var subtitleLanguage: String?
+    @Published public private(set) var subtitleSize: SubtitleSize
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        downloadNetwork = defaults.string(forKey: "downloadNetwork").flatMap(DownloadNetwork.init(rawValue:)) ?? .wifiOnly
+        subtitleLanguage = defaults.string(forKey: "subtitleLanguage").flatMap(Self.validLanguage)
+        subtitleSize = defaults.string(forKey: "subtitleSize").flatMap(SubtitleSize.init(rawValue:)) ?? .medium
         feedPeriod = defaults.string(forKey: "feedPeriod").flatMap(FeedPeriod.init(rawValue:)) ?? .all
         hidesWatchedFeed = defaults.bool(forKey: "hidesWatchedFeed")
         contentLocale = .current(defaults: defaults)
@@ -46,6 +53,20 @@ public final class AppPreferences: ObservableObject {
         resumesPlayback = defaults.object(forKey: "resumesPlayback") as? Bool ?? true
         let savedAppearance = defaults.string(forKey: "appearance") ?? "System"
         appearance = ["System", "Light", "Dark"].contains(savedAppearance) ? savedAppearance : "System"
+    }
+    public func setDownloadNetwork(_ network: DownloadNetwork) {
+        downloadNetwork = network; defaults.set(network.rawValue, forKey: "downloadNetwork")
+    }
+    public func setSubtitleLanguage(_ language: String?) {
+        subtitleLanguage = language.flatMap(Self.validLanguage)
+        defaults.set(subtitleLanguage ?? "", forKey: "subtitleLanguage")
+    }
+    public func setSubtitleSize(_ size: SubtitleSize) {
+        subtitleSize = size; defaults.set(size.rawValue, forKey: "subtitleSize")
+    }
+    private static func validLanguage(_ code: String) -> String? {
+        let base = SubtitleSelection.baseLanguage(code)
+        return Locale.isoLanguageCodes.contains(base) ? base : nil
     }
     public func setFeedPeriod(_ value: FeedPeriod) {
         feedPeriod = value; defaults.set(value.rawValue, forKey: "feedPeriod")

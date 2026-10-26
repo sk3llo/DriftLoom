@@ -32,7 +32,10 @@ public struct YouTubeStreamResolver: StreamResolving {
     public init() {}
 
     public func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
-        guard let choice else { return try await resolve(request) }
+        do { return try await resolveChoice(request, choice: choice) } catch { throw PlaybackError.readable(error) }
+    }
+    private func resolveChoice(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+        guard let choice else { return try await resolveDefault(request) }
         let source = try await YouTubeDownloadResolver().source(videoID: request.videoID, choice: choice)
         let metadata = try? await YouTube(videoID: request.videoID, methods: [.local]).metadata
         return ResolvedVideo(title: metadata?.title ?? "YouTube video", streamURL: source.url,
@@ -40,6 +43,9 @@ public struct YouTubeStreamResolver: StreamResolving {
     }
 
     public func resolve(_ request: VideoRequest) async throws -> ResolvedVideo {
+        do { return try await resolveDefault(request) } catch { throw PlaybackError.readable(error) }
+    }
+    private func resolveDefault(_ request: VideoRequest) async throws -> ResolvedVideo {
         // A new instance for every resolution avoids reusing expired signed URLs.
         // Explicitly disable the library's optional third-party remote extraction.
         let video = YouTube(videoID: request.videoID, methods: [.local])

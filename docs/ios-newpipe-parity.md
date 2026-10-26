@@ -8,11 +8,11 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 
 | Stage | Implemented in this checkpoint | Still required for full parity |
 | --- | --- | --- |
-| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist home tabs; optional live suggestions; official regional YouTube music chart | Local-playlist home tabs and interleaved tab ordering; other kiosk sources; remaining metadata and visual comparison |
+| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist/local-playlist home tabs with one combined, interleaved order; optional live suggestions; official regional YouTube music chart | Other kiosk sources; remaining metadata and visual comparison |
 | Video details and mini-player | Inline native player; owner/subscription row; save/share/playlist/speed actions; related/description/comments tabs, replies, views/date; minimizing and returning without discarding search state | Remaining stream metadata; remaining detail actions; full visual parity |
-| Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection | Separate adaptive video/audio selection and merging; external subtitle extraction; exhaustive interruption/headphone/lock-screen/PiP tests |
+| Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; YouTube subtitle tracks (manual and auto-generated) with a remembered language, text size and fullscreen overlay; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection | Separate adaptive video/audio selection and merging; subtitle styling beyond size; auto-translated subtitle tracks; exhaustive interruption/headphone/lock-screen/PiP tests |
 | Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved; persisted subscription groups and membership; group filtering in subscriptions/feed; date and watched-video filters; native backup and supported Android group migration | Additional feed sources and controls; group icons and remaining Android settings migration |
-| Downloads | Available HLS/muxed/audio format discovery; versioned job records; cancellation/retry with fresh URLs; iOS background transfer reconnection; delete controls; completed HLS cache validation and local playback verified on iPhone 7 | External subtitles; separate video/audio merging; storage usage and network settings; broader file/audio and interrupted/background transfer tests |
+| Downloads | Available HLS/muxed/audio format discovery; versioned job records; cancellation/retry with fresh URLs; iOS background transfer reconnection; delete controls; completed HLS cache validation and local playback verified on iPhone 7; Wi-Fi-only/any-network policy per job with waiting and relaunch recovery; storage usage; subtitles saved with a download for offline playback | Separate video/audio merging; broader file/audio and interrupted/background transfer tests |
 | Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup; Android preferences and positions migration; remaining player/download settings; additional services |
 
 ## Storage and compatibility
@@ -71,8 +71,19 @@ recovery journals use version 2 so earlier builds refuse an interrupted import t
 migrated. Feed date/watched filters apply to the bounded recent RSS results, not the entire channel
 archive. Switching groups clears the previous group's videos before the next feed completes.
 
-Continue with external subtitles, remaining custom tab controls, and download
-controls, then introduce additional services behind explicit service-aware models. Do not label whole
+Subtitles come from the iOS InnerTube client's caption list because web player caption URLs now need a
+proof-of-origin token and return empty bodies. Only cue text and track labels are saved with downloads, never
+the signed caption URL. External subtitles are drawn by the app over the video (inline and fullscreen) and are
+not shown in Picture in Picture. Selecting a YouTube track turns off captions embedded in the media.
+
+Home tab order is stored in home-tabs.json. The file stays at version 1 while it only contains pinned
+channels/playlists, so earlier builds can still read it; pinning a local playlist or reordering across groups
+writes version 2, which earlier builds refuse and leave untouched. Deleted playlists drop out of the order.
+
+Download network policy is fixed per job when it starts or is retried; changing the preference does not move
+existing transfers. Wi-Fi-only jobs wait while only cellular is available.
+
+Continue by introducing additional services behind explicit service-aware models. Do not label whole
 milestones or full NewPipe parity complete while the gaps above remain. Validate format/codec and
 background behavior on hardware before claiming support.
 

@@ -19,11 +19,26 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var playbackRate: Float = 1
     @Published public private(set) var maximumHeight = 0
     @Published public private(set) var selectedFormat: DownloadChoice?
+    @Published public private(set) var subtitleTracks: [SubtitleTrack] = []
+    @Published public private(set) var selectedSubtitle: SubtitleTrack?
+    @Published public private(set) var subtitleText: String?
+    @Published public private(set) var subtitleError: String?
+    /// Language used to pick a track automatically for new videos; nil keeps subtitles off.
+    public var preferredSubtitleLanguage: String?
+    /// Called when the user picks a track or turns subtitles off, with its base language.
+    public var onSubtitleChoice: ((String?) -> Void)?
+    /// Offline subtitles saved with a download, keyed by video ID.
+    public var localSubtitles: ((String) -> (SubtitleTrack, [SubtitleCue])?)?
     public var localMedia: ((String) -> URL?)?
     public var remembersPositions = true
     public var resumesPositions = true
     private let positions: PlaybackPositions?
     private var positionObserver: Any?
+    private var subtitleObserver: Any?
+    private var subtitleTimeline: SubtitleTimeline?
+    private var subtitleTask: Task<Void, Never>?
+    private var subtitleGeneration = UUID()
+    private let subtitles: (any SubtitleLoading)?
 
     private let resolver: any StreamResolving
     private var currentRequest: VideoRequest?
@@ -35,9 +50,14 @@ public final class PlaybackSession: ObservableObject {
     private var playerObservation: NSKeyValueObservation?
     private var failureObserver: NSObjectProtocol?
 
-    public init(resolver: any StreamResolving = YouTubeStreamResolver(), positions: PlaybackPositions? = nil) {
+    public init(resolver: any StreamResolving = YouTubeStreamResolver(), positions: PlaybackPositions? = nil,
+                subtitles: (any SubtitleLoading)? = nil) {
         self.resolver = resolver
         self.positions = positions
+        self.subtitles = subtitles
+        subtitleObserver = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 4), queue: .main) { [weak self] time in
+            Task { @MainActor [weak self] in self?.updateSubtitle(at: time.seconds) }
+        }
         player.audiovisualBackgroundPlaybackPolicy = .continuesIfPossible
         if positions != nil {
             positionObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 5, preferredTimescale: 1), queue: .main) { [weak self] _ in
@@ -59,6 +79,8 @@ public final class PlaybackSession: ObservableObject {
 
     deinit {
         if let positionObserver { player.removeTimeObserver(positionObserver) }
+        if let subtitleObserver { player.removeTimeObserver(subtitleObserver) }
+        subtitleTask?.cancel()
         resolveTask?.cancel()
         failureTask?.cancel()
         if let failureObserver { NotificationCenter.default.removeObserver(failureObserver) }
@@ -83,6 +105,7 @@ public final class PlaybackSession: ObservableObject {
 #endif
                 install(ResolvedVideo(title: "Downloaded video", streamURL: url, usesHLS: url.pathExtension == "movpkg"), position: position)
             } else { resolve(request, position: position) }
+            loadSubtitles(videoID: request.videoID)
         } catch { phase = .failed(error.localizedDescription) }
     }
 
@@ -161,7 +184,80 @@ public final class PlaybackSession: ObservableObject {
         didRecover = false
         video = nil
         selectedFormat = nil
+        clearSubtitles()
         phase = .idle
+    }
+
+    /// Select an external track, or nil to turn subtitles off. The choice is remembered by language.
+    public func selectSubtitle(_ track: SubtitleTrack?) {
+        onSubtitleChoice?(track.map { SubtitleSelection.baseLanguage($0.languageCode) })
+        preferredSubtitleLanguage = track.map { SubtitleSelection.baseLanguage($0.languageCode) }
+        apply(track)
+    }
+
+    private func loadSubtitles(videoID: String) {
+        clearSubtitles()
+        if let local = localSubtitles?(videoID) {
+            subtitleTracks = [local.0]
+            if SubtitleSelection.preferred([local.0], language: preferredSubtitleLanguage) != nil { install(local.0, cues: local.1) }
+            return
+        }
+        guard let subtitles else { return }
+        let token = subtitleGeneration
+        subtitleTask = Task { [weak self] in
+            let tracks = (try? await subtitles.tracks(videoID: videoID)) ?? []
+            guard !Task.isCancelled, let self, self.subtitleGeneration == token, self.videoID == videoID else { return }
+            self.subtitleTracks = tracks
+            self.subtitleTask = nil
+            if let track = SubtitleSelection.preferred(tracks, language: self.preferredSubtitleLanguage) { self.apply(track) }
+        }
+    }
+
+    private func apply(_ track: SubtitleTrack?) {
+        subtitleTask?.cancel(); subtitleTask = nil
+        subtitleTimeline = nil; subtitleText = nil; subtitleError = nil
+        subtitleGeneration = UUID()
+        selectedSubtitle = track
+        guard let track else { return }
+        if track.url.isFileURL, let videoID, let local = localSubtitles?(videoID), local.0.id == track.id {
+            install(track, cues: local.1); return
+        }
+        guard let subtitles else { return }
+        let token = subtitleGeneration
+        subtitleTask = Task { [weak self] in
+            do {
+                let cues = try await subtitles.cues(for: track)
+                guard !Task.isCancelled, let self, self.subtitleGeneration == token, self.selectedSubtitle == track else { return }
+                self.install(track, cues: cues)
+            } catch is CancellationError {
+            } catch {
+                guard let self, self.subtitleGeneration == token, self.selectedSubtitle == track else { return }
+                self.subtitleError = error.localizedDescription
+            }
+        }
+    }
+
+    private func install(_ track: SubtitleTrack, cues: [SubtitleCue]) {
+        selectedSubtitle = track
+        subtitleTimeline = SubtitleTimeline(cues)
+        // External subtitles replace any captions embedded in the media to avoid showing both.
+        if let item = player.currentItem, let group = item.asset.mediaSelectionGroup(forMediaCharacteristic: .legible) {
+            item.select(nil, in: group)
+        }
+        updateSubtitle(at: player.currentTime().seconds)
+    }
+
+    /// The subtitle text the overlay shows at a playback time, for the currently loaded track.
+    func subtitle(at seconds: Double) -> String? { subtitleTimeline?.text(at: seconds) }
+
+    private func updateSubtitle(at seconds: Double) {
+        let text = subtitle(at: seconds)
+        if text != subtitleText { subtitleText = text }
+    }
+
+    private func clearSubtitles() {
+        subtitleTask?.cancel(); subtitleTask = nil; subtitleGeneration = UUID()
+        subtitleTimeline = nil; subtitleTracks = []; selectedSubtitle = nil; subtitleText = nil; subtitleError = nil
     }
 
     private func rememberPosition() {

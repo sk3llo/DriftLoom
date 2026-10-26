@@ -17,6 +17,9 @@ public struct DownloadSource: Sendable {
 public struct YouTubeDownloadResolver: Sendable {
     public init() {}
     public func choices(videoID: String) async throws -> [DownloadChoice] {
+        do { return try await findChoices(videoID: videoID) } catch { throw PlaybackError.readable(error) }
+    }
+    private func findChoices(videoID: String) async throws -> [DownloadChoice] {
         let request = try VideoRequest(input: videoID)
         let video = YouTube(videoID: request.videoID, methods: [.local])
         var choices: [DownloadChoice] = []
@@ -38,6 +41,9 @@ public struct YouTubeDownloadResolver: Sendable {
         URLComponents(url: stream.url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "itag" }?.value
     }
     public func source(videoID: String, choice: DownloadChoice) async throws -> DownloadSource {
+        do { return try await findSource(videoID: videoID, choice: choice) } catch { throw PlaybackError.readable(error) }
+    }
+    private func findSource(videoID: String, choice: DownloadChoice) async throws -> DownloadSource {
         let request = try VideoRequest(input: videoID)
         let video = YouTube(videoID: request.videoID, methods: [.local])
         if choice.kind == .hls, let hls = try await video.livestreams.first(where: { $0.streamType == .hls }) {
@@ -58,8 +64,14 @@ public struct DownloadRecord: Codable, Identifiable, Equatable, Sendable {
     public var progress: Double
     public var localPath: String?
     public var error: String?
-    public init(item: BrowseItem, choice: DownloadChoice) {
-        id = UUID(); self.item = item; self.choice = choice; state = .preparing; progress = 0
+    public var network: DownloadNetwork?
+    public var waitingForNetwork: Bool?
+    /// Requested subtitle language (base code) and whether an automatic track is acceptable.
+    public var subtitleLanguage: String?
+    public var subtitlePath: String?
+    public var subtitleError: String?
+    public init(item: BrowseItem, choice: DownloadChoice, subtitleLanguage: String? = nil) {
+        id = UUID(); self.item = item; self.choice = choice; state = .preparing; progress = 0; self.subtitleLanguage = subtitleLanguage
     }
 }
 
@@ -87,9 +99,10 @@ public final class DownloadLibrary: ObservableObject {
     private static func valid(_ record: DownloadRecord) -> Bool {
         guard record.item.kind == .video, (try? VideoRequest(input: record.item.contentID).videoID) == record.item.contentID,
               record.progress.isFinite, (0...1).contains(record.progress) else { return false }
-        if let path = record.localPath {
+        for path in [record.localPath, record.subtitlePath].compactMap({ $0 }) {
             guard !path.hasPrefix("/"), !path.split(separator: "/").contains(".."), !path.contains(":") else { return false }
         }
+        if let language = record.subtitleLanguage, language.isEmpty || language.count > 20 { return false }
         return true
     }
     @discardableResult public func add(_ record: DownloadRecord) -> Bool {

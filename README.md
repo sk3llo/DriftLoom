@@ -15,21 +15,27 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Video details, description, views/date, comments and replies, and a persistent mini-player.
 - Editable queues survive relaunch without automatically playing; play-next/enqueue, finite shuffle,
   repeat, speed, resolution limits, and supported extracted playback formats are available.
-  Captions exposed by the current media asset use native controls; external subtitle extraction is pending.
+  YouTube subtitle tracks (uploaded and auto-generated) can be chosen in the player and are drawn over the video,
+  including fullscreen; a preferred language turns them on automatically. Captions embedded in the media asset
+  still use native controls when no YouTube track list is available.
 - Background-audio configuration, Now Playing/remote command integration, and AVKit Picture in Picture support.
   Physical background playback has been verified; not every system control or PiP scenario has been tested.
 - Saved videos, subscriptions, history, local playlists, and remote playlist bookmarks persist locally.
   Resume positions are bounded, tied to history recording, and removed with deleted history.
-- Appearance, home-tab ordering/visibility, search/watch history controls, and resume preferences are implemented.
+- Appearance, home-tab visibility, one combined tab order across built-in sections, pinned channels/playlists and
+  pinned local playlists, search/watch history controls, subtitle language/size, and resume preferences are implemented.
 - Downloads have persisted jobs, cancellation/retry, native HLS/file background transfers, and local playback.
   HLS download completion and offline playback have been verified on a physical iPhone 7.
+  Downloads can wait for Wi-Fi (the default) or use mobile data, show the storage they use, and can save
+  subtitles in a chosen language for offline playback.
 - Library JSON backup/export and reviewed merge imports preserve a pre-import recovery copy.
   NewPipe subscription JSON and ZIP database migration support YouTube subscriptions, history,
   ordered local playlists (including duplicates), and remote playlist bookmarks. Android preferences,
   stream positions, downloaded bytes, and unsupported services are excluded and reported.
-- This is an incremental parity rework, not a complete NewPipe port. External subtitle extraction,
-  separate video/audio merging, subscription groups, custom content tabs, extra services, and remaining
-  settings and device scenarios still need implementation or verification.
+- This is an incremental parity rework, not a complete NewPipe port. Separate video/audio merging,
+  extra services, and remaining settings and device scenarios still need implementation or verification.
+- When YouTube refuses extraction (for example "confirm you're not a bot" on a rate-limited network),
+  playback and downloads report that in plain language. DriftLoom does not try to bypass these checks.
   See [the rework checklist](docs/ios-newpipe-parity.md).
 
 The earlier playback fix was verified on an Android phone before this rebrand.

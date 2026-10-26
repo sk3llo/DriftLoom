@@ -38,11 +38,10 @@ private enum HomeSheet: String, Identifiable {
     var id: String { rawValue }
 }
 
-private enum HomeTabSelection: Hashable { case section(HomeSection), pinned(String) }
-
 struct HomeView: View {
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
+    @EnvironmentObject private var playlists: PlaylistStore
     @Binding var selection: HomeSection
     let onSearch: () -> Void
     let onPlay: (BrowseItem) -> Void
@@ -52,16 +51,25 @@ struct HomeView: View {
     @StateObject private var feed = SubscriptionFeedStore()
     @StateObject private var pinnedPage = BrowseStore()
     @State private var selectedPinned: String?
-    private var homeTabs: [HomeTabSelection] { preferences.homeSections.map(HomeTabSelection.section) + pinnedTabs.tabs.map { .pinned($0.id) } }
-    private var currentTab: Binding<HomeTabSelection> {
-        Binding(get: { selectedPinned.map(HomeTabSelection.pinned) ?? .section(selection) }, set: { tab in
-            switch tab { case let .section(section): selectedPinned = nil; selection = section
-            case let .pinned(id): selectedPinned = id }
+    @State private var selectedLocal: UUID?
+    private var homeTabs: [HomeTabKey] {
+        pinnedTabs.arrangement(sections: preferences.homeSections, localPlaylistIDs: Set(playlists.playlists.map(\.id)))
+    }
+    private var currentTab: Binding<HomeTabKey> {
+        Binding(get: { selectedLocal.map(HomeTabKey.local) ?? selectedPinned.map(HomeTabKey.pinned) ?? .section(selection) }, set: { tab in
+            switch tab {
+            case let .section(section): selectedPinned = nil; selectedLocal = nil; selection = section
+            case let .pinned(id): selectedLocal = nil; selectedPinned = id
+            case let .local(id): selectedPinned = nil; selectedLocal = id
+            }
         })
     }
-    private func tabTitle(_ tab: HomeTabSelection) -> String {
-        switch tab { case let .section(section): return section.rawValue
-        case let .pinned(id): return pinnedTabs.tabs.first { $0.id == id }?.item.title ?? "Home" }
+    private func tabTitle(_ tab: HomeTabKey) -> String {
+        switch tab {
+        case let .section(section): return section.rawValue
+        case let .pinned(id): return pinnedTabs.tabs.first { $0.id == id }?.item.title ?? "Home"
+        case let .local(id): return playlists.playlists.first { $0.id == id }?.name ?? "Playlist"
+        }
     }
     var body: some View {
         ZStack(alignment: .leading) {
@@ -83,7 +91,9 @@ struct HomeView: View {
                         .accessibilityLabel("More options")
                     }.padding(.horizontal, 6).background(Color(.systemBackground))
                     SectionStrip(values: homeTabs, selection: currentTab, title: tabTitle)
-                    if let id = selectedPinned, let tab = pinnedTabs.tabs.first(where: { $0.id == id }) {
+                    if let id = selectedLocal, playlists.playlists.contains(where: { $0.id == id }) {
+                        LocalPlaylistView(id: id, onPlay: onPlay, embedded: true).id(id)
+                    } else if let id = selectedPinned, let tab = pinnedTabs.tabs.first(where: { $0.id == id }) {
                         PinnedPageView(item: tab.item, store: pinnedPage, onPlay: onPlay)
                     } else if selection == .trending { TrendingMusicView(onPlay: onPlay) }
                     else if selection == .feed { FeedView(store: feed, onPlay: onPlay) }
@@ -109,7 +119,7 @@ struct HomeView: View {
                                     ForEach(HomeSection.allCases) { section in
                                         Button {
                                             if !preferences.homeSections.contains(section) { preferences.setHomeSections(preferences.homeSections + [section]) }
-                                            selectedPinned = nil; selection = section; menuVisible = false
+                                            selectedPinned = nil; selectedLocal = nil; selection = section; menuVisible = false
                                         } label: {
                                             Label(section.rawValue, systemImage: section.symbol)
                                                 .frame(maxWidth: .infinity, alignment: .leading).padding(16)
@@ -118,8 +128,12 @@ struct HomeView: View {
                                         }.buttonStyle(.plain).accessibilityIdentifier("drawer-section-" + section.rawValue)
                                     }
                                     ForEach(pinnedTabs.tabs) { tab in
-                                        drawerButton(tab.item.title, symbol: tab.item.kind == .channel ? "person.crop.circle" : "rectangle.stack") { selectedPinned = tab.id }
+                                        drawerButton(tab.item.title, symbol: tab.item.kind == .channel ? "person.crop.circle" : "rectangle.stack") { selectedLocal = nil; selectedPinned = tab.id }
                                             .accessibilityIdentifier("drawer-pinned-" + tab.id)
+                                    }
+                                    ForEach(playlists.playlists.filter { pinnedTabs.containsLocal($0.id) }) { playlist in
+                                        drawerButton(playlist.name, symbol: "music.note.list") { selectedPinned = nil; selectedLocal = playlist.id }
+                                            .accessibilityIdentifier("drawer-local-" + playlist.id.uuidString)
                                     }
                                     Divider().padding(.vertical, 8)
                                     drawerButton("Search", symbol: "magnifyingglass") { onSearch() }
@@ -137,7 +151,11 @@ struct HomeView: View {
                 }.zIndex(1)
             }
         }
-        .onChange(of: selection) { _ in selectedPinned = nil }
+        .onChange(of: selection) { _ in selectedPinned = nil; selectedLocal = nil }
+        .onChange(of: playlists.playlists.map(\.id)) { ids in
+            if playlists.isWritable { pinnedTabs.retainLocal(Set(ids)) }
+            if let selectedLocal, !ids.contains(selectedLocal) { self.selectedLocal = nil }
+        }
         .onChange(of: pinnedTabs.tabs) { tabs in
             if let selectedPinned, !tabs.contains(where: { $0.id == selectedPinned }) { self.selectedPinned = nil }
         }

@@ -4,6 +4,7 @@ import Combine
 import DriftLoomPlayback
 import Foundation
 import UIKit
+import Network
 
 @MainActor
 final class DownloadManager: ObservableObject {
@@ -14,12 +15,18 @@ final class DownloadManager: ObservableObject {
     private let bridge: DownloadDelegate
     private var files: URLSession!
     private var hls: AVAssetDownloadURLSession!
+    private var wifiFiles: URLSession!
+    private var wifiHLS: AVAssetDownloadURLSession!
+    private let networkMonitor = NWPathMonitor()
+    private var networkConnected = false
+    private var networkCellular = false
     private var subscriptions = Set<AnyCancellable>()
     private var preparations: [UUID: Task<Void, Never>] = [:]
     private var completions: [String: () -> Void] = [:]
     private var connected = false
     private var validations = 0
     private var finishedSessions = Set<String>()
+    @Published var operationError: String?
     @Published private(set) var reconnecting = true
 
     private init() {
@@ -33,11 +40,30 @@ final class DownloadManager: ObservableObject {
            arguments[index + 1].range(of: "^[A-Za-z0-9_-]{1,64}$", options: .regularExpression) != nil { suffix = ".test." + arguments[index + 1] }
 #endif
         let configuration = URLSessionConfiguration.background(withIdentifier: Self.fileSessionID + suffix)
-        configuration.sessionSendsLaunchEvents = true; configuration.isDiscretionary = false
+        DownloadNetwork.any.configure(configuration)
         files = URLSession(configuration: configuration, delegate: bridge, delegateQueue: nil)
         let hlsConfiguration = URLSessionConfiguration.background(withIdentifier: Self.hlsSessionID + suffix)
-        hlsConfiguration.sessionSendsLaunchEvents = true; hlsConfiguration.isDiscretionary = false
+        DownloadNetwork.any.configure(hlsConfiguration)
         hls = AVAssetDownloadURLSession(configuration: hlsConfiguration, assetDownloadDelegate: bridge, delegateQueue: nil)
+        let wifiConfiguration = URLSessionConfiguration.background(withIdentifier: Self.fileSessionID + ".wifi" + suffix)
+        DownloadNetwork.wifiOnly.configure(wifiConfiguration)
+        wifiFiles = URLSession(configuration: wifiConfiguration, delegate: bridge, delegateQueue: nil)
+        let wifiHLSConfiguration = URLSessionConfiguration.background(withIdentifier: Self.hlsSessionID + ".wifi" + suffix)
+        DownloadNetwork.wifiOnly.configure(wifiHLSConfiguration)
+        wifiHLS = AVAssetDownloadURLSession(configuration: wifiHLSConfiguration, assetDownloadDelegate: bridge, delegateQueue: nil)
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+        let forcedOffline = ProcessInfo.processInfo.arguments.contains("--download-smoke-no-network")
+#else
+        let forcedOffline = false
+#endif
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            let available = path.status == .satisfied && !forcedOffline, cellular = path.usesInterfaceType(.cellular)
+            Task { @MainActor in
+                self?.networkConnected = available; self?.networkCellular = cellular
+                self?.resumeWaitingDownloads()
+            }
+        }
+        networkMonitor.start(queue: DispatchQueue(label: "DriftLoom.downloadNetwork"))
         library.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &subscriptions)
         Task { await reconnect() }
     }
@@ -53,46 +79,66 @@ final class DownloadManager: ObservableObject {
         await withCheckedContinuation { continuation in session.getAllTasks { continuation.resume(returning: $0) } }
     }
     private func reconnect() async {
-        let fileTasks = await allTasks(files)
-        let hlsTasks = await allTasks(hls)
-        let tasks = fileTasks + hlsTasks
+        var tasks: [URLSessionTask] = []
+        for session in [files!, hls!, wifiFiles!, wifiHLS!] { tasks += await allTasks(session) }
         let descriptions = Set(tasks.compactMap(\.taskDescription))
         for task in tasks where matching(task.taskDescription) == nil { task.cancel() }
         for var record in records where record.state == .preparing || record.state == .downloading {
+            if record.state == .preparing && record.waitingForNetwork == true { continue }
             if !descriptions.contains(description(record)) {
                 record.state = .failed; record.error = "Download interrupted. Retry to obtain a fresh stream."
                 _ = library.update(record)
             }
         }
-        connected = true; reconnecting = false
+        connected = true; reconnecting = false; resumeWaitingDownloads()
     }
-    @discardableResult func start(item: BrowseItem, choice: DownloadChoice) -> UUID? {
+    @discardableResult func start(item: BrowseItem, choice: DownloadChoice, subtitleLanguage: String? = nil) -> UUID? {
         guard connected, library.isWritable else { return nil }
-        let record = DownloadRecord(item: item, choice: choice)
+        let record = DownloadRecord(item: item, choice: choice, subtitleLanguage: subtitleLanguage)
         guard library.add(record) else { return nil }
         retry(record.id); return record.id
     }
     func retry(_ id: UUID) {
         guard connected, var record = records.first(where: { $0.id == id }), record.state != .completed else { return }
-        preparations[id]?.cancel()
+        preparations[id]?.cancel(); preparations[id] = nil
         record.transferID = UUID(); record.state = .preparing; record.error = nil; record.progress = 0; record.localPath = nil
-        guard library.update(record) else { return }
+        record.network = AppPreferences(defaults: makeAppDefaults()).downloadNetwork
+        record.waitingForNetwork = !(record.network ?? .any).permits(connected: networkConnected, cellular: networkCellular)
+        guard library.update(record), record.waitingForNetwork != true else { return }
+        prepare(record)
+    }
+    private func resumeWaitingDownloads() {
+        guard connected else { return }
+        for var record in records where record.state == .preparing && record.waitingForNetwork == true && preparations[record.id] == nil {
+            guard (record.network ?? .any).permits(connected: networkConnected, cellular: networkCellular) else { continue }
+            record.waitingForNetwork = false
+            if library.update(record) { prepare(record) }
+        }
+    }
+    private func prepare(_ record: DownloadRecord) {
+        let id = record.id
         let transfer = description(record)
         preparations[id] = Task { [weak self] in
             do {
                 let source = try await YouTubeDownloadResolver().source(videoID: record.item.contentID, choice: record.choice)
                 try Task.checkCancellation()
+                await self?.saveSubtitles(record, transfer: transfer)
                 guard let self, var current = self.matching(transfer), current.state == .preparing else { return }
                 let task: URLSessionTask
                 if source.choice.kind == .hls {
-                    let asset = AVURLAsset(url: source.url)
+                    let asset = AVURLAsset(url: source.url, options: [AVURLAssetAllowsCellularAccessKey: record.network != .wifiOnly])
                     let duration = try await asset.load(.duration)
                     try Task.checkCancellation()
                     guard duration.isNumeric, duration.seconds > 0 else { throw BrowseError.unavailable("Live streams cannot be saved as offline downloads.") }
                     guard self.matching(transfer)?.state == .preparing else { return }
-                    guard let download = self.hls.makeAssetDownloadTask(asset: asset, assetTitle: record.item.title, assetArtworkData: nil, options: nil) else { throw PlaybackError.noPlayableStream }
+                    let session = record.network == .wifiOnly ? self.wifiHLS! : self.hls!
+                    guard let download = session.makeAssetDownloadTask(asset: asset, assetTitle: record.item.title, assetArtworkData: nil, options: nil) else { throw PlaybackError.noPlayableStream }
                     task = download
-                } else { task = self.files.downloadTask(with: source.url) }
+                } else {
+                    let session = record.network == .wifiOnly ? self.wifiFiles! : self.files!
+                    var request = URLRequest(url: source.url); request.allowsCellularAccess = record.network != .wifiOnly
+                    task = session.downloadTask(with: request)
+                }
                 task.taskDescription = transfer; current.state = .downloading
                 guard self.library.update(current) else { task.cancel(); return }
                 task.resume()
@@ -105,31 +151,72 @@ final class DownloadManager: ObservableObject {
         guard var record = records.first(where: { $0.id == id }), record.state != .completed else { return }
         preparations[id]?.cancel(); preparations[id] = nil
         let transfer = description(record)
-        record.state = .cancelled; record.error = nil; record.transferID = nil
+        record.state = .cancelled; record.error = nil; record.transferID = nil; record.waitingForNetwork = false
         guard library.update(record) else { return }
         Task {
-            let tasks = await allTasks(files)
-            let assets = await allTasks(hls)
-            for task in tasks + assets where task.taskDescription == transfer { task.cancel() }
+            for session in [files!, hls!, wifiFiles!, wifiHLS!] {
+                for task in await allTasks(session) where task.taskDescription == transfer { task.cancel() }
+            }
         }
     }
     func remove(_ id: UUID) {
+        operationError = nil
         guard let record = records.first(where: { $0.id == id }) else { return }
         if record.state != .completed { cancel(id) }
-        if let url = localURL(record) {
+        if let url = managedURL(record) {
             do { try FileManager.default.removeItem(at: url) }
-            catch { return }
+            catch { operationError = "The downloaded media couldn't be deleted. Try again after playback stops."; return }
         }
+        if let url = subtitleURL(record) { try? FileManager.default.removeItem(at: url) }
         _ = library.remove(id)
     }
+    var storageURLs: [URL] { records.compactMap(managedURL) + records.compactMap(subtitleURL) }
+    /// Saved subtitles for a completed download of this video, if any.
+    func localSubtitles(videoID: String) -> (SubtitleTrack, [SubtitleCue])? {
+        records.lazy.filter { $0.item.contentID == videoID && $0.state == .completed }
+            .compactMap(subtitleURL).compactMap(SubtitleFiles.load).first
+    }
+    private func subtitleURL(_ record: DownloadRecord) -> URL? {
+        guard let path = record.subtitlePath, path.hasPrefix("Library/Application Support/DriftLoom/Media/"), path.hasSuffix(".subtitles.json") else { return nil }
+        let home = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true).standardizedFileURL.resolvingSymlinksInPath()
+        let url = home.appendingPathComponent(path).standardizedFileURL.resolvingSymlinksInPath()
+        guard DownloadPaths.relativePath(for: url, home: home) == path, FileManager.default.fileExists(atPath: url.path) else { return nil }
+        return url
+    }
+    /// Best effort: a subtitle failure is reported on the job but never blocks the media download.
+    private func saveSubtitles(_ record: DownloadRecord, transfer: String) async {
+        guard let language = record.subtitleLanguage else { return }
+        var outcome: (path: String?, error: String?) = (nil, nil)
+        do {
+            let client = YouTubeSubtitleClient()
+            guard let track = SubtitleSelection.preferred(try await client.tracks(videoID: record.item.contentID), language: language) else {
+                throw BrowseError.unavailable("Subtitles in this language aren't available for this video.")
+            }
+            let cues = try await client.cues(for: track)
+            let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DriftLoom/Media")
+            let url = directory.appendingPathComponent(record.id.uuidString + ".subtitles.json")
+            try SubtitleFiles.save(track, cues: cues, to: url)
+            var local = url; var values = URLResourceValues(); values.isExcludedFromBackup = true
+            try? local.setResourceValues(values)
+            outcome.path = DownloadPaths.relativePath(for: url, home: URL(fileURLWithPath: NSHomeDirectory()))
+        } catch is CancellationError { return }
+        catch { outcome.error = error.localizedDescription }
+        guard var current = matching(transfer) else { return }
+        current.subtitlePath = outcome.path; current.subtitleError = outcome.error
+        _ = library.update(current)
+    }
     func localURL(_ record: DownloadRecord) -> URL? {
+        guard let url = managedURL(record) else { return nil }
+        if record.choice.kind == .hls, AVURLAsset(url: url).assetCache?.isPlayableOffline != true { return nil }
+        return url
+    }
+    private func managedURL(_ record: DownloadRecord) -> URL? {
         guard record.state == .completed, let path = record.localPath else { return nil }
         let home = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true).standardizedFileURL.resolvingSymlinksInPath()
         let url = home.appendingPathComponent(path).standardizedFileURL.resolvingSymlinksInPath()
-        guard url.path.hasPrefix(home.path + "/"),
+        guard url.path.hasPrefix(home.path + "/"), DownloadPaths.relativePath(for: url, home: home) == path,
               (path.hasPrefix("Library/Application Support/DriftLoom/Media/") || (path.hasPrefix("Library/com.apple.UserManagedAssets.") && path.split(separator: "/").count == 3 && url.pathExtension == "movpkg")),
               FileManager.default.fileExists(atPath: url.path) else { return nil }
-        if record.choice.kind == .hls, AVURLAsset(url: url).assetCache?.isPlayableOffline != true { return nil }
         return url
     }
     private func description(_ record: DownloadRecord) -> String { record.id.uuidString + ":" + (record.transferID?.uuidString ?? "") }
