@@ -12,7 +12,14 @@ public actor YouTubeChartsClient {
         self.session = session ?? URLSession(configuration: configuration)
     }
     public func music(locale: ContentLocale) async throws -> BrowsePage {
-        var page = URLComponents(string: "https://charts.youtube.com/charts/TrendingVideos/\(locale.country.lowercased())")!
+        try await chart(locale: locale, type: "TRENDING_VIDEOS", page: "TrendingVideos", title: "Trending music")
+    }
+    /// Trending movie and show trailers, the chart behind NewPipe's trailers kiosk.
+    public func trailers(locale: ContentLocale) async throws -> BrowsePage {
+        try await chart(locale: locale, type: "TRENDING_MOVIES", page: "TrendingMovies", title: "Movie trailers")
+    }
+    private func chart(locale: ContentLocale, type: String, page path: String, title: String) async throws -> BrowsePage {
+        var page = URLComponents(string: "https://charts.youtube.com/charts/\(path)/\(locale.country.lowercased())")!
         page.queryItems = [URLQueryItem(name: "hl", value: locale.language)]
         let htmlData = try await fetch(URLRequest(url: page.url!))
         guard let html = String(data: htmlData, encoding: .utf8),
@@ -28,11 +35,11 @@ public actor YouTubeChartsClient {
             "context": ["client": ["clientName": "WEB_MUSIC_ANALYTICS", "clientVersion": version,
                                       "hl": locale.language, "gl": locale.country, "utcOffsetMinutes": 0]],
             "browseId": "FEmusic_analytics_charts_home",
-            "query": "perspective=CHART_DETAILS&chart_params_country_code=\(locale.country)&chart_params_chart_type=TRENDING_VIDEOS"
+            "query": "perspective=CHART_DETAILS&chart_params_country_code=\(locale.country)&chart_params_chart_type=\(type)"
         ])
         let data = try await fetch(request)
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw BrowseError.unsupportedResponse }
-        return try ChartsParser.music(root, country: locale.country)
+        return try ChartsParser.music(root, country: locale.country, title: title)
     }
     private func fetch(_ request: URLRequest) async throws -> Data {
         let (data, response) = try await session.data(for: request)
@@ -45,7 +52,7 @@ public actor YouTubeChartsClient {
 
 enum ChartsParser {
     typealias Object = [String: Any]
-    static func music(_ root: Object, country: String) throws -> BrowsePage {
+    static func music(_ root: Object, country: String, title: String = "Trending music") throws -> BrowsePage {
         guard let sections = ((root["contents"] as? Object)?["sectionListRenderer"] as? Object)?["contents"] as? [Object] else { throw BrowseError.unsupportedResponse }
         var rows: [Object] = [], found = false
         for section in sections {
@@ -74,6 +81,6 @@ enum ChartsParser {
             return BrowseItem(contentID: id, kind: .video, title: title, subtitle: row["channelName"] as? String ?? "",
                               thumbnail: url, duration: duration, channelID: channel)
         }
-        return BrowsePage(title: "Trending music · " + country, items: items)
+        return BrowsePage(title: title + " · " + country, items: items)
     }
 }

@@ -13,7 +13,12 @@ enum NewPipeDatabase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let file = directory.appendingPathComponent("database.sqlite")
-        try data.write(to: file, options: .atomic)
+        // Android writes NewPipe's database in WAL mode, and a backup holds only the main file.
+        // A read-only connection can't open a WAL database without creating its shared-memory file,
+        // so mark this private temporary copy as a rollback-journal database (header bytes 18-19).
+        var copy = data
+        if copy.count > 19, copy[18] == 2, copy[19] == 2 { copy[18] = 1; copy[19] = 1 }
+        try copy.write(to: file, options: .atomic)
         var handle: OpaquePointer?
         guard sqlite3_open_v2(file.path, &handle, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK, let db = handle else {
             if let handle { sqlite3_close(handle) }; throw CocoaError(.fileReadCorruptFile)
@@ -144,7 +149,7 @@ enum NewPipeDatabase {
             positions = Array(positions.sorted { (order[$0.videoID] ?? .max) < (order[$1.videoID] ?? .max) }.prefix(500))
         }
         guard PlaylistStore.valid(playlists) else { throw CocoaError(.fileReadCorruptFile) }
-        var plan = LibraryImportPlan(summary: "Merge \(library.subscriptions.count) YouTube subscriptions, \(library.history.count) history entries and \(positions.count) resume positions and \(playlists.playlists.count) local playlists and \(playlists.bookmarks.count) playlist bookmarks and \(importedGroups?.groups.count ?? 0) subscription groups from NewPipe.", warnings: ["Android preferences, group icons, and downloaded media aren't migrated. Resume positions are added only for imported history while watch history is on, and never replace positions saved on this device."] + (skipped == 0 ? [] : ["\(skipped) unsupported or invalid entries were skipped."]), library: library, playlists: playlists, groups: importedGroups)
+        var plan = LibraryImportPlan(summary: "Merge \(library.subscriptions.count) YouTube subscriptions, \(library.history.count) history entries and \(positions.count) resume positions and \(playlists.playlists.count) local playlists and \(playlists.bookmarks.count) playlist bookmarks and \(importedGroups?.groups.count ?? 0) subscription groups from NewPipe.", warnings: ["Group icons and downloaded media aren't migrated; settings come only from preferences.json and are applied only if you choose to. Resume positions are added only for imported history while watch history is on, and never replace positions saved on this device."] + (skipped == 0 ? [] : ["\(skipped) unsupported or invalid entries were skipped."]), library: library, playlists: playlists, groups: importedGroups)
         plan.positions = positions
         return plan
     }

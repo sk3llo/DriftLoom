@@ -13,6 +13,17 @@ struct BrowseProbe {
             print("PASS: official YouTube chart returned \(page.items.count) videos in published order")
             return
         }
+        if CommandLine.arguments.contains("--kiosks") {
+            for kiosk in YouTubeKiosk.allCases {
+                do {
+                    let page = try await YouTubeBrowsingClient().page(for: .kiosk(kiosk))
+                    let kinds = Dictionary(grouping: page.items, by: \.kind).mapValues(\.count)
+                    print((page.items.isEmpty ? "EMPTY" : "PASS") + ": \(kiosk.rawValue) title=\(page.title) items=\(page.items.count) \(kinds) more=\(page.next != nil)")
+                    if let first = page.items.first { print("    first: \(first.kind) \(first.title.prefix(60))") }
+                } catch { print("FAIL: \(kiosk.rawValue): \(error.localizedDescription)") }
+            }
+            return
+        }
         if CommandLine.arguments.contains("--suggestions") {
             let suggestions = try await YouTubeSuggestionsClient().suggestions(for: "newpipe", locale: ContentLocale())
             guard !suggestions.isEmpty else { throw BrowseError.unavailable("Expected search suggestions") }

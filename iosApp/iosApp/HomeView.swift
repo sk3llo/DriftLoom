@@ -96,6 +96,7 @@ struct HomeView: View {
                     } else if let id = selectedPinned, let tab = pinnedTabs.tabs.first(where: { $0.id == id }) {
                         PinnedPageView(item: tab.item, store: pinnedPage, onPlay: onPlay)
                     } else if selection == .trending { TrendingMusicView(onPlay: onPlay) }
+                    else if let kiosk = selection.kiosk { KioskView(kiosk: kiosk, onPlay: onPlay).id(kiosk) }
                     else if selection == .feed { FeedView(store: feed, onPlay: onPlay) }
                     else if selection == .bookmarks { BookmarksView(onPlay: onPlay) }
                     else { LibrarySectionView(section: selection, onPlay: onPlay).id(selection) }
@@ -183,6 +184,20 @@ struct HomeView: View {
         Button { menuVisible = false; action() } label: {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading).padding(16).foregroundStyle(.primary)
         }.buttonStyle(.plain).accessibilityIdentifier("drawer-" + title)
+    }
+}
+
+private struct KioskView: View {
+    let kiosk: YouTubeKiosk
+    let onPlay: (BrowseItem) -> Void
+    @EnvironmentObject private var preferences: AppPreferences
+    @StateObject private var store = BrowseStore()
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("YouTube · " + kiosk.rawValue + " · " + preferences.contentLocale.country).font(.caption).foregroundStyle(.secondary).padding(8)
+                .accessibilityIdentifier("kioskSource")
+            BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(.kiosk(kiosk)) } })
+        }.task(id: preferences.contentLocale) { await store.load(.kiosk(kiosk)) }
     }
 }
 

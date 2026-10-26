@@ -14,6 +14,8 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
     // --subtitle-smoke LANG: turn on subtitles in that language and require a visible cue.
     let subtitleFlag = arguments.firstIndex(of: "--subtitle-smoke")
     if let subtitleFlag, arguments.indices.contains(subtitleFlag + 1) { session.preferredSubtitleLanguage = arguments[subtitleFlag + 1] }
+    // --subtitle-smoke-translate: allow YouTube's machine translation when no native track matches.
+    if arguments.contains("--subtitle-smoke-translate") { session.translatesSubtitles = true }
     var subtitleReported = subtitleFlag == nil
     if let flag, arguments.indices.contains(flag + 1) { session.open(arguments[flag + 1]) }
     // --playback-smoke-merged: play the highest separate video+audio format this device decodes.

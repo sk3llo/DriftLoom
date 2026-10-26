@@ -207,7 +207,8 @@ final class DownloadManager: ObservableObject {
         var outcome: (path: String?, error: String?) = (nil, nil)
         do {
             let client = YouTubeSubtitleClient()
-            guard let track = SubtitleSelection.preferred(try await client.tracks(videoID: record.item.contentID), language: language) else {
+            let translates = AppPreferences(defaults: makeAppDefaults()).translatesSubtitles
+            guard let track = try await client.catalog(videoID: record.item.contentID).preferred(language: language, allowTranslation: translates) else {
                 throw BrowseError.unavailable("Subtitles in this language aren't available for this video.")
             }
             let cues = try await client.cues(for: track)

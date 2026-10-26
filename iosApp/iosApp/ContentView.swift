@@ -78,6 +78,7 @@ struct ContentView: View {
         }
         .onChange(of: preferences.resumesPlayback) { playback.resumesPositions = $0 }
         .onChange(of: preferences.subtitleLanguage) { playback.preferredSubtitleLanguage = $0 }
+        .onChange(of: preferences.translatesSubtitles) { playback.translatesSubtitles = $0 }
         .onChange(of: library.historyEnabled) { playback.remembersPositions = $0 && library.isWritable }
         .onChange(of: library.isWritable) { playback.remembersPositions = $0 && library.historyEnabled }
         .onChange(of: library.history.map { $0.item.contentID }) { ids in
@@ -87,6 +88,7 @@ struct ContentView: View {
             playback.remembersPositions = library.historyEnabled && library.isWritable
             playback.resumesPositions = preferences.resumesPlayback
             playback.preferredSubtitleLanguage = preferences.subtitleLanguage
+            playback.translatesSubtitles = preferences.translatesSubtitles
             playback.onSubtitleChoice = { [weak preferences] in preferences?.setSubtitleLanguage($0) }
             if library.isWritable { positions.retainOnly(Set(library.history.map { $0.item.contentID })) }
             selectedSection = preferences.homeSections.first ?? .subscriptions
@@ -105,6 +107,9 @@ struct ContentView: View {
             await runPlaybackSmokeCheck(playback)
             await runBackgroundSmokeCheck(playback)
             await runDownloadSmokeCheck(playback)
+            await runKioskSmokeCheck()
+            await runImportSmokeCheck(library: library, playlists: playlists, groups: subscriptionGroups, positions: positions,
+                                      preferences: preferences, pinnedTabs: pinnedTabs)
 #endif
         }
     }

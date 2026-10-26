@@ -6,8 +6,23 @@ public enum BrowseRoute: Hashable, Sendable {
     case search(String), channel(String), playlist(String), related(String)
     case advancedSearch(String, SearchOptions)
     case trendingMusic
+    case kiosk(YouTubeKiosk)
     case filteredSearch(String, SearchFilter), channelTab(String, ChannelTab)
     case mix(playlist: String, seed: String)
+}
+
+/// YouTube's own curated pages, matching the kiosks NewPipe's extractor offers.
+public enum YouTubeKiosk: String, CaseIterable, Codable, Sendable {
+    case live = "Live", gaming = "Gaming", podcasts = "Podcasts", trailers = "Movie trailers"
+    /// Page path on www.youtube.com; trailers come from YouTube Charts instead.
+    var path: String? {
+        switch self {
+        case .live: return "/channel/UC4R8DWoMoI7CAwX8_LjQHig/livetab"
+        case .gaming: return "/channel/UCOpNcN46UbXVtpKMrmU4Abg/trending"
+        case .podcasts: return "/podcasts"
+        case .trailers: return nil
+        }
+    }
 }
 
 public enum SearchFilter: String, CaseIterable, Sendable {
@@ -116,6 +131,7 @@ public actor YouTubeBrowsingClient: Browsing {
 
     public func page(for route: BrowseRoute) async throws -> BrowsePage {
         if route == .trendingMusic { return try await YouTubeChartsClient(session: session).music(locale: .current()) }
+        if route == .kiosk(.trailers) { return try await YouTubeChartsClient(session: session).trailers(locale: .current()) }
         var components = URLComponents(string: "https://www.youtube.com")!
         let title: String
         let isSearch: Bool
@@ -125,6 +141,10 @@ public actor YouTubeBrowsingClient: Browsing {
         var query = [URLQueryItem(name: "hl", value: locale.language), URLQueryItem(name: "gl", value: locale.country)]
         switch route {
         case .trendingMusic: throw BrowseError.invalidInput // Handled by the verified Charts source above.
+        case let .kiosk(kiosk):
+            guard let path = kiosk.path else { throw BrowseError.invalidInput }
+            components.path = path
+            title = kiosk.rawValue; isSearch = false
         case let .search(value), let .filteredSearch(value, _), let .advancedSearch(value, _):
             let value = value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !value.isEmpty, value.count <= 500 else { throw BrowseError.invalidInput }

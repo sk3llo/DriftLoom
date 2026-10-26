@@ -19,6 +19,9 @@ struct LibraryTransferView: View {
     @EnvironmentObject private var playlists: PlaylistStore
     @EnvironmentObject private var groups: SubscriptionGroups
     @EnvironmentObject private var positions: PlaybackPositions
+    @EnvironmentObject private var preferences: AppPreferences
+    @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
+    @State private var appliesSettings = false
     @State private var backup = LibraryBackupFile()
     @State private var exporting = false
     @State private var importing = false
@@ -38,17 +41,30 @@ struct LibraryTransferView: View {
                 Text("Choose a DriftLoom library backup or a NewPipe subscriptions JSON export or ZIP database backup. Review the import before merging. Existing items and privacy settings are kept; a recovery copy is saved on this device.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button("Choose import file") { importing = true }.disabled(!library.isWritable || !playlists.isWritable || !groups.isWritable)
-                Text("NewPipe ZIP migration supports YouTube subscriptions, history with resume positions, local playlists, and subscription groups. Android preferences and downloaded media are excluded; unsupported entries are reported in the preview.")
+                Text("NewPipe ZIP migration supports YouTube subscriptions, history with resume positions, local playlists, subscription groups, and optionally your NewPipe settings and home tabs. Java-serialized settings files are never read, and downloaded media isn't migrated; unsupported entries are reported in the preview.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             if let pending {
                 Section("Import preview") {
                     Text(pending.summary)
                     ForEach(pending.warnings, id: \.self) { Text($0).foregroundStyle(.secondary) }
+                    if let settings = pending.settings {
+                        Toggle("Also apply these NewPipe settings", isOn: $appliesSettings).accessibilityIdentifier("applyNewPipeSettings")
+                        ForEach(settings.changes, id: \.self) { Text($0).font(.footnote) }
+                        if settings.skippedTabs > 0 {
+                            Text("\(settings.skippedTabs) home tabs without a DriftLoom equivalent (local playlists, feed groups, other services) are skipped.")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
                     Button("Merge imported library") {
                         do {
                             try LibraryTransfer.apply(pending, library: library, playlists: playlists, groups: groups, positions: positions)
-                            self.pending = nil; message = "Import complete. Existing items were kept and a recovery copy was saved."
+                            if appliesSettings, let settings = pending.settings {
+                                LibraryTransfer.applySettings(settings, preferences: preferences, library: library, pinnedTabs: pinnedTabs)
+                            }
+                            message = "Import complete. Existing items were kept and a recovery copy was saved."
+                                + (appliesSettings && pending.settings != nil ? " NewPipe settings were applied." : "")
+                            self.pending = nil; appliesSettings = false
                         } catch { message = "Import failed: " + error.localizedDescription }
                     }
                     Button("Cancel import", role: .cancel) { self.pending = nil }

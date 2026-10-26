@@ -15,6 +15,8 @@ public struct LibraryImportPlan {
     var groups: SubscriptionGroupDocument? = nil
     /// Resume points for imported history entries (NewPipe `stream_state`).
     public var positions: [ImportedPosition] = []
+    /// Settings from NewPipe's preferences.json, applied only when the user opts in.
+    public var settings: MigratedSettings?
 }
 
 @MainActor
@@ -47,7 +49,14 @@ public enum LibraryTransfer {
         return data
     }
     public static func preview(_ data: Data) throws -> LibraryImportPlan {
-        if data.starts(with: [0x50, 0x4b]) { return try NewPipeDatabase.read(NewPipeArchive.database(data)) }
+        if data.starts(with: [0x50, 0x4b]) {
+            var plan = try NewPipeDatabase.read(NewPipeArchive.database(data))
+            // A malformed preferences file never blocks the library import.
+            if let json = try? NewPipeArchive.preferences(data), let settings = try? NewPipePreferences.parse(json), !settings.isEmpty {
+                plan.settings = settings
+            }
+            return plan
+        }
         guard data.count <= 20_000_000 else { throw BrowseError.unavailable("This import exceeds the 20 MB limit.") }
         let decoder = JSONDecoder()
         if let object = try JSONSerialization.jsonObject(with: data) as? [String: Any], object["format"] != nil {
@@ -139,6 +148,35 @@ public enum LibraryTransfer {
         if library.historyEnabled, let positions {
             let history = Set(library.history.map(\.item.contentID))
             for position in plan.positions where history.contains(position.videoID) { positions.importPosition(position) }
+        }
+    }
+    /// Apply migrated NewPipe settings. Called separately from `apply`, after the user opted in.
+    public static func applySettings(_ settings: MigratedSettings, preferences: AppPreferences, library: LibraryStore, pinnedTabs: PinnedHomeTabs) {
+        if let appearance = settings.appearance { preferences.setAppearance(appearance) }
+        if settings.contentLanguage != nil || settings.contentCountry != nil {
+            preferences.setContentLocale(language: settings.contentLanguage ?? preferences.contentLocale.language,
+                                         country: settings.contentCountry ?? preferences.contentLocale.country)
+        }
+        if let value = settings.recordsSearchHistory { preferences.setRecordsSearchHistory(value) }
+        if let value = settings.recordsWatchHistory, library.isWritable { library.setHistoryEnabled(value) }
+        if let value = settings.resumesPlayback { preferences.setResumesPlayback(value) }
+        if let value = settings.usesSearchSuggestions { preferences.setUsesSearchSuggestions(value) }
+        if let value = settings.downloadNetwork { preferences.setDownloadNetwork(value) }
+        let sections = settings.homeTabs.compactMap { if case let .section(section) = $0 { return section }; return nil }
+        guard !sections.isEmpty else { return }
+        preferences.setHomeSections(sections)
+        var keys: [HomeTabKey] = []
+        for tab in settings.homeTabs {
+            switch tab {
+            case let .section(section): keys.append(.section(section))
+            case let .pinned(item):
+                if !pinnedTabs.contains(item) { pinnedTabs.toggle(item) }
+                if pinnedTabs.contains(item) { keys.append(.pinned(item.id)) }
+            }
+        }
+        // Keep NewPipe's interleaved order only when pinned tabs are part of it.
+        if keys.contains(where: { if case .pinned = $0 { return true }; return false }) {
+            pinnedTabs.setOrder(keys + pinnedTabs.arrangement(sections: sections, localPlaylistIDs: Set(pinnedTabs.localPlaylists)).filter { !keys.contains($0) })
         }
     }
     static func transaction(directory: URL, library: Data, playlists: Data, groups: Data? = nil,

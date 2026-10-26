@@ -14,7 +14,7 @@ struct DownloadPicker: View {
     @EnvironmentObject private var preferences: AppPreferences
     private var subtitleLanguages: [String] {
         var seen = Set<String>()
-        return subtitleTracks.map { SubtitleSelection.baseLanguage($0.languageCode) }.filter { seen.insert($0).inserted }
+        return subtitleTracks.map { SubtitleSelection.baseLanguage($0.displayLanguage) }.filter { seen.insert($0).inserted }
     }
     var body: some View {
         AppNavigation {
@@ -42,10 +42,15 @@ struct DownloadPicker: View {
             .navigationTitle("Download").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { dismiss() } } }
             .task {
-                if let tracks = try? await YouTubeSubtitleClient().tracks(videoID: item.contentID) {
-                    subtitleTracks = tracks
-                    subtitleLanguage = SubtitleSelection.preferred(tracks, language: preferences.subtitleLanguage)
-                        .map { SubtitleSelection.baseLanguage($0.languageCode) }
+                if let catalog = try? await YouTubeSubtitleClient().catalog(videoID: item.contentID) {
+                    subtitleTracks = catalog.tracks
+                    subtitleLanguage = catalog.preferred(language: preferences.subtitleLanguage, allowTranslation: preferences.translatesSubtitles)
+                        .map { SubtitleSelection.baseLanguage($0.displayLanguage) }
+                    // A translated preference isn't among the native languages; list it so the picker can show it.
+                    if let language = subtitleLanguage, !subtitleLanguages.contains(language), let source = catalog.translationSource,
+                       let target = catalog.translations.first(where: { SubtitleSelection.baseLanguage($0.code) == language }) {
+                        subtitleTracks.append(source.translated(to: target))
+                    }
                 }
             }
             .task {

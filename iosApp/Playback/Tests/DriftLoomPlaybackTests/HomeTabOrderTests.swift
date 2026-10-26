@@ -69,3 +69,22 @@ final class HomeTabOrderTests: XCTestCase {
         }
     }
 }
+
+@MainActor
+final class KioskSectionTests: XCTestCase {
+    func testKiosksAreOptInAndMapToYouTubePages() {
+        let name = "DriftLoom.Tests." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let preferences = AppPreferences(defaults: defaults)
+        XCTAssertEqual(preferences.homeSections, HomeSection.defaultSections)
+        XCTAssertTrue(HomeSection.defaultSections.allSatisfy { $0.kiosk == nil })
+        XCTAssertEqual([HomeSection.live, .gaming, .podcasts, .trailers].compactMap(\.kiosk), YouTubeKiosk.allCases)
+        preferences.setHomeSections([.gaming, .subscriptions])
+        XCTAssertEqual(AppPreferences(defaults: defaults).homeSections, [.gaming, .subscriptions])
+        // An older build's saved list without kiosks stays exactly as it was.
+        defaults.set(["History", "Bookmarked"], forKey: "homeSections")
+        XCTAssertEqual(AppPreferences(defaults: defaults).homeSections, [.history, .bookmarks])
+        XCTAssertNotNil(YouTubeKiosk.live.path); XCTAssertNil(YouTubeKiosk.trailers.path)
+    }
+}

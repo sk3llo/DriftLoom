@@ -314,6 +314,19 @@ final class NavigationTests: XCTestCase {
         XCTAssertLessThan(app.buttons["ROAD TRIP"].frame.minX, app.buttons["SUBSCRIPTIONS"].frame.minX, "The interleaved order survives relaunch")
     }
 
+    func testKioskFromDrawerLoadsYouTubeLiveAndStaysOnHome() {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        let live = app.descendants(matching: .any)["drawer-section-Live"].firstMatch
+        if live.exists, !live.isHittable { app.swipeUp() }
+        XCTAssertTrue(live.waitForExistence(timeout: 5)); live.tap()
+        XCTAssertTrue(app.staticTexts["kioskSource"].waitForExistence(timeout: 10))
+        let video = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browseVideo-'")).firstMatch
+        XCTAssertTrue(video.waitForExistence(timeout: 45), "The Live kiosk should list videos")
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["LIVE"].waitForExistence(timeout: 10), "Opening a kiosk from the drawer adds it to home")
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

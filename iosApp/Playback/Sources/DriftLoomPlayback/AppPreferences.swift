@@ -4,7 +4,20 @@ import Foundation
 
 public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
     case subscriptions = "Subscriptions", feed = "What's new", bookmarks = "Bookmarked", history = "History", trending = "Trending music"
+    case live = "Live", gaming = "Gaming", podcasts = "Podcasts", trailers = "Movie trailers"
     public var id: String { rawValue }
+    /// Shown on a fresh install; the YouTube kiosks are opt-in from the drawer or settings.
+    public static let defaultSections: [HomeSection] = [.subscriptions, .feed, .bookmarks, .history, .trending]
+    /// The YouTube page behind a kiosk section.
+    public var kiosk: YouTubeKiosk? {
+        switch self {
+        case .live: return .live
+        case .gaming: return .gaming
+        case .podcasts: return .podcasts
+        case .trailers: return .trailers
+        default: return nil
+        }
+    }
     public var symbol: String {
         switch self {
         case .subscriptions: return "person.crop.circle"
@@ -12,6 +25,10 @@ public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
         case .bookmarks: return "bookmark"
         case .history: return "clock"
         case .trending: return "chart.line.uptrend.xyaxis"
+        case .live: return "dot.radiowaves.left.and.right"
+        case .gaming: return "gamecontroller"
+        case .podcasts: return "mic"
+        case .trailers: return "film"
         }
     }
 }
@@ -31,19 +48,22 @@ public final class AppPreferences: ObservableObject {
     /// Base language for automatic subtitles; nil means subtitles start off.
     @Published public private(set) var subtitleLanguage: String?
     @Published public private(set) var subtitleSize: SubtitleSize
+    /// Fall back to YouTube's machine translation when no subtitles exist in the chosen language.
+    @Published public private(set) var translatesSubtitles: Bool
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         downloadNetwork = defaults.string(forKey: "downloadNetwork").flatMap(DownloadNetwork.init(rawValue:)) ?? .wifiOnly
         subtitleLanguage = defaults.string(forKey: "subtitleLanguage").flatMap(Self.validLanguage)
         subtitleSize = defaults.string(forKey: "subtitleSize").flatMap(SubtitleSize.init(rawValue:)) ?? .medium
+        translatesSubtitles = defaults.bool(forKey: "translatesSubtitles")
         feedPeriod = defaults.string(forKey: "feedPeriod").flatMap(FeedPeriod.init(rawValue:)) ?? .all
         hidesWatchedFeed = defaults.bool(forKey: "hidesWatchedFeed")
         contentLocale = .current(defaults: defaults)
-        let saved = defaults.stringArray(forKey: "homeSections")?.compactMap(HomeSection.init(rawValue:)) ?? HomeSection.allCases
+        let saved = defaults.stringArray(forKey: "homeSections")?.compactMap(HomeSection.init(rawValue:)) ?? HomeSection.defaultSections
         var seen = Set<HomeSection>()
         let valid = saved.filter { seen.insert($0).inserted }
-        homeSections = valid.isEmpty ? HomeSection.allCases : valid
+        homeSections = valid.isEmpty ? HomeSection.defaultSections : valid
         var queries = Set<String>()
         searchHistory = Array((defaults.stringArray(forKey: "searchHistory") ?? []).filter {
             !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.count <= 500 && queries.insert($0).inserted
@@ -60,6 +80,9 @@ public final class AppPreferences: ObservableObject {
     public func setSubtitleLanguage(_ language: String?) {
         subtitleLanguage = language.flatMap(Self.validLanguage)
         defaults.set(subtitleLanguage ?? "", forKey: "subtitleLanguage")
+    }
+    public func setTranslatesSubtitles(_ enabled: Bool) {
+        translatesSubtitles = enabled; defaults.set(enabled, forKey: "translatesSubtitles")
     }
     public func setSubtitleSize(_ size: SubtitleSize) {
         subtitleSize = size; defaults.set(size.rawValue, forKey: "subtitleSize")

@@ -36,6 +36,9 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   play and download from YouTube's separate video and audio streams, combined without re-encoding; 1080p merged playback and a merged download were verified on the iPhone 7.
 - This is an incremental parity rework, not a complete NewPipe port. Extra services
   and remaining settings and device scenarios still need implementation or verification.
+- Opt-in Live, Gaming, Podcasts and Movie trailers kiosks; opt-in auto-translated subtitles (YouTube currently
+  rate-limits these from the test network); NewPipe ZIP imports can also apply NewPipe's settings and home tabs
+  from `preferences.json`. Real (WAL-mode) NewPipe backups now import; earlier builds rejected them.
 - When YouTube refuses extraction (for example "confirm you're not a bot" on a rate-limited network),
   playback and downloads report that in plain language. DriftLoom does not try to bypass these checks.
   See [the rework checklist](docs/ios-newpipe-parity.md).

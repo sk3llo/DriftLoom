@@ -50,10 +50,12 @@ struct SettingsView: View {
                             Text(Locale.current.localizedString(forLanguageCode: code) ?? code).tag(Optional(code))
                         }
                     }.accessibilityIdentifier("subtitleLanguage")
+                    Toggle("Auto-translate when unavailable", isOn: Binding(get: { preferences.translatesSubtitles }, set: preferences.setTranslatesSubtitles))
+                        .accessibilityIdentifier("translateSubtitles")
                     Picker("Text size", selection: Binding(get: { preferences.subtitleSize }, set: preferences.setSubtitleSize)) {
                         ForEach(SubtitleSize.allCases) { Text($0.rawValue).tag($0) }
                     }
-                    Text("YouTube subtitles in this language turn on automatically, preferring ones written by the uploader over auto-generated ones. Choosing subtitles in the player updates this setting.")
+                    Text("YouTube subtitles in this language turn on automatically, preferring ones written by the uploader over auto-generated ones. Choosing subtitles in the player updates this setting. Auto-translation uses YouTube's machine translation, which YouTube may limit at times.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Downloads") {

@@ -20,6 +20,11 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var maximumHeight = 0
     @Published public private(set) var selectedFormat: DownloadChoice?
     @Published public private(set) var subtitleTracks: [SubtitleTrack] = []
+    /// Languages YouTube can machine-translate this video's subtitles into.
+    @Published public private(set) var subtitleTranslations: [SubtitleLanguage] = []
+    private var subtitleCatalog = SubtitleCatalog(tracks: [])
+    /// Use an auto-translated track when the preferred language has no subtitles of its own.
+    public var translatesSubtitles = false
     @Published public private(set) var selectedSubtitle: SubtitleTrack?
     @Published public private(set) var subtitleText: String?
     @Published public private(set) var subtitleError: String?
@@ -190,9 +195,15 @@ public final class PlaybackSession: ObservableObject {
 
     /// Select an external track, or nil to turn subtitles off. The choice is remembered by language.
     public func selectSubtitle(_ track: SubtitleTrack?) {
-        onSubtitleChoice?(track.map { SubtitleSelection.baseLanguage($0.languageCode) })
-        preferredSubtitleLanguage = track.map { SubtitleSelection.baseLanguage($0.languageCode) }
+        onSubtitleChoice?(track.map { SubtitleSelection.baseLanguage($0.displayLanguage) })
+        preferredSubtitleLanguage = track.map { SubtitleSelection.baseLanguage($0.displayLanguage) }
         apply(track)
+    }
+
+    /// Choose a machine translation of the recommended source track.
+    public func selectTranslation(_ language: SubtitleLanguage) {
+        guard let source = subtitleCatalog.translationSource else { return }
+        selectSubtitle(source.translated(to: language))
     }
 
     private func loadSubtitles(videoID: String) {
@@ -205,11 +216,13 @@ public final class PlaybackSession: ObservableObject {
         guard let subtitles else { return }
         let token = subtitleGeneration
         subtitleTask = Task { [weak self] in
-            let tracks = (try? await subtitles.tracks(videoID: videoID)) ?? []
+            let catalog = (try? await subtitles.catalog(videoID: videoID)) ?? SubtitleCatalog(tracks: [])
             guard !Task.isCancelled, let self, self.subtitleGeneration == token, self.videoID == videoID else { return }
-            self.subtitleTracks = tracks
+            self.subtitleCatalog = catalog
+            self.subtitleTracks = catalog.tracks
+            self.subtitleTranslations = catalog.translations
             self.subtitleTask = nil
-            if let track = SubtitleSelection.preferred(tracks, language: self.preferredSubtitleLanguage) { self.apply(track) }
+            if let track = catalog.preferred(language: self.preferredSubtitleLanguage, allowTranslation: self.translatesSubtitles) { self.apply(track) }
         }
     }
 
@@ -258,6 +271,7 @@ public final class PlaybackSession: ObservableObject {
     private func clearSubtitles() {
         subtitleTask?.cancel(); subtitleTask = nil; subtitleGeneration = UUID()
         subtitleTimeline = nil; subtitleTracks = []; selectedSubtitle = nil; subtitleText = nil; subtitleError = nil
+        subtitleTranslations = []; subtitleCatalog = SubtitleCatalog(tracks: [])
     }
 
     private func rememberPosition() {

@@ -8,12 +8,12 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 
 | Stage | Implemented in this checkpoint | Still required for full parity |
 | --- | --- | --- |
-| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist/local-playlist home tabs with one combined, interleaved order; optional live suggestions; official regional YouTube music chart | Other kiosk sources; remaining metadata and visual comparison |
+| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist/local-playlist home tabs with one combined, interleaved order; optional live suggestions; official regional YouTube music chart; opt-in Live, Gaming, Podcasts and Movie trailers kiosks from the same YouTube sources NewPipe's extractor uses | Kiosk pagination; remaining metadata and visual comparison |
 | Video details and mini-player | Inline native player; owner/subscription row; save/share/playlist/speed actions; related/description/comments tabs, replies, views/date; minimizing and returning without discarding search state | Remaining stream metadata; remaining detail actions; full visual parity |
-| Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; YouTube subtitle tracks (manual and auto-generated) with a remembered language, text size and fullscreen overlay; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection; separate video-only + audio formats above the best combined stream, played as an AVComposition (H.264, or AV1 only where hardware decodes it) | Automatic adaptive switching between separate formats; subtitle styling beyond size; auto-translated subtitle tracks; exhaustive interruption/headphone/lock-screen/PiP tests |
+| Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; YouTube subtitle tracks (manual and auto-generated) with a remembered language, text size and fullscreen overlay; opt-in YouTube machine translation into any offered language; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection; separate video-only + audio formats above the best combined stream, played as an AVComposition (H.264, or AV1 only where hardware decodes it) | Automatic adaptive switching between separate formats; subtitle styling beyond size; exhaustive interruption/headphone/lock-screen/PiP tests |
 | Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved; persisted subscription groups and membership; group filtering in subscriptions/feed; date and watched-video filters; native backup and supported Android group migration | Additional feed sources and controls; group icons and remaining Android settings migration |
 | Downloads | Available HLS/muxed/audio format discovery; versioned job records; cancellation/retry with fresh URLs; iOS background transfer reconnection; delete controls; completed HLS cache validation and local playback verified on iPhone 7; Wi-Fi-only/any-network policy per job with waiting and relaunch recovery; storage usage; subtitles saved with a download for offline playback; separate video+audio downloads (two transfers, parts kept across relaunch, combined by passthrough export into one MP4) | broader file/audio and interrupted/background transfer tests |
-| Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup; Android preferences migration; remaining player/download settings; additional services |
+| Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup;  remaining player/download settings; additional services |
 
 ## Storage and compatibility
 
@@ -89,6 +89,24 @@ A 403 on either stream triggers the usual single refresh.
 NewPipe ZIP imports now carry resume positions from `stream_state` for imported history entries (at most 500,
 5 s from the start and 10 s from the end). They are applied only while watch history is recorded and never
 replace a position saved on this device.
+
+Auto-translated subtitles request the same caption track with `tlang`. YouTube currently answers those
+requests with HTTP 429 from the test network (plain tracks still load); the app then shows a rate-limit message
+and keeps playing. Translation is off by default and only used when the chosen language has no track.
+
+Kiosks: Live (YouTube's Live channel tab), Gaming (the Gaming channel's trending tab), Podcasts
+(/podcasts) and Movie trailers (YouTube Charts TRENDING_MOVIES). They are opt-in home sections; opening one
+from the drawer adds it to home. Kiosk pages currently load one page without continuation.
+
+NewPipe settings: only `preferences.json` is read (never the Java-serialized `newpipe.settings`). Theme,
+content language/region, search/watch history, resume, search suggestions, download network and the main
+tab layout (built-in tabs, kiosks, YouTube channels and online playlists, in NewPipe's order) are shown in
+the import preview and applied only when the user turns on "Also apply these NewPipe settings". Local
+playlist tabs, feed-group tabs and other services' tabs are reported as skipped.
+
+Real NewPipe backups store the database in WAL mode. The importer now converts its private temporary copy to
+a rollback-journal header before opening it read-only; before this, every real Android backup failed to
+import on iOS (the earlier tests used synthetic databases).
 
 Download network policy is fixed per job when it starts or is retried; changing the preference does not move
 existing transfers. Wi-Fi-only jobs wait while only cellular is available.

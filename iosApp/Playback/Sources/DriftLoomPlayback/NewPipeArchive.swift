@@ -2,9 +2,21 @@
 import Foundation
 import zlib
 
-/// Read only the named SQLite member. Never extract archive paths or deserialize Java preferences.
+/// Read only named members into memory. Never extract archive paths or deserialize Java preferences.
 enum NewPipeArchive {
     static func database(_ data: Data) throws -> Data {
+        let found = try members(data, limits: ["newpipe.db": 100_000_000, "driftloom.db": 100_000_000])
+        guard found.count <= 1, let database = found.values.first, database.starts(with: Data("SQLite format 3\0".utf8)) else {
+            throw BrowseError.unavailable("This ZIP doesn't contain a supported NewPipe database backup.")
+        }
+        return database
+    }
+    /// The JSON preferences NewPipe 0.27+ writes next to the database, if present.
+    static func preferences(_ data: Data) throws -> Data? {
+        try members(data, limits: ["preferences.json": 2_000_000])["preferences.json"]
+    }
+    /// Each requested member at most once, size-limited and CRC-checked.
+    static func members(_ data: Data, limits: [String: Int]) throws -> [String: Data] {
         guard data.count <= 50_000_000, data.count >= 22 else { throw CocoaError(.fileReadCorruptFile) }
         let bytes = [UInt8](data)
         func number(_ offset: Int, _ size: Int) throws -> Int {
@@ -23,7 +35,7 @@ enum NewPipeArchive {
         guard try number(end + 4, 2) == 0, try number(end + 6, 2) == 0 else { throw CocoaError(.fileReadCorruptFile) }
         let count = try number(end + 10, 2), central = try number(end + 16, 4)
         guard count > 0, count <= 1000, central < end else { throw CocoaError(.fileReadCorruptFile) }
-        var offset = central, found: Data?
+        var offset = central, found: [String: Data] = [:]
         for _ in 0..<count {
             guard try number(offset, 4) == 0x02014b50 else { throw CocoaError(.fileReadCorruptFile) }
             let flags = try number(offset + 8, 2), method = try number(offset + 10, 2)
@@ -34,8 +46,8 @@ enum NewPipeArchive {
             let name = String(bytes: bytes[nameStart..<(nameStart + nameLength)], encoding: .utf8)
             offset = nameStart + nameLength + extra + comment
             guard offset <= end else { throw CocoaError(.fileReadCorruptFile) }
-            guard name == "newpipe.db" || name == "driftloom.db" else { continue }
-            guard found == nil, flags & 1 == 0, (method == 0 || method == 8), expanded > 0, expanded <= 100_000_000,
+            guard let name, let limit = limits[name] else { continue }
+            guard found[name] == nil, flags & 1 == 0, (method == 0 || method == 8), expanded > 0, expanded <= limit,
                   try number(local, 4) == 0x04034b50 else { throw CocoaError(.fileReadCorruptFile) }
             let localNameLength = try number(local + 26, 2), localExtra = try number(local + 28, 2)
             let start = local + 30 + localNameLength + localExtra
@@ -62,10 +74,7 @@ enum NewPipeArchive {
             }
             let actual = output.withUnsafeBytes { crc32(0, $0.bindMemory(to: UInt8.self).baseAddress, uInt(output.count)) }
             guard UInt32(actual) == UInt32(crc) else { throw CocoaError(.fileReadCorruptFile) }
-            found = output
-        }
-        guard let found, found.starts(with: Data("SQLite format 3\0".utf8)) else {
-            throw BrowseError.unavailable("This ZIP doesn't contain a supported NewPipe database backup.")
+            found[name] = output
         }
         return found
     }
