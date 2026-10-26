@@ -103,6 +103,44 @@ final class NavigationTests: XCTestCase {
         XCTAssertEqual(query.value as? String, "NDLS404 SENSOJI")
     }
 
+    func testSubscriptionGroupsPersistAndFilterChannels() {
+        let app = application()
+        app.buttons["mainMenu"].tap()
+        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["manageSubscriptionGroups"].waitForExistence(timeout: 5))
+        app.buttons["manageSubscriptionGroups"].tap()
+        app.buttons["createSubscriptionGroup"].tap()
+        let name = app.textFields["subscriptionGroupName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("Music group")
+        let member = app.buttons["groupMember-UCUb-HI7Kd-Dr1fBvYjV1IYg"]
+        member.tap(); XCTAssertEqual(member.value as? String, "Selected"); app.buttons["saveSubscriptionGroup"].tap()
+        XCTAssertTrue(app.staticTexts["subscriptionGroupsTitle"].waitForExistence(timeout: 5))
+        app.buttons["closeSubscriptionGroups"].tap()
+        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["Music group"].tap()
+        XCTAssertTrue(app.staticTexts["ndls 404"].waitForExistence(timeout: 5))
+        app.terminate(); app.launch()
+        app.buttons["mainMenu"].tap()
+        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
+        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["Music group"].tap()
+        XCTAssertTrue(app.staticTexts["ndls 404"].waitForExistence(timeout: 5))
+        app.buttons["manageSubscriptionGroups"].tap()
+        let group = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "editGroup-")).firstMatch
+        XCTAssertTrue(group.waitForExistence(timeout: 5)); group.tap()
+        XCTAssertEqual(app.textFields["subscriptionGroupName"].value as? String, "Music group")
+        app.buttons["groupMember-UCUb-HI7Kd-Dr1fBvYjV1IYg"].tap(); app.buttons["saveSubscriptionGroup"].tap()
+        app.buttons["closeSubscriptionGroups"].tap()
+        XCTAssertTrue(app.staticTexts["No channels in this group"].waitForExistence(timeout: 5))
+        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["selectGroup-all"].tap()
+        XCTAssertTrue(app.staticTexts["ndls 404"].waitForExistence(timeout: 5))
+        app.buttons["mainMenu"].tap()
+        app.descendants(matching: .any)["drawer-section-What's new"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["feedFilters"].waitForExistence(timeout: 5))
+        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["Music group"].tap()
+        XCTAssertTrue(app.staticTexts["No channels in this feed"].waitForExistence(timeout: 5))
+        app.buttons["feedFilters"].tap()
+        XCTAssertTrue(app.buttons["Last 7 days"].waitForExistence(timeout: 5)); app.buttons["Last 7 days"].tap()
+    }
+
     func testCommentsLoadForKnownVideo() {
         let app = application()
         let video = app.buttons["browseVideo-11-9ZaYiTPE"].firstMatch

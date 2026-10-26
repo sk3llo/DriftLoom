@@ -72,6 +72,23 @@ enum NewPipeDatabase {
             guard row["service_id"] == "0", let id = channelID(row["url"]), let name = row["name"], !name.isEmpty else { skipped += 1; continue }
             if subscriptionIDs.insert(id).inserted { library.subscriptions.append(LibraryRecord(item: BrowseItem(contentID: id, kind: .channel, title: name, thumbnail: thumbnail(row["avatar_url"])), date: Date(timeIntervalSince1970: 0))) }
         }
+        var importedGroups: SubscriptionGroupDocument?
+        if tables.contains("feed_group") || tables.contains("feed_group_subscription_join") {
+            guard tables.contains("feed_group"), tables.contains("feed_group_subscription_join") else { throw CocoaError(.fileReadCorruptFile) }
+            var members: [String: [String]] = [:]
+            for row in try rows("SELECT g.group_id,s.service_id,s.url FROM feed_group_subscription_join g JOIN subscriptions s ON s.uid=g.subscription_id") {
+                guard let group = row["group_id"], row["service_id"] == "0", let id = channelID(row["url"]), subscriptionIDs.contains(id) else { skipped += 1; continue }
+                members[group, default: []].append(id)
+            }
+            var document = SubscriptionGroupDocument()
+            for row in try rows("SELECT uid,name FROM feed_group ORDER BY sort_order,uid") {
+                guard let uid = row["uid"], let name = row["name"] else { throw CocoaError(.fileReadCorruptFile) }
+                document.groups.append(SubscriptionGroup(id: stableID("NewPipe.group." + uid + "." + name), name: name,
+                                                         channelIDs: Array(Set(members[uid] ?? [])).sorted()))
+            }
+            guard SubscriptionGroups.valid(document) else { throw BrowseError.unavailable("Imported subscription groups exceed supported limits.") }
+            importedGroups = document
+        }
         var streams: [String: BrowseItem] = [:]
         for row in try rows("SELECT uid,service_id,url,title,uploader,thumbnail_url FROM streams WHERE uid IN (SELECT stream_id FROM playlist_stream_join UNION SELECT stream_id FROM stream_history)") {
             guard row["service_id"] == "0", let uid = row["uid"], let input = row["url"], let request = try? VideoRequest(input: input),
@@ -111,6 +128,6 @@ enum NewPipeDatabase {
             }
         }
         guard PlaylistStore.valid(playlists) else { throw CocoaError(.fileReadCorruptFile) }
-        return LibraryImportPlan(summary: "Merge \(library.subscriptions.count) YouTube subscriptions, \(library.history.count) history entries and \(playlists.playlists.count) local playlists and \(playlists.bookmarks.count) playlist bookmarks from NewPipe.", warnings: ["Android preferences, stream positions, and downloaded media aren't migrated."] + (skipped == 0 ? [] : ["\(skipped) unsupported or invalid entries were skipped."]), library: library, playlists: playlists)
+        return LibraryImportPlan(summary: "Merge \(library.subscriptions.count) YouTube subscriptions, \(library.history.count) history entries and \(playlists.playlists.count) local playlists and \(playlists.bookmarks.count) playlist bookmarks and \(importedGroups?.groups.count ?? 0) subscription groups from NewPipe.", warnings: ["Android preferences, group icons, stream positions, and downloaded media aren't migrated."] + (skipped == 0 ? [] : ["\(skipped) unsupported or invalid entries were skipped."]), library: library, playlists: playlists, groups: importedGroups)
     }
 }

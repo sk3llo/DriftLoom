@@ -25,6 +25,17 @@ func makePlaylistStore() -> PlaylistStore {
 }
 
 @MainActor
+func makeSubscriptionGroups() -> SubscriptionGroups {
+    let directory = libraryFileURL().deletingLastPathComponent()
+    let recoveryError: String?
+    do { try LibraryTransfer.recover(directory: directory); recoveryError = nil }
+    catch { recoveryError = "An interrupted import couldn't be recovered. Group edits are disabled and saved files are preserved." }
+    let store = SubscriptionGroups(fileURL: directory.appendingPathComponent("subscription-groups.json"))
+    if let recoveryError { store.blockForRecovery(recoveryError) }
+    return store
+}
+
+@MainActor
 func libraryFileURL() -> URL {
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
     let arguments = ProcessInfo.processInfo.arguments

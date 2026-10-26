@@ -165,6 +165,14 @@ Release. Eight UI journeys pass on the SE simulator. On the physical iPhone 7, s
 in the full run, and the search/player journey passed on focused rerun; both the app search button
 and keyboard submission were checked separately. These checks do not imply full NewPipe parity.
 
+The subscription checkpoint adds group creation/rename/reorder/removal, channel membership, and group
+filtering in subscriptions and What's new. The feed also has date and watched-video filters. Native
+version-2 backups include groups; version-1 imports preserve existing groups. Supported Android group
+membership/order migrates from ZIP backups, with group icons excluded. All 82 package tests pass in
+Debug and Release; all 10 UI journeys pass on the SE simulator. The physical iPhone group journey and
+nearby settings, pinned-tab, and search/player checks pass on optimized builds. The live search suite
+encountered an unreadable upstream response on an earlier run; the final full simulator run passed.
+
 ## Development
 
 The project includes the Android app (`app`), shared Kotlin/Compose module (`shared`),

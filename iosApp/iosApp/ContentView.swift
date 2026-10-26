@@ -5,6 +5,7 @@ import SwiftUI
 import UIKit
 
 extension Notification.Name {
+    static let driftLoomManageGroups = Notification.Name("DriftLoom.manageGroups")
     static let driftLoomExpandPlayer = Notification.Name("DriftLoom.expandPlayer")
     static let driftLoomAddToPlaylist = Notification.Name("DriftLoom.addToPlaylist")
 }
@@ -17,6 +18,7 @@ struct ContentView: View {
     @StateObject private var playlists = makePlaylistStore()
     @StateObject private var preferences = makePreferences()
     @StateObject private var pinnedTabs = PinnedHomeTabs(fileURL: libraryFileURL().deletingLastPathComponent().appendingPathComponent("home-tabs.json"))
+    @StateObject private var subscriptionGroups = makeSubscriptionGroups()
     @State private var historyRecorder: LibraryPlaybackRecorder?
     @State private var nowPlaying: NowPlayingController?
     @State private var selectedSection = HomeSection.subscriptions
@@ -56,12 +58,12 @@ struct ContentView: View {
             }
         }
         .background(Color(.systemBackground))
-        .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists).environmentObject(pinnedTabs)
+        .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists).environmentObject(pinnedTabs).environmentObject(subscriptionGroups)
         .tint(AppStyle.accent).accentColor(AppStyle.accent)
         .preferredColorScheme(preferences.appearance == "Dark" ? .dark : preferences.appearance == "Light" ? .light : nil)
-        .alert("Library", isPresented: Binding(get: { library.lastError != nil || playlists.lastError != nil || queue.storageError != nil || pinnedTabs.error != nil }, set: {
-            if !$0 { library.dismissError(); playlists.dismissError(); queue.dismissStorageError(); pinnedTabs.dismissError() }
-        })) { Button("OK") { library.dismissError(); playlists.dismissError(); queue.dismissStorageError(); pinnedTabs.dismissError() } } message: { Text(library.lastError ?? playlists.lastError ?? queue.storageError ?? pinnedTabs.error ?? "") }
+        .alert("Library", isPresented: Binding(get: { library.lastError != nil || playlists.lastError != nil || queue.storageError != nil || pinnedTabs.error != nil || subscriptionGroups.error != nil }, set: {
+            if !$0 { library.dismissError(); playlists.dismissError(); queue.dismissStorageError(); pinnedTabs.dismissError(); subscriptionGroups.dismissError() }
+        })) { Button("OK") { library.dismissError(); playlists.dismissError(); queue.dismissStorageError(); pinnedTabs.dismissError(); subscriptionGroups.dismissError() } } message: { Text(library.lastError ?? playlists.lastError ?? queue.storageError ?? pinnedTabs.error ?? subscriptionGroups.error ?? "") }
         .sheet(item: $addingToPlaylist) { item in PlaylistPickerView(item: item).environmentObject(playlists) }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomAddToPlaylist)) { addingToPlaylist = $0.object as? BrowseItem }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomExpandPlayer)) { _ in expanded = true }

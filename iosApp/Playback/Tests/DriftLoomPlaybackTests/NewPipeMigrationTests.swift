@@ -6,7 +6,7 @@ import zlib
 
 @MainActor
 final class NewPipeMigrationTests: XCTestCase {
-    private func database() throws -> Data {
+    private func database(withGroups: Bool = false) throws -> Data {
         let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: file) }
         var db: OpaquePointer?
@@ -28,6 +28,18 @@ final class NewPipeMigrationTests: XCTestCase {
         INSERT INTO stream_history VALUES(1,1700000000000),(1,1700000001000);
         """
         XCTAssertEqual(sqlite3_exec(db, sql, nil, nil, nil), SQLITE_OK)
+        if withGroups {
+            let groupsSQL = """
+            ALTER TABLE subscriptions ADD COLUMN uid INTEGER;
+            UPDATE subscriptions SET uid=1 WHERE service_id=0;
+            UPDATE subscriptions SET uid=2 WHERE service_id=1;
+            CREATE TABLE feed_group(uid INTEGER,name TEXT,sort_order INTEGER);
+            CREATE TABLE feed_group_subscription_join(group_id INTEGER,subscription_id INTEGER);
+            INSERT INTO feed_group VALUES(1,'Music',1),(2,'Empty',0);
+            INSERT INTO feed_group_subscription_join VALUES(1,1),(1,2);
+            """
+            XCTAssertEqual(sqlite3_exec(db, groupsSQL, nil, nil, nil), SQLITE_OK)
+        }
         sqlite3_close(db)
         return try Data(contentsOf: file)
     }
@@ -81,6 +93,14 @@ final class NewPipeMigrationTests: XCTestCase {
             XCTAssertEqual(playlists.playlists.first?.entries.count, 2)
             XCTAssertEqual(Set(playlists.playlists.first!.entries.map(\.id)).count, 2)
         }
+    }
+    func testAndroidGroupsPreserveOrderAndSupportedMembershipWithStableIDs() throws {
+        let data = try database(withGroups: true)
+        let plan = try LibraryTransfer.preview(zip(data, deflated: true))
+        XCTAssertEqual(plan.groups?.groups.map(\.name), ["Empty", "Music"])
+        XCTAssertEqual(plan.groups?.groups.last?.channelIDs, ["UCUb-HI7Kd-Dr1fBvYjV1IYg"])
+        let again = try LibraryTransfer.preview(zip(data))
+        XCTAssertEqual(again.groups?.groups, plan.groups?.groups)
     }
     func testArchiveCorruptionAndPathMembersAreRejected() throws {
         let data = try database()

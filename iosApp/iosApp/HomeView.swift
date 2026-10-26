@@ -22,19 +22,19 @@ struct SectionStrip<Value: Hashable>: View {
                                     .padding(.horizontal, 16).frame(minHeight: 46)
                                 Rectangle().fill(selection == value ? AppStyle.accent : .clear).frame(height: 2)
                             }
-                        }.buttonStyle(.plain).id(value)
+                        }.contentShape(Rectangle()).buttonStyle(.plain).id(value)
                             .accessibilityAddTraits(selection == value ? .isSelected : [])
                     }
                 }
             }.onChange(of: selection) { value in withAnimation { proxy.scrollTo(value, anchor: .center) } }
         }
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(height: 48).contentShape(Rectangle()).clipped()
         .background(Color(.secondarySystemBackground))
     }
 }
 
 private enum HomeSheet: String, Identifiable {
-    case settings, about, link, downloads
+    case settings, about, link, downloads, groups
     var id: String { rawValue }
 }
 
@@ -92,7 +92,7 @@ struct HomeView: View {
                 }
                 .navigationBarHidden(true)
             }
-            .accessibilityHidden(menuVisible).allowsHitTesting(!menuVisible)
+            .accessibilityHidden(menuVisible || sheet != nil).allowsHitTesting(!menuVisible && sheet == nil)
             if menuVisible {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
@@ -144,6 +144,7 @@ struct HomeView: View {
         .task(id: selectedPinned) {
             if let id = selectedPinned, let route = pinnedTabs.tabs.first(where: { $0.id == id })?.item.destination { await pinnedPage.load(route) }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomManageGroups)) { _ in sheet = .groups }
         .sheet(item: $sheet, onDismiss: {
             if let video = pendingVideo { pendingVideo = nil; onPlay(video) }
         }) { target in
@@ -153,6 +154,7 @@ struct HomeView: View {
                     DownloadsView { video in pendingVideo = video; sheet = nil }
                         .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { sheet = nil } } }
                 }
+            case .groups: SubscriptionGroupsView()
             case .settings: SettingsView()
             case .about: AboutView()
             case .link: OpenVideoLinkView { video in pendingVideo = video; sheet = nil }
@@ -212,15 +214,40 @@ private struct PinnedPageView: View {
 
 private struct FeedView: View {
     @EnvironmentObject private var library: LibraryStore
+    @EnvironmentObject private var groups: SubscriptionGroups
+    @EnvironmentObject private var preferences: AppPreferences
     @ObservedObject var store: SubscriptionFeedStore
     let onPlay: (BrowseItem) -> Void
-    private var channels: [String] { library.subscriptions.map { $0.item.contentID } }
+    @State private var selectedGroup: UUID?
+    private var channels: [String] { groups.channelIDs(for: selectedGroup, subscribed: library.subscriptions.map { $0.item.contentID }) }
+    private var visible: [FeedVideo] {
+        FeedFilter.apply(store.items, period: preferences.feedPeriod, hidingWatched: preferences.hidesWatchedFeed,
+                         watchedIDs: Set(library.history.map { $0.item.contentID }))
+    }
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            SubscriptionGroupFilter(selection: $selectedGroup)
+            HStack {
+                Menu {
+                    Picker("Upload date", selection: Binding(get: { preferences.feedPeriod }, set: preferences.setFeedPeriod)) {
+                        ForEach(FeedPeriod.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    Toggle("Hide watched videos", isOn: Binding(get: { preferences.hidesWatchedFeed }, set: preferences.setHidesWatchedFeed))
+                } label: { Label("Feed filters", systemImage: "slider.horizontal.3").frame(minHeight: 44) }
+                    .accessibilityIdentifier("feedFilters")
+                Spacer()
+                Button { Task { await store.load(channelIDs: channels) } } label: { Image(systemName: "arrow.clockwise").frame(width: 44, height: 44) }
+                    .accessibilityLabel("Refresh feed").disabled(store.loading || channels.isEmpty)
+            }.padding(.horizontal, 12)
             if channels.isEmpty {
-                EmptyStateView("No new videos", systemImage: "tray", message: "Subscribe to channels to build your feed.")
+                EmptyStateView("No channels in this feed", systemImage: "tray", message: selectedGroup == nil ? "Subscribe to channels to build your feed." : "Edit this group to add subscribed channels.")
             } else {
                 List {
+                    Text("Recent uploads from channel RSS feeds; each channel supplies a limited number of videos.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if preferences.feedPeriod != .all || preferences.hidesWatchedFeed {
+                        Text(preferences.feedPeriod.rawValue + (preferences.hidesWatchedFeed ? " · Watched videos hidden" : "")).font(.caption)
+                    }
                     if store.loading {
                         HStack { ProgressView(); Text("Refreshing \(store.completedChannels) of \(channels.count) channels…").font(.footnote) }
                     }
@@ -228,10 +255,10 @@ private struct FeedView: View {
                         Text("\(store.failedChannels) channel feeds could not be loaded. Pull to refresh and try again.")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
-                    if !store.loading, store.items.isEmpty {
-                        Text("No recent videos are available.").foregroundStyle(.secondary)
+                    if !store.loading, visible.isEmpty {
+                        Text("No videos match these feed filters.").foregroundStyle(.secondary)
                     }
-                    ForEach(store.items) { entry in
+                    ForEach(visible) { entry in
                         VStack(alignment: .leading, spacing: 5) {
                             BrowseResultRow(item: entry.item, onPlay: onPlay)
                             Text(entry.published, style: .relative).font(.caption2).foregroundStyle(.secondary)
@@ -241,9 +268,7 @@ private struct FeedView: View {
                 }.listStyle(.plain).refreshable { await store.load(channelIDs: channels) }
             }
         }
-        .task(id: channels) {
-            if !channels.isEmpty { await store.load(channelIDs: channels) }
-        }
+        .task(id: channels) { await store.load(channelIDs: channels) }
     }
 }
 

@@ -25,9 +25,13 @@ public final class AppPreferences: ObservableObject {
     @Published public private(set) var appearance: String
     @Published public private(set) var contentLocale: ContentLocale
     @Published public private(set) var resumesPlayback: Bool
+    @Published public private(set) var feedPeriod: FeedPeriod
+    @Published public private(set) var hidesWatchedFeed: Bool
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        feedPeriod = defaults.string(forKey: "feedPeriod").flatMap(FeedPeriod.init(rawValue:)) ?? .all
+        hidesWatchedFeed = defaults.bool(forKey: "hidesWatchedFeed")
         contentLocale = .current(defaults: defaults)
         let saved = defaults.stringArray(forKey: "homeSections")?.compactMap(HomeSection.init(rawValue:)) ?? HomeSection.allCases
         var seen = Set<HomeSection>()
@@ -42,6 +46,12 @@ public final class AppPreferences: ObservableObject {
         resumesPlayback = defaults.object(forKey: "resumesPlayback") as? Bool ?? true
         let savedAppearance = defaults.string(forKey: "appearance") ?? "System"
         appearance = ["System", "Light", "Dark"].contains(savedAppearance) ? savedAppearance : "System"
+    }
+    public func setFeedPeriod(_ value: FeedPeriod) {
+        feedPeriod = value; defaults.set(value.rawValue, forKey: "feedPeriod")
+    }
+    public func setHidesWatchedFeed(_ value: Bool) {
+        hidesWatchedFeed = value; defaults.set(value, forKey: "hidesWatchedFeed")
     }
     public func setContentLocale(language: String, country: String) {
         let locale = ContentLocale(language: language, country: country)

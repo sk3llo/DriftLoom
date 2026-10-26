@@ -17,6 +17,7 @@ private struct LibraryBackupFile: FileDocument {
 struct LibraryTransferView: View {
     @EnvironmentObject private var library: LibraryStore
     @EnvironmentObject private var playlists: PlaylistStore
+    @EnvironmentObject private var groups: SubscriptionGroups
     @State private var backup = LibraryBackupFile()
     @State private var exporting = false
     @State private var importing = false
@@ -25,18 +26,18 @@ struct LibraryTransferView: View {
     var body: some View {
         List {
             Section("Library backup") {
-                Text("Back up saved videos, subscriptions, watch history, local playlists, and bookmarked playlists. Downloaded media, playback queues, and app settings are excluded.")
+                Text("Back up saved videos, subscriptions, watch history, local playlists, bookmarked playlists, and subscription groups. Downloaded media, playback queues, and app settings are excluded.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button("Export library backup") {
-                    do { backup = LibraryBackupFile(data: try LibraryTransfer.export(library: library, playlists: playlists)); exporting = true }
+                    do { backup = LibraryBackupFile(data: try LibraryTransfer.export(library: library, playlists: playlists, groups: groups)); exporting = true }
                     catch { message = error.localizedDescription }
-                }.disabled(!library.isWritable || !playlists.isWritable)
+                }.disabled(!library.isWritable || !playlists.isWritable || !groups.isWritable)
             }
             Section("Import and merge") {
                 Text("Choose a DriftLoom library backup or a NewPipe subscriptions JSON export or ZIP database backup. Review the import before merging. Existing items and privacy settings are kept; a recovery copy is saved on this device.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Button("Choose import file") { importing = true }.disabled(!library.isWritable || !playlists.isWritable)
-                Text("NewPipe ZIP migration supports YouTube subscriptions, history, and local playlists. Android preferences and downloaded media are excluded; unsupported entries are reported in the preview.")
+                Button("Choose import file") { importing = true }.disabled(!library.isWritable || !playlists.isWritable || !groups.isWritable)
+                Text("NewPipe ZIP migration supports YouTube subscriptions, history, local playlists, and subscription groups. Android preferences and downloaded media are excluded; unsupported entries are reported in the preview.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             if let pending {
@@ -45,7 +46,7 @@ struct LibraryTransferView: View {
                     ForEach(pending.warnings, id: \.self) { Text($0).foregroundStyle(.secondary) }
                     Button("Merge imported library") {
                         do {
-                            try LibraryTransfer.apply(pending, library: library, playlists: playlists)
+                            try LibraryTransfer.apply(pending, library: library, playlists: playlists, groups: groups)
                             self.pending = nil; message = "Import complete. Existing items were kept and a recovery copy was saved."
                         } catch { message = "Import failed: " + error.localizedDescription }
                     }

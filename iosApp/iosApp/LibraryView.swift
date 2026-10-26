@@ -28,12 +28,21 @@ struct LibrarySectionView: View {
     @EnvironmentObject private var library: LibraryStore
     let section: HomeSection
     let onPlay: (BrowseItem) -> Void
+    @EnvironmentObject private var groups: SubscriptionGroups
+    @State private var selectedGroup: UUID?
     @State private var confirmsClearHistory = false
     private var records: [LibraryRecord] {
-        switch section { case .subscriptions: return library.subscriptions; case .history: return library.history; default: return library.saved }
+        switch section {
+        case .subscriptions:
+            let ids = Set(groups.channelIDs(for: selectedGroup, subscribed: library.subscriptions.map { $0.item.contentID }))
+            return library.subscriptions.filter { ids.contains($0.item.contentID) }
+        case .history: return library.history
+        default: return library.saved
+        }
     }
     var body: some View {
         VStack(spacing: 0) {
+            if section == .subscriptions { SubscriptionGroupFilter(selection: $selectedGroup) }
             if section == .history, !records.isEmpty {
                 HStack {
                     Text("\(records.count) videos").font(.caption).foregroundStyle(.secondary)
@@ -73,11 +82,11 @@ struct LibrarySectionView: View {
         switch section { case .subscriptions: library.unsubscribe(id); case .history: library.removeHistory(id); default: library.removeSaved(id) }
     }
     private var emptyTitle: String {
-        switch section { case .subscriptions: return "No subscriptions"; case .history: return "No history"; default: return "No bookmarks" }
+        switch section { case .subscriptions: return selectedGroup == nil ? "No subscriptions" : "No channels in this group"; case .history: return "No history"; default: return "No bookmarks" }
     }
     private var emptyMessage: String {
         switch section {
-        case .subscriptions: return "Search for a channel and subscribe to see it here."
+        case .subscriptions: return selectedGroup == nil ? "Search for a channel and subscribe to see it here." : "Use Manage subscription groups to add channels to this group."
         case .history: return library.historyEnabled ? "Videos appear here once playback starts." : "Recording watch history is disabled in Settings."
         default: return "Save videos from their action menu or the video detail screen."
         }

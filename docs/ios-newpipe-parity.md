@@ -11,9 +11,9 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 | Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist home tabs; optional live suggestions; official regional YouTube music chart | Local-playlist home tabs and interleaved tab ordering; other kiosk sources; remaining metadata and visual comparison |
 | Video details and mini-player | Inline native player; owner/subscription row; save/share/playlist/speed actions; related/description/comments tabs, replies, views/date; minimizing and returning without discarding search state | Remaining stream metadata; remaining detail actions; full visual parity |
 | Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection | Separate adaptive video/audio selection and merging; external subtitle extraction; exhaustive interruption/headphone/lock-screen/PiP tests |
-| Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved | Subscription groups; additional feed controls; group migration and feed settings |
+| Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved; persisted subscription groups and membership; group filtering in subscriptions/feed; date and watched-video filters; native backup and supported Android group migration | Additional feed sources and controls; group icons and remaining Android settings migration |
 | Downloads | Available HLS/muxed/audio format discovery; versioned job records; cancellation/retry with fresh URLs; iOS background transfer reconnection; delete controls; completed HLS cache validation and local playback verified on iPhone 7 | External subtitles; separate video/audio merging; storage usage and network settings; broader file/audio and interrupted/background transfer tests |
-| Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup; Android preferences, groups and positions migration; remaining player/download settings; additional services |
+| Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup; Android preferences and positions migration; remaining player/download settings; additional services |
 
 ## Storage and compatibility
 
@@ -28,7 +28,7 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 - Downloads validate a completed local asset before exposing offline playback. HLS cache locations are
   normalized against the app container before persistence; files outside managed locations are rejected.
 - Imports merge into current library data and keep current privacy preferences. A recovery journal rolls
-  back both library files if writing fails or the app exits partway through an import. A retained copy is
+  back library, playlists, and included subscription groups if writing fails or the app exits partway through an import. A retained copy is
   saved in PreImportBackups before changes.
 - ZIP import reads only newpipe.db or driftloom.db, validates CRC and bounded decompression, and uses
   read-only SQLite with fixed SQL, row/text limits, and a VM instruction budget. Android Java-serialized
@@ -50,7 +50,7 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 
 ## Verification notes and next batch
 
-The package suite currently contains 71 tests, including real-media pause/seek preservation on format
+The package suite currently contains 82 tests, including real-media pause/seek preservation on format
 changes, queue restoration, both comment response shapes, ZIP/SQLite migration fixtures, corrupt data,
 failed import rollback, and interrupted-import recovery. Live probes verify comments/replies and
 combined search filters. HLS download/local playback is tested on hardware; simulator tests cover the
@@ -64,7 +64,14 @@ Live probes also verify suggestions and the official YouTube music chart. Pinned
 tabs use a separate versioned home-tabs.json; unreadable files remain untouched. The chart is explicitly
 labeled as music from YouTube Charts, rather than general YouTube trending. Suggestions can be disabled.
 
-Continue with external subtitles, subscription groups, remaining custom tab controls, and download
+Subscription groups use subscription-groups.json independently of the existing library. Group members
+that are no longer subscribed are ignored by filters without destroying saved membership. Native
+version-2 backups include groups; version-1 backups leave existing groups untouched. Three-file
+recovery journals use version 2 so earlier builds refuse an interrupted import they cannot recover. Android group icons are not
+migrated. Feed date/watched filters apply to the bounded recent RSS results, not the entire channel
+archive. Switching groups clears the previous group's videos before the next feed completes.
+
+Continue with external subtitles, remaining custom tab controls, and download
 controls, then introduce additional services behind explicit service-aware models. Do not label whole
 milestones or full NewPipe parity complete while the gaps above remain. Validate format/codec and
 background behavior on hardware before claiming support.

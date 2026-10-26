@@ -78,12 +78,14 @@ public final class SubscriptionFeedStore: ObservableObject {
     @Published public private(set) var completedChannels = 0
     private let client: any FeedLoading
     private var generation = UUID()
+    private var requestedChannels: [String] = []
     public init(client: any FeedLoading = YouTubeFeedClient()) { self.client = client }
     public func load(channelIDs: [String]) async {
         let token = UUID(); generation = token
         loading = true; failedChannels = 0; completedChannels = 0
         var seen = Set<String>(), collected: [FeedVideo] = []
         let ids = channelIDs.filter { seen.insert($0).inserted }
+        if ids != requestedChannels { items = []; requestedChannels = ids }
         // Bound simultaneous network requests, including for large imported subscription lists.
         for offset in stride(from: 0, to: ids.count, by: 3) {
             guard !Task.isCancelled, generation == token else { break }
