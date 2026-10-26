@@ -275,12 +275,15 @@ public final class PlaybackSession: ObservableObject {
             do {
                 let video = try await resolver.resolve(request, choice: choice)
                 try Task.checkCancellation()
+                // A separate audio stream is combined with the video-only stream for playback.
+                let merged: AVAsset? = try await video.audioURL.asyncMap { try await MergedMedia.composition(video: video.streamURL, audio: $0) }
+                try Task.checkCancellation()
                 guard let self, self.generation == token else { return }
 #if os(iOS)
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
                 try AVAudioSession.sharedInstance().setActive(true)
 #endif
-                self.install(video, position: position, autoplay: autoplay)
+                self.install(video, asset: merged, position: position, autoplay: autoplay)
             } catch is CancellationError {
                 // A newer request owns the UI now.
             } catch {
@@ -290,12 +293,12 @@ public final class PlaybackSession: ObservableObject {
         }
     }
 
-    private func install(_ video: ResolvedVideo, position: CMTime, autoplay: Bool = true) {
+    private func install(_ video: ResolvedVideo, asset: AVAsset? = nil, position: CMTime, autoplay: Bool = true) {
         clearItemObservers()
         self.video = video
         title = video.title
         phase = .loading
-        let item = AVPlayerItem(url: video.streamURL)
+        let item = asset.map { AVPlayerItem(asset: $0) } ?? AVPlayerItem(url: video.streamURL)
         item.preferredMaximumResolution = resolutionLimit
         itemObservation = item.observe(\.status, options: [.new]) { [weak self, weak item] _, _ in
             Task { @MainActor [weak self, weak item] in
@@ -326,12 +329,13 @@ public final class PlaybackSession: ObservableObject {
         guard failureTask == nil else { return }
         let token = generation
         let loggedStatus = item.errorLog()?.events.last(where: { $0.errorStatusCode == 403 })?.errorStatusCode
-        let streamURL = video?.streamURL
+        // Merged playback can fail on either stream, so check the audio URL too.
+        let streamURLs = [video?.streamURL, video?.audioURL].compactMap { $0 }.filter { !$0.isFileURL }
         failureTask = Task { [weak self, weak item] in
             // Initial manifest failures can have no AVPlayer error log. Confirm the HTTP
             // status without fetching a media body; do not depend on private CoreMedia codes.
             var status = loggedStatus
-            if status == nil, let streamURL {
+            for streamURL in streamURLs where loggedStatus == nil && status != 403 {
                 var request = URLRequest(url: streamURL, cachePolicy: .reloadIgnoringLocalCacheData,
                                          timeoutInterval: 10)
                 request.httpMethod = "HEAD"
@@ -362,5 +366,12 @@ public final class PlaybackSession: ObservableObject {
         itemObservation = nil
         if let failureObserver { NotificationCenter.default.removeObserver(failureObserver) }
         failureObserver = nil
+    }
+}
+
+private extension Optional {
+    func asyncMap<T>(_ transform: (Wrapped) async throws -> T) async rethrows -> T? {
+        guard let value = self else { return nil }
+        return try await transform(value)
     }
 }

@@ -72,6 +72,49 @@ final class NewPipeMigrationTests: XCTestCase {
         word(0x06054b50,4); word(0,2); word(0,2); word(1,2); word(1,2); word(size,4); word(central,4); word(0,2)
         return result
     }
+    func testResumePositionsMigrateForHistoryWithoutReplacingLocalOnes() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: file) }
+        try database().write(to: file)
+        var db: OpaquePointer?
+        XCTAssertEqual(sqlite3_open(file.path, &db), SQLITE_OK)
+        let sql = """
+        ALTER TABLE streams ADD COLUMN duration INTEGER;
+        UPDATE streams SET duration=600 WHERE uid=1;
+        INSERT INTO streams VALUES(2,0,'https://www.youtube.com/watch?v=dQw4w9WgXcQ','Not in history','Channel',NULL,212);
+        INSERT INTO streams VALUES(3,0,'https://www.youtube.com/watch?v=jNQXAC9IVRw','Finished','Channel',NULL,19);
+        INSERT INTO playlist_stream_join VALUES(1,2,2),(1,3,3);
+        INSERT INTO stream_history VALUES(3,1700000002000);
+        CREATE TABLE stream_state(stream_id INTEGER,progress_time INTEGER);
+        INSERT INTO stream_state VALUES(1,123456),(2,60000),(3,15000);
+        """
+        XCTAssertEqual(sqlite3_exec(db, sql, nil, nil, nil), SQLITE_OK)
+        sqlite3_close(db)
+        let plan = try LibraryTransfer.preview(try zip(Data(contentsOf: file)))
+        // Only history entries count; the 19-second video at 15 s is too close to its end to resume.
+        XCTAssertEqual(plan.positions, [ImportedPosition(videoID: "11-9ZaYiTPE", seconds: 123.456, duration: 600)])
+        XCTAssertTrue(plan.summary.contains("1 resume positions"))
+
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let name = "DriftLoom.Tests." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let positions = PlaybackPositions(defaults: defaults)
+        let library = LibraryStore(fileURL: directory.appendingPathComponent("library.json"))
+        let playlists = PlaylistStore(fileURL: directory.appendingPathComponent("playlists.json"))
+        library.setHistoryEnabled(false)
+        try LibraryTransfer.apply(plan, library: library, playlists: playlists, positions: positions)
+        XCTAssertNil(positions.seconds(for: "11-9ZaYiTPE"), "History recording off: positions are not imported")
+        library.setHistoryEnabled(true)
+        positions.record(id: "11-9ZaYiTPE", seconds: 42, duration: 600)
+        try LibraryTransfer.apply(plan, library: library, playlists: playlists, positions: positions)
+        XCTAssertEqual(positions.seconds(for: "11-9ZaYiTPE"), 42, "A position saved on this device wins")
+        positions.retainOnly([])
+        try LibraryTransfer.apply(plan, library: library, playlists: playlists, positions: positions)
+        XCTAssertEqual(positions.seconds(for: "11-9ZaYiTPE"), 123.456)
+    }
+
     func testStoredAndDeflatedNewPipeBackupsMigrateAndMergeIdempotently() throws {
         let database = try database()
         for compressed in [false, true] {

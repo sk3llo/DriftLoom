@@ -63,7 +63,7 @@ struct ContentView: View {
             }
         }
         .background(Color(.systemBackground))
-        .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists).environmentObject(pinnedTabs).environmentObject(subscriptionGroups)
+        .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists).environmentObject(pinnedTabs).environmentObject(subscriptionGroups).environmentObject(positions)
         .tint(AppStyle.accent).accentColor(AppStyle.accent)
         .preferredColorScheme(preferences.appearance == "Dark" ? .dark : preferences.appearance == "Light" ? .light : nil)
         .alert("Library", isPresented: Binding(get: { library.lastError != nil || playlists.lastError != nil || queue.storageError != nil || pinnedTabs.error != nil || subscriptionGroups.error != nil }, set: {

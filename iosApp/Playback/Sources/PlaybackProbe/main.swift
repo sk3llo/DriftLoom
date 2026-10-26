@@ -14,6 +14,15 @@ struct PlaybackProbe {
         session.preferredSubtitleLanguage = subtitleLanguage
         session.player.isMuted = true
         session.open(input)
+        // --merged: play the highest separate video+audio format instead of automatic HLS.
+        if arguments.contains("--merged"), let id = session.videoID {
+            let choices = try await YouTubeDownloadResolver().choices(videoID: id)
+            guard let merged = choices.last(where: { $0.kind == .merged }) else {
+                throw NSError(domain: "DriftLoomProbe", code: 5, userInfo: [NSLocalizedDescriptionKey: "No merged format offered"])
+            }
+            print("Merged formats:", choices.filter { $0.kind == .merged }.map(\.name).joined(separator: ", "))
+            session.selectFormat(merged)
+        }
         var shownSubtitle: String?
         let checksSeek = CommandLine.arguments.contains("--seek-60")
         var hasSeeked = false
@@ -44,7 +53,7 @@ struct PlaybackProbe {
                 if let track = session.selectedSubtitle, let shownSubtitle {
                     print("PASS: subtitles \(track.id) of \(session.subtitleTracks.count) tracks; shown: \(shownSubtitle.replacingOccurrences(of: "\n", with: " / "))")
                 }
-                print("PASS: native playback advanced to \(seconds)s; HLS=\(session.video?.usesHLS == true)")
+                print("PASS: native playback advanced to \(seconds)s; HLS=\(session.video?.usesHLS == true); separate audio=\(session.video?.audioURL != nil); size=\(session.player.currentItem?.presentationSize ?? .zero)")
                 session.stop()
                 return
             }

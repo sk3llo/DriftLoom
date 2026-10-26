@@ -16,6 +16,14 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
     if let subtitleFlag, arguments.indices.contains(subtitleFlag + 1) { session.preferredSubtitleLanguage = arguments[subtitleFlag + 1] }
     var subtitleReported = subtitleFlag == nil
     if let flag, arguments.indices.contains(flag + 1) { session.open(arguments[flag + 1]) }
+    // --playback-smoke-merged: play the highest separate video+audio format this device decodes.
+    if arguments.contains("--playback-smoke-merged"), let id = session.videoID {
+        guard let merged = (try? await YouTubeDownloadResolver().choices(videoID: id))?.last(where: { $0.kind == .merged }) else {
+            NSLog("DriftLoomSmoke: FAIL no merged format"); return
+        }
+        NSLog("DriftLoomSmoke: START %@", merged.name)
+        session.selectFormat(merged)
+    }
     var hasSeeked = false
     for _ in 0..<90 {
         do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
@@ -36,7 +44,9 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
             guard finished else { NSLog("DriftLoomSmoke: FAIL seeking"); return }
             session.player.play()
         } else if hasSeeked, seconds.isFinite, seconds >= 65 {
-            NSLog("DriftLoomSmoke: PASS advanced past 65 seconds; HLS=%d", session.video?.usesHLS == true ? 1 : 0)
+            let size = session.player.currentItem?.presentationSize ?? .zero
+            NSLog("DriftLoomSmoke: PASS advanced past 65 seconds; HLS=%d; separate audio=%d; %dx%d", session.video?.usesHLS == true ? 1 : 0,
+                  session.video?.audioURL != nil ? 1 : 0, Int(size.width), Int(size.height))
             return
         }
     }

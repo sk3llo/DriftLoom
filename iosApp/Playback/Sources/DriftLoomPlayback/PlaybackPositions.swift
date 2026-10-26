@@ -31,6 +31,11 @@ public final class PlaybackPositions: ObservableObject {
         positions = Dictionary(uniqueKeysWithValues: positions.sorted { $0.value.updated > $1.value.updated }.prefix(500).map { ($0.key, $0.value) })
         persist()
     }
+    /// Add a migrated resume point unless this device already has one for the video.
+    public func importPosition(_ position: ImportedPosition) {
+        guard positions[position.videoID] == nil else { return }
+        record(id: position.videoID, seconds: position.seconds, duration: position.duration)
+    }
     public func retainOnly(_ ids: Set<String>) {
         positions = positions.filter { ids.contains($0.key) }; persist()
     }

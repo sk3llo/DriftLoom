@@ -4,7 +4,8 @@ import Foundation
 import YouTubeKit
 
 public struct DownloadChoice: Identifiable, Codable, Equatable, Sendable {
-    public enum Kind: String, Codable, Sendable { case hls, video, audio }
+    /// `merged` pairs a video-only stream with a separate audio stream (higher resolutions).
+    public enum Kind: String, Codable, Sendable { case hls, video, audio, merged }
     public let id: String
     public let name: String
     public let kind: Kind
@@ -13,6 +14,8 @@ public struct DownloadChoice: Identifiable, Codable, Equatable, Sendable {
 public struct DownloadSource: Sendable {
     public let url: URL
     public let choice: DownloadChoice
+    /// The audio stream for a `merged` choice.
+    public var audioURL: URL? = nil
 }
 public struct YouTubeDownloadResolver: Sendable {
     public init() {}
@@ -33,9 +36,34 @@ public struct YouTubeDownloadResolver: Sendable {
                     return DownloadChoice(id: id, name: stream.includesVideoTrack ? "Video · \(stream.videoResolution ?? 0)p" : "Audio · \((stream.bitrate ?? 0) / 1000) kbps", kind: stream.includesVideoTrack ? .video : .audio)
                 }
         }
+        if let streams = try? await video.streams { choices += Self.mergedChoices(streams) }
         try Task.checkCancellation()
         guard !choices.isEmpty else { throw PlaybackError.noPlayableStream }
         return choices
+    }
+    /// One merged choice per resolution above the best combined stream: H.264 when available,
+    /// paired with the highest-bitrate AAC audio. AV1 is listed only where the device decodes it.
+    static func mergedChoices(_ streams: [YouTubeKit.Stream]) -> [DownloadChoice] {
+        let best = streams.filter { $0.includesVideoAndAudioTrack && $0.isNativelyPlayable }.compactMap(\.videoResolution).max() ?? 0
+        guard let audio = bestAudio(streams), let audioID = formatID(audio) else { return [] }
+        let videos = streams.filter { $0.includesVideoTrack && !$0.includesAudioTrack && $0.isNativelyPlayable && $0.fileExtension == .mp4 }
+        var byHeight: [Int: YouTubeKit.Stream] = [:]
+        for stream in videos {
+            guard let height = stream.videoResolution, height > best else { continue }
+            if let current = byHeight[height], isH264(current) || !isH264(stream) { continue }
+            byHeight[height] = stream
+        }
+        return byHeight.keys.sorted().compactMap { height in
+            guard let stream = byHeight[height], let id = formatID(stream) else { return nil }
+            return DownloadChoice(id: "merged-\(id)-\(audioID)", name: "Video · \(height)p (separate audio)", kind: .merged)
+        }
+    }
+    private static func isH264(_ stream: YouTubeKit.Stream) -> Bool {
+        if case .avc1 = stream.videoCodec { return true }; return false
+    }
+    private static func bestAudio(_ streams: [YouTubeKit.Stream]) -> YouTubeKit.Stream? {
+        streams.filter { $0.includesAudioTrack && !$0.includesVideoTrack && $0.isNativelyPlayable && $0.fileExtension == .m4a }
+            .max { ($0.bitrate ?? 0) < ($1.bitrate ?? 0) }
     }
     private static func formatID(_ stream: YouTubeKit.Stream) -> String? {
         URLComponents(url: stream.url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "itag" }?.value
@@ -48,6 +76,15 @@ public struct YouTubeDownloadResolver: Sendable {
         let video = YouTube(videoID: request.videoID, methods: [.local])
         if choice.kind == .hls, let hls = try await video.livestreams.first(where: { $0.streamType == .hls }) {
             return DownloadSource(url: hls.url, choice: choice)
+        }
+        if choice.kind == .merged {
+            let parts = choice.id.split(separator: "-").map(String.init)
+            guard parts.count == 3, parts[0] == "merged" else { throw PlaybackError.noPlayableStream }
+            let streams = try await video.streams
+            guard let videoStream = streams.first(where: { Self.formatID($0) == parts[1] && $0.includesVideoTrack && $0.isNativelyPlayable }),
+                  let audioStream = streams.first(where: { Self.formatID($0) == parts[2] && !$0.includesVideoTrack && $0.isNativelyPlayable })
+            else { throw PlaybackError.noPlayableStream }
+            return DownloadSource(url: videoStream.url, choice: choice, audioURL: audioStream.url)
         }
         guard let stream = try await video.streams.first(where: { Self.formatID($0) == choice.id && $0.isNativelyPlayable && ($0.includesVideoAndAudioTrack || !$0.includesVideoTrack) }) else { throw PlaybackError.noPlayableStream }
         return DownloadSource(url: stream.url, choice: choice)
@@ -70,6 +107,9 @@ public struct DownloadRecord: Codable, Identifiable, Equatable, Sendable {
     public var subtitleLanguage: String?
     public var subtitlePath: String?
     public var subtitleError: String?
+    /// Finished parts of a merged download ("video"/"audio" → path relative to the app home),
+    /// kept until both are present and combined into one file.
+    public var partPaths: [String: String]?
     public init(item: BrowseItem, choice: DownloadChoice, subtitleLanguage: String? = nil) {
         id = UUID(); self.item = item; self.choice = choice; state = .preparing; progress = 0; self.subtitleLanguage = subtitleLanguage
     }
@@ -99,7 +139,8 @@ public final class DownloadLibrary: ObservableObject {
     private static func valid(_ record: DownloadRecord) -> Bool {
         guard record.item.kind == .video, (try? VideoRequest(input: record.item.contentID).videoID) == record.item.contentID,
               record.progress.isFinite, (0...1).contains(record.progress) else { return false }
-        for path in [record.localPath, record.subtitlePath].compactMap({ $0 }) {
+        if let parts = record.partPaths, !Set(parts.keys).isSubset(of: [TransferParts.video, TransferParts.audio]) { return false }
+        for path in [record.localPath, record.subtitlePath].compactMap({ $0 }) + (record.partPaths.map { Array($0.values) } ?? []) {
             guard !path.hasPrefix("/"), !path.split(separator: "/").contains(".."), !path.contains(":") else { return false }
         }
         if let language = record.subtitleLanguage, language.isEmpty || language.count > 20 { return false }
@@ -127,6 +168,21 @@ public final class DownloadLibrary: ObservableObject {
             try data.write(to: fileURL, options: options)
             self.records = records; error = nil; return true
         } catch { self.error = "Your download list couldn't be saved. Previous data is unchanged."; return false }
+    }
+}
+
+/// Merged downloads run one transfer per stream, described as "<transfer>#video" and "<transfer>#audio".
+public enum TransferParts {
+    public static let video = "video", audio = "audio"
+    public static func description(_ transfer: String, part: String) -> String { transfer + "#" + part }
+    public static func base(_ description: String?) -> String? { description?.split(separator: "#", maxSplits: 1).first.map(String.init) }
+    public static func part(_ description: String?) -> String? {
+        guard let parts = description?.split(separator: "#", maxSplits: 1), parts.count == 2, [video, audio].contains(String(parts[1])) else { return nil }
+        return String(parts[1])
+    }
+    /// Combine per-part progress into one value, weighting video (the larger file) more heavily.
+    public static func combined(_ progress: [String: Double]) -> Double {
+        max(0, min(1, (progress[video] ?? 0) * 0.85 + (progress[audio] ?? 0) * 0.15))
     }
 }
 

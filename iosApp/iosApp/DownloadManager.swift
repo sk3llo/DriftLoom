@@ -26,6 +26,7 @@ final class DownloadManager: ObservableObject {
     private var connected = false
     private var validations = 0
     private var finishedSessions = Set<String>()
+    private var partProgress: [String: [String: Double]] = [:]
     @Published var operationError: String?
     @Published private(set) var reconnecting = true
 
@@ -81,11 +82,16 @@ final class DownloadManager: ObservableObject {
     private func reconnect() async {
         var tasks: [URLSessionTask] = []
         for session in [files!, hls!, wifiFiles!, wifiHLS!] { tasks += await allTasks(session) }
-        let descriptions = Set(tasks.compactMap(\.taskDescription))
+        let descriptions = Set(tasks.compactMap { TransferParts.base($0.taskDescription) })
         for task in tasks where matching(task.taskDescription) == nil { task.cancel() }
         for var record in records where record.state == .preparing || record.state == .downloading {
             if record.state == .preparing && record.waitingForNetwork == true { continue }
+            // Both parts finished but the app stopped before combining them: combine now.
+            if record.partPaths?.count == 2 {
+                Task { await mergeParts(description(record)) }; continue
+            }
             if !descriptions.contains(description(record)) {
+                discardParts(&record)
                 record.state = .failed; record.error = "Download interrupted. Retry to obtain a fresh stream."
                 _ = library.update(record)
             }
@@ -101,6 +107,7 @@ final class DownloadManager: ObservableObject {
     func retry(_ id: UUID) {
         guard connected, var record = records.first(where: { $0.id == id }), record.state != .completed else { return }
         preparations[id]?.cancel(); preparations[id] = nil
+        discardParts(&record)
         record.transferID = UUID(); record.state = .preparing; record.error = nil; record.progress = 0; record.localPath = nil
         record.network = AppPreferences(defaults: makeAppDefaults()).downloadNetwork
         record.waitingForNetwork = !(record.network ?? .any).permits(connected: networkConnected, cellular: networkCellular)
@@ -124,8 +131,16 @@ final class DownloadManager: ObservableObject {
                 try Task.checkCancellation()
                 await self?.saveSubtitles(record, transfer: transfer)
                 guard let self, var current = self.matching(transfer), current.state == .preparing else { return }
-                let task: URLSessionTask
-                if source.choice.kind == .hls {
+                var tasks: [URLSessionTask] = []
+                if source.choice.kind == .merged, let audioURL = source.audioURL {
+                    let session = record.network == .wifiOnly ? self.wifiFiles! : self.files!
+                    for (part, url) in [(TransferParts.video, source.url), (TransferParts.audio, audioURL)] {
+                        var request = URLRequest(url: url); request.allowsCellularAccess = record.network != .wifiOnly
+                        let task = session.downloadTask(with: request)
+                        task.taskDescription = TransferParts.description(transfer, part: part)
+                        tasks.append(task)
+                    }
+                } else if source.choice.kind == .hls {
                     let asset = AVURLAsset(url: source.url, options: [AVURLAssetAllowsCellularAccessKey: record.network != .wifiOnly])
                     let duration = try await asset.load(.duration)
                     try Task.checkCancellation()
@@ -133,15 +148,16 @@ final class DownloadManager: ObservableObject {
                     guard self.matching(transfer)?.state == .preparing else { return }
                     let session = record.network == .wifiOnly ? self.wifiHLS! : self.hls!
                     guard let download = session.makeAssetDownloadTask(asset: asset, assetTitle: record.item.title, assetArtworkData: nil, options: nil) else { throw PlaybackError.noPlayableStream }
-                    task = download
+                    download.taskDescription = transfer; tasks = [download]
                 } else {
                     let session = record.network == .wifiOnly ? self.wifiFiles! : self.files!
                     var request = URLRequest(url: source.url); request.allowsCellularAccess = record.network != .wifiOnly
-                    task = session.downloadTask(with: request)
+                    let task = session.downloadTask(with: request)
+                    task.taskDescription = transfer; tasks = [task]
                 }
-                task.taskDescription = transfer; current.state = .downloading
-                guard self.library.update(current) else { task.cancel(); return }
-                task.resume()
+                current.state = .downloading
+                guard self.library.update(current) else { tasks.forEach { $0.cancel() }; return }
+                tasks.forEach { $0.resume() }
             } catch is CancellationError { }
             catch { self?.failed(transfer, message: error.localizedDescription) }
             if self?.records.first(where: { $0.id == id })?.transferID == record.transferID { self?.preparations[id] = nil }
@@ -155,9 +171,10 @@ final class DownloadManager: ObservableObject {
         guard library.update(record) else { return }
         Task {
             for session in [files!, hls!, wifiFiles!, wifiHLS!] {
-                for task in await allTasks(session) where task.taskDescription == transfer { task.cancel() }
+                for task in await allTasks(session) where TransferParts.base(task.taskDescription) == transfer { task.cancel() }
             }
         }
+        if var current = records.first(where: { $0.id == id }), current.partPaths != nil { discardParts(&current); _ = library.update(current) }
     }
     func remove(_ id: UUID) {
         operationError = nil
@@ -168,6 +185,7 @@ final class DownloadManager: ObservableObject {
             catch { operationError = "The downloaded media couldn't be deleted. Try again after playback stops."; return }
         }
         if let url = subtitleURL(record) { try? FileManager.default.removeItem(at: url) }
+        var parts = record; discardParts(&parts)
         _ = library.remove(id)
     }
     var storageURLs: [URL] { records.compactMap(managedURL) + records.compactMap(subtitleURL) }
@@ -220,21 +238,67 @@ final class DownloadManager: ObservableObject {
         return url
     }
     private func description(_ record: DownloadRecord) -> String { record.id.uuidString + ":" + (record.transferID?.uuidString ?? "") }
-    private func matching(_ transfer: String?) -> DownloadRecord? {
-        guard let transfer else { return nil }
+    private func matching(_ taskDescription: String?) -> DownloadRecord? {
+        guard let transfer = TransferParts.base(taskDescription) else { return nil }
         return records.first { description($0) == transfer && ($0.state == .preparing || $0.state == .downloading) }
     }
     fileprivate func progress(_ transfer: String?, value: Double) {
         guard value.isFinite, var record = matching(transfer) else { return }
-        let progress = max(0, min(1, value))
+        var progress = max(0, min(1, value))
+        if let part = TransferParts.part(transfer), let base = TransferParts.base(transfer) {
+            partProgress[base, default: [:]][part] = progress
+            progress = TransferParts.combined(partProgress[base] ?? [:])
+        }
         guard progress - record.progress >= 0.02 else { return }
         record.progress = progress; _ = library.update(record)
     }
     fileprivate func failed(_ transfer: String?, message: String) {
         guard var record = matching(transfer) else { return }
+        if TransferParts.part(transfer) != nil, let base = TransferParts.base(transfer) {
+            // One stream failed: stop the other and drop anything already saved.
+            Task { for session in [files!, wifiFiles!] { for task in await allTasks(session) where TransferParts.base(task.taskDescription) == base { task.cancel() } } }
+            partProgress[base] = nil
+        }
+        discardParts(&record)
         record.state = .failed; record.error = message; _ = library.update(record)
     }
+    /// Delete saved part files of a merged download and forget them on the record.
+    private func discardParts(_ record: inout DownloadRecord) {
+        let home = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+        for path in record.partPaths?.values ?? [:].values where path.hasPrefix("Library/Application Support/DriftLoom/Media/") {
+            try? FileManager.default.removeItem(at: home.appendingPathComponent(path))
+        }
+        record.partPaths = nil
+    }
+    /// Combine both finished parts into one MP4, then validate it like any other download.
+    private func mergeParts(_ transfer: String) async {
+        guard let record = matching(transfer), let parts = record.partPaths,
+              let videoPath = parts[TransferParts.video], let audioPath = parts[TransferParts.audio] else { return }
+        let home = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+        let output = home.appendingPathComponent("Library/Application Support/DriftLoom/Media")
+            .appendingPathComponent(record.id.uuidString + "-" + UUID().uuidString + ".mp4")
+        validations += 1
+        defer { validations -= 1; flushCompletions() }
+        do {
+            try await MergedMedia.export(video: home.appendingPathComponent(videoPath), audio: home.appendingPathComponent(audioPath), to: output)
+        } catch {
+            failed(transfer, message: "The video and audio couldn't be combined. Retry the download."); return
+        }
+        guard var current = matching(transfer) else { try? FileManager.default.removeItem(at: output); return }
+        discardParts(&current); _ = library.update(current)
+        partProgress[transfer] = nil
+        await completed(transfer, location: output, hls: false)
+    }
     fileprivate func completed(_ transfer: String?, location: URL, hls: Bool) async {
+        if let part = TransferParts.part(transfer), let base = TransferParts.base(transfer) {
+            guard var record = matching(base), let path = DownloadPaths.relativePath(for: location, home: URL(fileURLWithPath: NSHomeDirectory())) else {
+                try? FileManager.default.removeItem(at: location); return
+            }
+            record.partPaths = (record.partPaths ?? [:]).merging([part: path]) { _, new in new }
+            guard library.update(record) else { try? FileManager.default.removeItem(at: location); return }
+            if record.partPaths?.count == 2 { await mergeParts(base) }
+            return
+        }
         validations += 1
         defer { validations -= 1; flushCompletions() }
         guard var record = matching(transfer) else {
@@ -266,7 +330,7 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, AVAs
             Task { @MainActor in self.owner?.failed(transfer, message: "The server refused the download. Retry to refresh the stream.") }; return
         }
         let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DriftLoom/Media")
-        let destination = directory.appendingPathComponent(id.uuidString + "-" + UUID().uuidString + ".mp4")
+        let destination = directory.appendingPathComponent(id.uuidString + "-" + UUID().uuidString + (TransferParts.part(transfer).map { "." + $0 + ".part" } ?? "") + (TransferParts.part(transfer) == TransferParts.audio ? ".m4a" : ".mp4"))
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try FileManager.default.moveItem(at: location, to: destination)

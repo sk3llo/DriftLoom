@@ -32,8 +32,10 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   NewPipe subscription JSON and ZIP database migration support YouTube subscriptions, history,
   ordered local playlists (including duplicates), and remote playlist bookmarks. Android preferences,
   stream positions, downloaded bytes, and unsupported services are excluded and reported.
-- This is an incremental parity rework, not a complete NewPipe port. Separate video/audio merging,
-  extra services, and remaining settings and device scenarios still need implementation or verification.
+- Resolutions above the best combined stream (typically 480p–2160p, limited to codecs the device decodes)
+  play and download from YouTube's separate video and audio streams, combined without re-encoding; 1080p merged playback and a merged download were verified on the iPhone 7.
+- This is an incremental parity rework, not a complete NewPipe port. Extra services
+  and remaining settings and device scenarios still need implementation or verification.
 - When YouTube refuses extraction (for example "confirm you're not a bot" on a rate-limited network),
   playback and downloads report that in plain language. DriftLoom does not try to bypass these checks.
   See [the rework checklist](docs/ios-newpipe-parity.md).
@@ -180,7 +182,7 @@ nearby settings, pinned-tab, and search/player checks pass on optimized builds. 
 encountered an unreadable upstream response on an earlier run; the final full simulator run passed.
 
 Verification on 26 October 2026 (subtitles, download settings, home tabs): 103 package tests pass and all
-14 UI journeys pass on the iPhone SE (3rd generation) simulator in optimized Release. On the physical
+13 UI journeys pass on the iPhone SE (3rd generation) simulator in optimized Release. On the physical
 iPhone 7/iOS 15.8.2, Xcode 26.6 refuses to host UI tests ("Logic Testing Unavailable"), so the optimized
 DRIFTLOOM_DEVICE_TESTING build was launched with smoke flags through `pymobiledevice3 developer dvt launch`.
 Playback advanced past 65 seconds over HLS with English subtitles shown at 61 s; an HLS download saved

@@ -7,12 +7,15 @@ public struct ResolvedVideo: Sendable {
     public let streamURL: URL
     public let usesHLS: Bool
     public let description: String
+    /// Separate audio stream to play alongside a video-only `streamURL`.
+    public let audioURL: URL?
 
-    public init(title: String, streamURL: URL, usesHLS: Bool, description: String = "") {
+    public init(title: String, streamURL: URL, usesHLS: Bool, description: String = "", audioURL: URL? = nil) {
         self.title = title
         self.streamURL = streamURL
         self.usesHLS = usesHLS
         self.description = description
+        self.audioURL = audioURL
     }
 }
 
@@ -39,7 +42,7 @@ public struct YouTubeStreamResolver: StreamResolving {
         let source = try await YouTubeDownloadResolver().source(videoID: request.videoID, choice: choice)
         let metadata = try? await YouTube(videoID: request.videoID, methods: [.local]).metadata
         return ResolvedVideo(title: metadata?.title ?? "YouTube video", streamURL: source.url,
-                             usesHLS: choice.kind == .hls, description: metadata?.description ?? "")
+                             usesHLS: choice.kind == .hls, description: metadata?.description ?? "", audioURL: source.audioURL)
     }
 
     public func resolve(_ request: VideoRequest) async throws -> ResolvedVideo {

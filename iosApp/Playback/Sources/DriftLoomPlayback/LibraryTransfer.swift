@@ -1,12 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Foundation
 
+public struct ImportedPosition: Equatable, Sendable {
+    public let videoID: String
+    public let seconds: Double
+    public let duration: Double
+}
+
 public struct LibraryImportPlan {
     public let summary: String
     public let warnings: [String]
     let library: LibraryDocument
     let playlists: PlaylistDocument
     var groups: SubscriptionGroupDocument? = nil
+    /// Resume points for imported history entries (NewPipe `stream_state`).
+    public var positions: [ImportedPosition] = []
 }
 
 @MainActor
@@ -74,7 +82,8 @@ public enum LibraryTransfer {
             && LibraryStore.valid(document.saved, kind: .video) && LibraryStore.valid(document.subscriptions, kind: .channel)
             && LibraryStore.valid(document.history, kind: .video)
     }
-    public static func apply(_ plan: LibraryImportPlan, library: LibraryStore, playlists: PlaylistStore, groups: SubscriptionGroups? = nil) throws {
+    public static func apply(_ plan: LibraryImportPlan, library: LibraryStore, playlists: PlaylistStore, groups: SubscriptionGroups? = nil,
+                             positions: PlaybackPositions? = nil) throws {
         guard library.isWritable, playlists.isWritable,
               library.fileURL.deletingLastPathComponent() == playlists.fileURL.deletingLastPathComponent() else { throw CocoaError(.fileWriteNoPermission) }
         if plan.groups != nil {
@@ -126,6 +135,11 @@ public enum LibraryTransfer {
             throw error
         }
         library.reload(); playlists.reload(); groups?.reload()
+        // Positions follow the history privacy setting and never replace a resume point made on this device.
+        if library.historyEnabled, let positions {
+            let history = Set(library.history.map(\.item.contentID))
+            for position in plan.positions where history.contains(position.videoID) { positions.importPosition(position) }
+        }
     }
     static func transaction(directory: URL, library: Data, playlists: Data, groups: Data? = nil,
                             writer: (Data, URL) throws -> Void = atomicWrite) throws {

@@ -40,10 +40,12 @@ func runDownloadSmokeCheck(_ playback: PlaybackSession) async {
             log.notice("START: verifying saved download after cold launch")
         } else {
             let choices = try await YouTubeDownloadResolver().choices(videoID: item.contentID)
-            guard let choice = choices.first(where: { $0.kind == .hls }),
+            // --download-smoke-merged: download the lowest separate video+audio format and combine it.
+            let kind: DownloadChoice.Kind = arguments.contains("--download-smoke-merged") ? .merged : .hls
+            guard let choice = choices.first(where: { $0.kind == kind }),
                   let started = manager.start(item: item, choice: choice, subtitleLanguage: subtitleLanguage) else { throw PlaybackError.noPlayableStream }
             id = started
-            log.notice("START: downloading verification HLS asset")
+            log.notice("START: downloading verification asset \(choice.name, privacy: .public)")
         }
         for _ in 0..<240 {
             try await Task.sleep(nanoseconds: 1_000_000_000)
@@ -52,7 +54,14 @@ func runDownloadSmokeCheck(_ playback: PlaybackSession) async {
             if record.state == .completed {
                 guard let url = manager.localURL(record) else { throw PlaybackError.noPlayableStream }
                 let asset = AVURLAsset(url: url)
-                guard asset.assetCache?.isPlayableOffline == true else { throw PlaybackError.noPlayableStream }
+                if record.choice.kind == .hls {
+                    guard asset.assetCache?.isPlayableOffline == true else { throw PlaybackError.noPlayableStream }
+                } else {
+                    let videoTracks = try await asset.loadTracks(withMediaType: .video), audioTracks = try await asset.loadTracks(withMediaType: .audio)
+                    guard (record.choice.kind == .audio || !videoTracks.isEmpty), !audioTracks.isEmpty else { throw PlaybackError.noPlayableStream }
+                    let size = try await videoTracks.first?.load(.naturalSize) ?? .zero
+                    log.notice("FILE: \(record.choice.name, privacy: .public) has \(videoTracks.count) video and \(audioTracks.count) audio tracks, \(Int(size.width))x\(Int(size.height))")
+                }
                 if let subtitleLanguage {
                     guard record.subtitlePath != nil else { throw BrowseError.unavailable("Subtitles weren't saved: " + (record.subtitleError ?? "unknown")) }
                     playback.preferredSubtitleLanguage = subtitleLanguage
@@ -68,7 +77,7 @@ func runDownloadSmokeCheck(_ playback: PlaybackSession) async {
                         log.notice("PASS: saved subtitles shown from the download: \(text, privacy: .public)")
                     }
                     if let baseline, seconds - baseline > 5, playback.video?.streamURL.isFileURL == true, subtitleSeen {
-                        log.notice("PASS: HLS asset is playable offline and local playback advanced past five seconds")
+                        log.notice("PASS: \(record.choice.kind.rawValue, privacy: .public) asset is playable offline and local playback advanced past five seconds")
                         return
                     }
                     if case let .failed(message) = playback.phase { throw BrowseError.unavailable(message) }
