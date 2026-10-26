@@ -79,6 +79,11 @@ public final class PinnedHomeTabs: ObservableObject {
         guard unique.count <= 200 else { return }
         _ = save(tabs, local: localPlaylists, order: unique)
     }
+    /// Put a tab first in a saved combined order; without one, the section order already decides.
+    public func moveToFront(_ key: HomeTabKey) {
+        guard !order.isEmpty, order.first != key else { return }
+        setOrder([key] + order.filter { $0 != key })
+    }
     public func containsLocal(_ id: UUID) -> Bool { localPlaylists.contains(id) }
     public func toggleLocal(_ id: UUID) {
         if containsLocal(id) { removeLocal(id); return }

@@ -78,13 +78,50 @@ final class KioskSectionTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: name) }
         let preferences = AppPreferences(defaults: defaults)
         XCTAssertEqual(preferences.homeSections, HomeSection.defaultSections)
-        XCTAssertTrue(HomeSection.defaultSections.allSatisfy { $0.kiosk == nil })
+        XCTAssertEqual(HomeSection.defaultSections.first, .live, "Live is the first tab")
+        XCTAssertEqual(HomeSection.defaultSections.compactMap(\.kiosk), [.live], "Other kiosks stay opt-in")
         XCTAssertEqual([HomeSection.live, .gaming, .podcasts, .trailers].compactMap(\.kiosk), YouTubeKiosk.allCases)
         preferences.setHomeSections([.gaming, .subscriptions])
         XCTAssertEqual(AppPreferences(defaults: defaults).homeSections, [.gaming, .subscriptions])
-        // An older build's saved list without kiosks stays exactly as it was.
-        defaults.set(["History", "Bookmarked"], forKey: "homeSections")
-        XCTAssertEqual(AppPreferences(defaults: defaults).homeSections, [.history, .bookmarks])
+        // The user's later choices are kept once the one-time Live update has run.
+        XCTAssertEqual(AppPreferences(defaults: defaults).homeSections, [.gaming, .subscriptions])
         XCTAssertNotNil(YouTubeKiosk.live.path); XCTAssertNil(YouTubeKiosk.trailers.path)
+    }
+}
+
+@MainActor
+final class LiveFirstMigrationTests: XCTestCase {
+    func testSavedLayoutsGetLiveFirstOnceAndKeepLaterChanges() throws {
+        let name = "DriftLoom.Tests." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(["History", "Bookmarked", "Live"], forKey: "homeSections")
+        let migrated = AppPreferences(defaults: defaults)
+        XCTAssertEqual(migrated.homeSections, [.live, .history, .bookmarks]); XCTAssertTrue(migrated.movedLiveFirst)
+        migrated.setHomeSections([.history, .live])
+        let later = AppPreferences(defaults: defaults)
+        XCTAssertEqual(later.homeSections, [.history, .live], "Runs only once"); XCTAssertFalse(later.movedLiveFirst)
+
+        let hidden = UserDefaults(suiteName: name + ".hidden")!
+        defer { hidden.removePersistentDomain(forName: name + ".hidden") }
+        hidden.set(["Subscriptions"], forKey: "homeSections")
+        XCTAssertEqual(AppPreferences(defaults: hidden).homeSections, [.live, .subscriptions], "A hidden Live tab is added")
+
+        let fresh = UserDefaults(suiteName: name + ".fresh")!
+        defer { fresh.removePersistentDomain(forName: name + ".fresh") }
+        let first = AppPreferences(defaults: fresh)
+        XCTAssertEqual(first.homeSections.first, .live); XCTAssertFalse(first.movedLiveFirst)
+    }
+    func testCombinedOrderMovesLiveToTheFront() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let tabs = PinnedHomeTabs(fileURL: directory.appendingPathComponent("home-tabs.json"))
+        tabs.moveToFront(.section(.live))
+        XCTAssertTrue(tabs.order.isEmpty, "Without a combined order nothing is written")
+        let playlist = UUID(); tabs.toggleLocal(playlist)
+        tabs.setOrder([.local(playlist), .section(.subscriptions), .section(.live)])
+        tabs.moveToFront(.section(.live))
+        XCTAssertEqual(tabs.arrangement(sections: [.live, .subscriptions], localPlaylistIDs: [playlist]),
+                       [.section(.live), .local(playlist), .section(.subscriptions)])
     }
 }

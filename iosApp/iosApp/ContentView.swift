@@ -91,6 +91,7 @@ struct ContentView: View {
             playback.translatesSubtitles = preferences.translatesSubtitles
             playback.onSubtitleChoice = { [weak preferences] in preferences?.setSubtitleLanguage($0) }
             if library.isWritable { positions.retainOnly(Set(library.history.map { $0.item.contentID })) }
+            if preferences.movedLiveFirst { pinnedTabs.moveToFront(.section(.live)) }
             selectedSection = preferences.homeSections.first ?? .subscriptions
             if historyRecorder == nil { historyRecorder = LibraryPlaybackRecorder(playback: playback, library: library) }
             if nowPlaying == nil { nowPlaying = NowPlayingController(playback: playback, queue: queue) }

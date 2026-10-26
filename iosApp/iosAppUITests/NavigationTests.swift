@@ -324,7 +324,8 @@ final class NavigationTests: XCTestCase {
         let video = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browseVideo-'")).firstMatch
         XCTAssertTrue(video.waitForExistence(timeout: 45), "The Live kiosk should list videos")
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["LIVE"].waitForExistence(timeout: 10), "Opening a kiosk from the drawer adds it to home")
+        XCTAssertTrue(app.buttons["LIVE"].waitForExistence(timeout: 10), "Live is on home")
+        XCTAssertLessThan(app.buttons["LIVE"].frame.minX, app.buttons["SUBSCRIPTIONS"].frame.minX, "Live is the first home tab")
     }
 
     func testSoundCloudSearchPlaysTracksAndOpensProfiles() {

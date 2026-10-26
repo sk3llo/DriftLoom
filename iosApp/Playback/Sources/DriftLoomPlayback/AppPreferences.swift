@@ -7,8 +7,8 @@ public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
     case live = "Live", gaming = "Gaming", podcasts = "Podcasts", trailers = "Movie trailers"
     case soundCloud = "SoundCloud trending"
     public var id: String { rawValue }
-    /// Shown on a fresh install; the YouTube kiosks are opt-in from the drawer or settings.
-    public static let defaultSections: [HomeSection] = [.subscriptions, .feed, .bookmarks, .history, .trending]
+    /// Shown on a fresh install, Live first; the other kiosks are opt-in from the drawer or settings.
+    public static let defaultSections: [HomeSection] = [.live, .subscriptions, .feed, .bookmarks, .history, .trending]
     /// The YouTube page behind a kiosk section.
     public var kiosk: YouTubeKiosk? {
         switch self {
@@ -38,6 +38,8 @@ public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
 @MainActor
 public final class AppPreferences: ObservableObject {
     @Published public private(set) var homeSections: [HomeSection]
+    /// True when this launch moved Live to the front of an existing saved layout (done once).
+    public private(set) var movedLiveFirst = false
     @Published public private(set) var searchHistory: [String]
     @Published public private(set) var usesSearchSuggestions: Bool
     @Published public private(set) var recordsSearchHistory: Bool
@@ -65,7 +67,19 @@ public final class AppPreferences: ObservableObject {
         let saved = defaults.stringArray(forKey: "homeSections")?.compactMap(HomeSection.init(rawValue:)) ?? HomeSection.defaultSections
         var seen = Set<HomeSection>()
         let valid = saved.filter { seen.insert($0).inserted }
-        homeSections = valid.isEmpty ? HomeSection.defaultSections : valid
+        var sections = valid.isEmpty ? HomeSection.defaultSections : valid
+        // One-time update: Live becomes the first tab in layouts saved before it was the default.
+        var moved = false
+        if !defaults.bool(forKey: "liveFirst.v1") {
+            defaults.set(true, forKey: "liveFirst.v1")
+            if defaults.stringArray(forKey: "homeSections") != nil, sections.first != .live {
+                sections = [.live] + sections.filter { $0 != .live }
+                defaults.set(sections.map(\.rawValue), forKey: "homeSections")
+                moved = true
+            }
+        }
+        homeSections = sections
+        movedLiveFirst = moved
         var queries = Set<String>()
         searchHistory = Array((defaults.stringArray(forKey: "searchHistory") ?? []).filter {
             !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.count <= 500 && queries.insert($0).inserted
