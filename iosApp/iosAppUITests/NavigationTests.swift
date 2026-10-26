@@ -474,6 +474,35 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.images["seekPreviewImage"].waitForExistence(timeout: 20), "A storyboard frame while scrubbing")
     }
 
+    func testInlineControlsReplaceAVKitAndFullscreenUsesAppleControls() {
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+        let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
+        let seek = app.descendants(matching: .any)["seekBar"].firstMatch
+        XCTAssertTrue(seek.waitForExistence(timeout: 30))
+        XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "seekBar").count, 1, "One seek bar")
+        func showControls() { if !app.buttons["playPause"].exists { player.tap() }; XCTAssertTrue(app.buttons["playPause"].waitForExistence(timeout: 3)) }
+        sleep(5)
+        XCTAssertFalse(app.buttons["playPause"].exists, "Controls hide while playing")
+        showControls()
+        XCTAssertTrue(app.buttons["skipBack"].exists); XCTAssertTrue(app.buttons["fullscreen"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["airPlay"].exists)
+        app.buttons["playPause"].tap()
+        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 5), "Pausing shows Play")
+        let before = seek.value as? String ?? ""
+        app.buttons["skipForward"].tap()
+        let moved = expectation(for: NSPredicate(format: "value != %@", before), evaluatedWith: seek)
+        wait(for: [moved], timeout: 5)
+        app.buttons["Play"].tap()
+        XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 5))
+        showControls()
+        app.buttons["fullscreen"].tap()
+        let close = app.buttons.matching(NSPredicate(format: "label IN {'Close', 'Done', 'Dismiss'}")).firstMatch
+        if !close.waitForExistence(timeout: 5) { app.otherElements.firstMatch.tap() }
+        XCTAssertTrue(close.waitForExistence(timeout: 10), "Apple's full-screen player with its own controls")
+        close.tap()
+        XCTAssertTrue(seek.waitForExistence(timeout: 10), "Closing full screen returns to DriftLoom's player")
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

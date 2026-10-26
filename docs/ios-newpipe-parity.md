@@ -125,8 +125,12 @@ to load, so no paging was added.
 
 Seek-bar previews: the storyboard spec (`storyboards.playerStoryboardSpecRenderer.spec`) comes from the same
 iOS InnerTube player response as captions, cached per video, so previews add no YouTube request. Sheets are
-cached in memory (40); the 160 px level is used. AVKit's own scrubber can't show custom frames, so DriftLoom adds
-its own seek bar under the video; fullscreen keeps AVKit's bar without previews.
+cached in memory (40); the 160 px level is used. AVKit's own scrubber can't show custom frames, so the inline
+player no longer uses AVPlayerViewController: it is an AVPlayerLayer with DriftLoom's controls (play/pause,
+±10 s, fullscreen, PiP via AVPictureInPictureController, AirPlay route picker) and a single seek bar with
+previews. Fullscreen presents AVPlayerViewController modally with native controls and no previews; app-drawn
+subtitles are hosted in its content overlay. Restoring from PiP reopens the player. Verified on the iPhone 7:
+PiP starts from the inline player, fullscreen shows Apple's controls; the simulator doesn't support PiP.
 
 New-video notifications: BGAppRefreshTask `net.driftloom.app.feedRefresh`, scheduled when the app goes to the
 background (earliest 30 minutes later; iOS chooses the time). It fetches up to 150 subscriptions' RSS/SoundCloud

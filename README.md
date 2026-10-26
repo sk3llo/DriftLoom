@@ -18,8 +18,12 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   YouTube subtitle tracks (uploaded and auto-generated) can be chosen in the player and are drawn over the video,
   including fullscreen; a preferred language turns them on automatically. Captions embedded in the media asset
   still use native controls when no YouTube track list is available.
-- Background-audio configuration, Now Playing/remote command integration, and AVKit Picture in Picture support.
-  Physical background playback has been verified; not every system control or PiP scenario has been tested.
+- Background-audio configuration, Now Playing/remote command integration, and Picture in Picture.
+  Physical background playback and starting PiP from the inline player have been verified on an iPhone 7;
+  not every system control or PiP scenario has been tested.
+- Inline player with DriftLoom's own controls, like NewPipe's: play/pause, skip back/forward 10 s, one seek bar
+  under the video, fullscreen, Picture in Picture (where supported) and AirPlay. Tap the video to show them;
+  they hide after 3 s while playing. Fullscreen opens Apple's full player with its native controls.
 - Saved videos, subscriptions, history, local playlists, and remote playlist bookmarks persist locally.
   Resume positions are bounded, tied to history recording, and removed with deleted history.
 - Appearance, home-tab visibility, one combined tab order across built-in sections, pinned channels/playlists and
@@ -48,7 +52,8 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   fails (with Retry), and on iOS 16.1+ a Live Activity with a progress bar on the lock screen and in the
   Dynamic Island. iOS 15 devices get the strip and notifications only.
 - Seek-bar previews: a seek bar under the video shows YouTube's storyboard frame and time while dragging
-  (fetched with the captions in one player request; not in fullscreen, offline or for SoundCloud).
+  (fetched with the captions in one player request; not in fullscreen, offline or for SoundCloud, where the
+  bubble shows only the time).
 - New-video notifications (Settings → Notifications, off by default): a background refresh checks
   subscriptions and notifies about recent uploads (one per video, or a summary for more than three); tapping
   plays the video or opens What's new. iOS decides when background refresh runs.

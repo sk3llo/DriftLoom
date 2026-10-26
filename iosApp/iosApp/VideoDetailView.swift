@@ -16,6 +16,7 @@ struct VideoDetailView: View {
     @State private var sharing = false
     @State private var downloading = false
     @State private var choosingFormat = false
+    @StateObject private var inline = InlinePlayerController()
     private enum DetailTab: String, CaseIterable { case related = "Related", comments = "Comments", description = "Description", queue = "Queue" }
 
     var body: some View {
@@ -31,10 +32,12 @@ struct VideoDetailView: View {
                 }.padding(.horizontal, 6).background(Color(.systemBackground))
                 Group {
                     if playback.player.currentItem != nil {
-                        NativeVideoPlayer(player: playback.player, subtitles: SubtitleOverlay(playback: playback, size: preferences.subtitleSize,
-                                                                                         artwork: playback.currentItemMetadata.flatMap { $0.isSoundCloud ? $0.thumbnail : nil }))
-                            .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
-                            .accessibilityIdentifier("videoPlayer")
+                        ZStack {
+                            InlinePlayerSurface(player: playback.player, overlay: overlay, controller: inline)
+                            InlinePlayerControls(playback: playback, controller: inline, overlay: overlay)
+                        }
+                        .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
+                        .accessibilityElement(children: .contain).accessibilityIdentifier("videoPlayer")
                     } else {
                         ZStack {
                             Color.black
@@ -43,8 +46,8 @@ struct VideoDetailView: View {
                         }.aspectRatio(16 / 9, contentMode: .fit)
                     }
                 }
-                if let storyboard = playback.storyboard, playback.player.currentItem != nil {
-                    StoryboardScrubber(playback: playback, storyboard: storyboard).id(playback.videoID).padding(.top, 8)
+                if playback.player.currentItem != nil {
+                    StoryboardScrubber(playback: playback, storyboard: playback.storyboard).id(playback.videoID).padding(.top, 8)
                 }
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
@@ -124,6 +127,11 @@ struct VideoDetailView: View {
         }
         .task(id: playback.videoID) { if let id = playback.videoID { await related.load(.related(id)) } }
         .task(id: playback.videoID) { if let id = playback.videoID { await discussion.load(videoID: id) } }
+    }
+
+    private var overlay: SubtitleOverlay {
+        SubtitleOverlay(playback: playback, size: preferences.subtitleSize,
+                        artwork: playback.currentItemMetadata.flatMap { $0.isSoundCloud ? $0.thumbnail : nil })
     }
 
     private var playbackOptions: some View {
@@ -262,44 +270,6 @@ struct SubtitleOverlay: View {
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }.allowsHitTesting(false)
-    }
-}
-
-private struct NativeVideoPlayer: UIViewControllerRepresentable {
-    let player: AVPlayer
-    let subtitles: SubtitleOverlay
-    final class Coordinator { var host: UIHostingController<SubtitleOverlay>? }
-    func makeCoordinator() -> Coordinator { Coordinator() }
-    func makeUIViewController(context: Context) -> AVPlayerViewController {
-        let controller = AVPlayerViewController()
-        controller.player = player
-        let host = UIHostingController(rootView: subtitles)
-        host.view.backgroundColor = .clear
-        host.view.isUserInteractionEnabled = false
-        host.view.translatesAutoresizingMaskIntoConstraints = false
-        if let overlay = controller.contentOverlayView {
-            overlay.addSubview(host.view)
-            NSLayoutConstraint.activate([host.view.leadingAnchor.constraint(equalTo: overlay.leadingAnchor), host.view.trailingAnchor.constraint(equalTo: overlay.trailingAnchor),
-                                         host.view.topAnchor.constraint(equalTo: overlay.topAnchor), host.view.bottomAnchor.constraint(equalTo: overlay.bottomAnchor)])
-        }
-        context.coordinator.host = host
-        controller.allowsPictureInPicturePlayback = true
-        // Minimizing the app player must not start a new system presentation on iOS 15.
-        controller.canStartPictureInPictureAutomaticallyFromInline = false
-        controller.entersFullScreenWhenPlaybackBegins = false
-        controller.view.clipsToBounds = true
-        return controller
-    }
-    func updateUIViewController(_ controller: AVPlayerViewController, context: Context) {
-        controller.player = player
-        context.coordinator.host?.rootView = subtitles
-    }
-    static func dismantleUIViewController(_ controller: AVPlayerViewController, coordinator: Coordinator) {
-        coordinator.host?.view.removeFromSuperview(); coordinator.host = nil
-        // The session retains AVPlayer for the mini-player and background audio.
-        // Release AVKit's presentation ownership when SwiftUI removes the video surface.
-        controller.player = nil
-        if controller.presentedViewController != nil { controller.dismiss(animated: false) }
     }
 }
 

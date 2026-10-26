@@ -57,13 +57,14 @@ final class StoryboardImages {
 /// A seek bar with YouTube's preview frames above the finger while dragging.
 struct StoryboardScrubber: View {
     @ObservedObject var playback: PlaybackSession
-    let storyboard: Storyboard
+    /// Preview frames when YouTube provides them; without, the bubble shows only the time.
+    let storyboard: Storyboard?
     @StateObject private var clock: PlaybackClock
     @State private var dragFraction: Double?
     @State private var preview: UIImage?
     @State private var previewTask: Task<Void, Never>?
 
-    init(playback: PlaybackSession, storyboard: Storyboard) {
+    init(playback: PlaybackSession, storyboard: Storyboard?) {
         self.playback = playback; self.storyboard = storyboard
         _clock = StateObject(wrappedValue: PlaybackClock(player: playback.player))
     }
@@ -110,21 +111,23 @@ struct StoryboardScrubber: View {
         let bubble: CGFloat = 160
         let x = min(max(0, width * fraction - bubble / 2), max(0, width - bubble))
         return VStack(spacing: 4) {
-            ZStack {
-                Color.black
-                if let preview { Image(uiImage: preview).resizable().scaledToFill().accessibilityIdentifier("seekPreviewImage") }
+            if storyboard != nil {
+                ZStack {
+                    Color.black
+                    if let preview { Image(uiImage: preview).resizable().scaledToFill().accessibilityIdentifier("seekPreviewImage") }
+                }
+                .frame(width: bubble, height: bubble * 9 / 16).clipped().cornerRadius(6)
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.8), lineWidth: 1))
             }
-            .frame(width: bubble, height: bubble * 9 / 16).clipped().cornerRadius(6)
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.8), lineWidth: 1))
             Text(format(fraction * clock.duration)).font(.caption.monospacedDigit().weight(.semibold))
                 .padding(.horizontal, 6).padding(.vertical, 2).background(Color.black.opacity(0.75)).foregroundColor(.white).cornerRadius(4)
         }
-        .offset(x: x, y: -34).allowsHitTesting(false)
+        .offset(x: x, y: storyboard == nil ? 0 : -34).allowsHitTesting(false)
     }
 
     private func update(_ fraction: Double) {
         dragFraction = fraction
-        guard let frame = storyboard.frame(at: fraction * clock.duration, duration: clock.duration) else { return }
+        guard let frame = storyboard?.frame(at: fraction * clock.duration, duration: clock.duration) else { return }
         previewTask?.cancel()
         previewTask = Task {
             let image = await StoryboardImages.shared.frame(frame)

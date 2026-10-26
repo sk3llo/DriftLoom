@@ -1,0 +1,229 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+import AVFoundation
+import AVKit
+import DriftLoomPlayback
+import SwiftUI
+import UIKit
+
+/// A view whose backing layer is an AVPlayerLayer.
+final class PlayerLayerView: UIView {
+    override class var layerClass: AnyClass { AVPlayerLayer.self }
+    var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
+}
+
+/// Picture in Picture and fullscreen for the inline player, which draws DriftLoom's own controls
+/// instead of AVKit's (AVKit's seek bar can't show preview frames).
+@MainActor
+final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictureControllerDelegate {
+    @Published private(set) var isPictureInPictureActive = false
+    @Published private(set) var isPictureInPicturePossible = false
+    private var pictureInPicture: AVPictureInPictureController?
+    private var possibleObservation: NSKeyValueObservation?
+    private weak var fullscreen: AVPlayerViewController?
+
+    func attach(_ layer: AVPlayerLayer) {
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+        NSLog("DriftLoomPlayerSmoke: pip supported=%d", AVPictureInPictureController.isPictureInPictureSupported() ? 1 : 0)
+#endif
+        guard pictureInPicture?.playerLayer !== layer, AVPictureInPictureController.isPictureInPictureSupported(),
+              let controller = AVPictureInPictureController(playerLayer: layer) else { return }
+        controller.delegate = self
+        // Minimizing the app player must not start a system presentation by itself.
+        controller.canStartPictureInPictureAutomaticallyFromInline = false
+        pictureInPicture = controller
+        possibleObservation = controller.observe(\.isPictureInPicturePossible, options: [.initial, .new]) { [weak self] controller, _ in
+            let possible = controller.isPictureInPicturePossible
+            Task { @MainActor [weak self] in
+                self?.isPictureInPicturePossible = possible
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+                NSLog("DriftLoomPlayerSmoke: pip possible=%d", possible ? 1 : 0)
+                // --player-smoke pip: start Picture in Picture as soon as it's possible.
+                if possible, self?.smokeAction == "pip", self?.smokeDone == false { self?.smokeDone = true; self?.togglePictureInPicture() }
+#endif
+            }
+        }
+    }
+    func togglePictureInPicture() {
+        guard let pictureInPicture else { return }
+        if pictureInPicture.isPictureInPictureActive { pictureInPicture.stopPictureInPicture() } else { pictureInPicture.startPictureInPicture() }
+    }
+
+    /// Apple's player with its native controls, presented over everything; its close button returns here.
+    func presentFullscreen(player: AVPlayer, overlay: SubtitleOverlay) {
+        guard fullscreen == nil, let presenter = Self.topViewController() else { return }
+        let controller = AVPlayerViewController()
+        controller.player = player
+        controller.allowsPictureInPicturePlayback = true
+        controller.modalPresentationStyle = .fullScreen
+        let host = UIHostingController(rootView: overlay)
+        host.view.backgroundColor = .clear; host.view.isUserInteractionEnabled = false
+        host.view.translatesAutoresizingMaskIntoConstraints = false
+        if let content = controller.contentOverlayView {
+            content.addSubview(host.view)
+            NSLayoutConstraint.activate([host.view.leadingAnchor.constraint(equalTo: content.leadingAnchor), host.view.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+                                         host.view.topAnchor.constraint(equalTo: content.topAnchor), host.view.bottomAnchor.constraint(equalTo: content.bottomAnchor)])
+        }
+        controller.addChild(host); host.didMove(toParent: controller)
+        fullscreen = controller
+        presenter.present(controller, animated: true)
+    }
+    var isFullscreen: Bool { fullscreen != nil }
+
+    private static func topViewController() -> UIViewController? {
+        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows).first { $0.isKeyWindow }
+        var top = window?.rootViewController
+        while let presented = top?.presentedViewController { top = presented }
+        return top
+    }
+
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+    var smokeAction: String? {
+        let arguments = ProcessInfo.processInfo.arguments
+        return arguments.firstIndex(of: "--player-smoke").flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
+    }
+    var smokeDone = false
+#endif
+    nonisolated func pictureInPictureControllerDidStartPictureInPicture(_ controller: AVPictureInPictureController) {
+        Task { @MainActor in
+            isPictureInPictureActive = true
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+            NSLog("DriftLoomPlayerSmoke: PASS pip started")
+#endif
+        }
+    }
+    nonisolated func pictureInPictureController(_ controller: AVPictureInPictureController, failedToStartPictureInPictureWithError error: Error) {
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+        NSLog("DriftLoomPlayerSmoke: FAIL pip %@", error.localizedDescription)
+#endif
+    }
+    nonisolated func pictureInPictureControllerDidStopPictureInPicture(_ controller: AVPictureInPictureController) {
+        Task { @MainActor in isPictureInPictureActive = false }
+    }
+    nonisolated func pictureInPictureController(_ controller: AVPictureInPictureController,
+                                                restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completion: @escaping (Bool) -> Void) {
+        // Returning from PiP shows the full player again.
+        Task { @MainActor in
+            NotificationCenter.default.post(name: .driftLoomExpandPlayer, object: nil)
+            completion(true)
+        }
+    }
+}
+
+/// The video surface with the subtitle/artwork overlay; controls are drawn by SwiftUI on top.
+struct InlinePlayerSurface: UIViewRepresentable {
+    let player: AVPlayer
+    let overlay: SubtitleOverlay
+    let controller: InlinePlayerController
+    final class Coordinator { var host: UIHostingController<SubtitleOverlay>? }
+    func makeCoordinator() -> Coordinator { Coordinator() }
+    func makeUIView(context: Context) -> PlayerLayerView {
+        let view = PlayerLayerView()
+        view.backgroundColor = .black; view.clipsToBounds = true
+        view.playerLayer.videoGravity = .resizeAspect
+        view.playerLayer.player = player
+        let host = UIHostingController(rootView: overlay)
+        host.view.backgroundColor = .clear; host.view.isUserInteractionEnabled = false
+        host.view.frame = view.bounds; host.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(host.view)
+        context.coordinator.host = host
+        controller.attach(view.playerLayer)
+        return view
+    }
+    func updateUIView(_ view: PlayerLayerView, context: Context) {
+        if view.playerLayer.player !== player { view.playerLayer.player = player }
+        context.coordinator.host?.rootView = overlay
+    }
+    static func dismantleUIView(_ view: PlayerLayerView, coordinator: Coordinator) {
+        coordinator.host?.view.removeFromSuperview(); coordinator.host = nil
+        // The session keeps the AVPlayer for the mini-player and background audio.
+        view.playerLayer.player = nil
+    }
+}
+
+/// AirPlay picker in DriftLoom's colours.
+struct AirPlayButton: UIViewRepresentable {
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let picker = AVRoutePickerView()
+        picker.tintColor = .white; picker.activeTintColor = UIColor(AppStyle.accent)
+        picker.prioritizesVideoDevices = true
+        picker.accessibilityIdentifier = "airPlay"
+        return picker
+    }
+    func updateUIView(_ view: AVRoutePickerView, context: Context) {}
+}
+
+/// Play/pause, skip ±10 s, fullscreen, PiP and AirPlay over the video. Tap toggles; they hide after 3 s while playing.
+struct InlinePlayerControls: View {
+    @ObservedObject var playback: PlaybackSession
+    @ObservedObject var controller: InlinePlayerController
+    let overlay: SubtitleOverlay
+    @State private var visible = true
+    @State private var hideTask: Task<Void, Never>?
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(visible ? 0.35 : 0).accessibilityHidden(true)
+            if visible {
+                HStack(spacing: 44) {
+                    controlButton("gobackward.10", label: "Back 10 seconds", id: "skipBack") { skip(-10) }
+                    controlButton(playback.phase == .playing ? "pause.fill" : "play.fill", label: playback.phase == .playing ? "Pause" : "Play",
+                                  id: "playPause", size: 34) { playback.togglePlayPause(); scheduleHide() }
+                    controlButton("goforward.10", label: "Forward 10 seconds", id: "skipForward") { skip(10) }
+                }
+                VStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Spacer()
+                        AirPlayButton().frame(width: 40, height: 40)
+                        if controller.isPictureInPicturePossible || controller.isPictureInPictureActive {
+                            controlButton(controller.isPictureInPictureActive ? "pip.exit" : "pip.enter",
+                                          label: controller.isPictureInPictureActive ? "Exit Picture in Picture" : "Picture in Picture",
+                                          id: "pictureInPicture", size: 18) { controller.togglePictureInPicture() }
+                        }
+                        controlButton("arrow.up.left.and.arrow.down.right", label: "Full screen", id: "fullscreen", size: 18) {
+                            controller.presentFullscreen(player: playback.player, overlay: overlay)
+                        }
+                    }.padding(.horizontal, 6).padding(.bottom, 2)
+                }
+            }
+        }
+        // The whole area toggles the controls; the buttons inside handle their own taps first.
+        .contentShape(Rectangle())
+        .onTapGesture { visible.toggle(); scheduleHide() }
+        .animation(.easeInOut(duration: 0.2), value: visible)
+        .onAppear(perform: scheduleHide)
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+        .task(id: playback.phase == .playing) {
+            // --player-smoke fullscreen: open the full-screen player once playback runs.
+            guard playback.phase == .playing, controller.smokeAction == "fullscreen", !controller.smokeDone else { return }
+            controller.smokeDone = true
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            controller.presentFullscreen(player: playback.player, overlay: overlay)
+            NSLog("DriftLoomPlayerSmoke: %@ fullscreen presented", controller.isFullscreen ? "PASS" : "FAIL")
+        }
+#endif
+        .onChange(of: playback.phase) { _ in scheduleHide() }
+    }
+
+    private func controlButton(_ symbol: String, label: String, id: String, size: CGFloat = 24, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: size, weight: .semibold)).foregroundColor(.white)
+                .frame(width: 44, height: 44).contentShape(Rectangle())
+        }
+        .accessibilityLabel(label).accessibilityIdentifier(id)
+    }
+    private func skip(_ seconds: Double) {
+        let now = playback.player.currentTime().seconds
+        guard now.isFinite else { return }
+        Task { await playback.player.seek(to: CMTime(seconds: max(0, now + seconds), preferredTimescale: 600)) }
+        scheduleHide()
+    }
+    private func scheduleHide() {
+        hideTask?.cancel()
+        guard visible, playback.phase == .playing, !UIAccessibility.isVoiceOverRunning else { return }
+        hideTask = Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if !Task.isCancelled { visible = false }
+        }
+    }
+}
