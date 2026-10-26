@@ -50,6 +50,7 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Opening links from other apps: "DriftLoom" in the share sheet (Safari, the YouTube and SoundCloud apps, …) and a
   `driftloom://open?url=<link>` URL scheme (also usable from Shortcuts). Videos and tracks play; YouTube channels,
   @handles and playlists, and SoundCloud profiles and playlists open as pages, including on.soundcloud.com links.
+  Sharing a link into DriftLoom was confirmed by hand on the iPhone 7 (iOS 15.8.2).
 - When YouTube refuses extraction (for example "confirm you're not a bot" on a rate-limited network),
   playback and downloads report that in plain language. DriftLoom does not try to bypass these checks.
   See [the rework checklist](docs/ios-newpipe-parity.md).
