@@ -356,6 +356,33 @@ final class NavigationTests: XCTestCase {
                       "The SoundCloud subscription survives relaunch")
     }
 
+    func testDownloadShowsProgressStripAndNotificationOpensDownloads() {
+        let app = application(extraArguments: ["--download-notifications", "--download-smoke", "--download-smoke-video", "sc:1992908699"])
+        XCTAssertTrue(app.buttons["downloadStrip"].waitForExistence(timeout: 30), "Progress strip while downloading")
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let allow = springboard.alerts.buttons["Allow"]
+        if allow.waitForExistence(timeout: 5) { allow.tap() }
+        let banner = springboard.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'ready to watch offline'")).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: 120), "A notification when the download finishes")
+        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.buttons["downloadStrip"])
+        wait(for: [gone], timeout: 10)
+        banner.tap()
+        XCTAssertTrue(app.buttons["Downloads and storage"].waitForExistence(timeout: 10), "Tapping the notification opens Downloads")
+    }
+
+    func testFailedDownloadNotifiesWithRetry() {
+        // A DRM-only SoundCloud track can't be saved, so the job fails right after it starts.
+        let app = application(extraArguments: ["--download-notifications", "--download-smoke", "--download-smoke-video", "sc:1889775891"])
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let allow = springboard.alerts.buttons["Allow"]
+        if allow.waitForExistence(timeout: 5) { allow.tap() }
+        let banner = springboard.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'Download failed' AND label CONTAINS 'DRM'")).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: 60), "A failure notification that says why")
+        banner.press(forDuration: 1.2)
+        XCTAssertTrue(springboard.buttons["Retry"].waitForExistence(timeout: 5), "Failures offer Retry")
+        _ = app.wait(for: .runningForeground, timeout: 1)
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

@@ -52,6 +52,7 @@ struct ContentView: View {
                     SearchView(onPlay: play, onClose: closeSearch)
                         .opacity(searching ? 1 : 0).allowsHitTesting(searching).accessibilityHidden(!searching)
                 }
+                DownloadProgressStrip()
                 if playback.videoID != nil, !expanded {
                     MiniPlayer(playback: playback, onExpand: { expanded = true }, onStop: queue.stop)
                 }
@@ -72,6 +73,7 @@ struct ContentView: View {
         .sheet(item: $addingToPlaylist) { item in PlaylistPickerView(item: item).environmentObject(playlists) }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomAddToPlaylist)) { addingToPlaylist = $0.object as? BrowseItem }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomExpandPlayer)) { _ in expanded = true }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in expanded = false; closeSearch() }
         .onOpenURL { url in openLink(url.absoluteString) }
         .onChange(of: preferences.homeSections) { values in
             if !values.contains(selectedSection), let first = values.first { selectedSection = first }

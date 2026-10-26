@@ -118,6 +118,15 @@ AVAssetDownloadTask can't store SoundCloud's bare media playlists for offline us
 is closed and can be retried. NewPipe backups' SoundCloud entries are still skipped (they store permalinks,
 which would need one lookup per item).
 
+Download progress UI: DownloadSummary (in the DriftLoomActivity package library, shared with the
+DriftLoomWidgets extension) drives an in-app strip, local notifications (permission asked when the first download
+starts; a failure offers Retry; tapping opens Downloads) and, on iOS 16.1+, one Live Activity for all running
+downloads. Background URLSession transfers can't report every step while the app is suspended, so the activity
+shows the last known progress until iOS reports the end. SoundCloud downloads request background time; if iOS ends
+it, the job fails with "Interrupted while DriftLoom was in the background", which ends the activity and notifies.
+Verified: Dynamic Island and lock screen on the iPhone 16 Pro simulator (iOS 18), notifications on the SE
+simulator and the iPhone 7 (iOS 15.8.2), where the app installs with the iOS 16.1 extension and ignores it.
+
 Download network policy is fixed per job when it starts or is retried; changing the preference does not move
 existing transfers. Wi-Fi-only jobs wait while only cellular is available.
 

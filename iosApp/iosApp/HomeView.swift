@@ -165,6 +165,7 @@ struct HomeView: View {
             if let id = selectedPinned, let route = pinnedTabs.tabs.first(where: { $0.id == id })?.item.destination { await pinnedPage.load(route) }
         }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomManageGroups)) { _ in sheet = .groups }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in menuVisible = false; sheet = .downloads }
         .sheet(item: $sheet, onDismiss: {
             if let video = pendingVideo { pendingVideo = nil; onPlay(video) }
         }) { target in

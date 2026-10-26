@@ -44,6 +44,9 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   history, local playlists, queues, subscriptions with feed entries, and offline downloads. Access follows
   NewPipe: the public client ID from soundcloud.com's own scripts and SoundCloud's web API (api-v2).
   DRM-only tracks (about 1 in 15 in a sample) and preview-only tracks can't be played and say so.
+- Download progress: a strip above the mini-player on every screen, notifications when a download finishes or
+  fails (with Retry), and on iOS 16.1+ a Live Activity with a progress bar on the lock screen and in the
+  Dynamic Island. iOS 15 devices get the strip and notifications only.
 - When YouTube refuses extraction (for example "confirm you're not a bot" on a rate-limited network),
   playback and downloads report that in plain language. DriftLoom does not try to bypass these checks.
   See [the rework checklist](docs/ios-newpipe-parity.md).

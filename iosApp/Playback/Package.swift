@@ -6,6 +6,8 @@ let package = Package(
     platforms: [.iOS(.v15), .macOS(.v14)],
     products: [
         .library(name: "DriftLoomPlayback", targets: ["DriftLoomPlayback"]),
+        // Download progress shared by the app and its Live Activity widget extension.
+        .library(name: "DriftLoomActivity", targets: ["DriftLoomActivity"]),
         .executable(name: "PlaybackProbe", targets: ["PlaybackProbe"]),
         .executable(name: "BrowseProbe", targets: ["BrowseProbe"])
     ],
@@ -14,7 +16,8 @@ let package = Package(
                  revision: "e5b7d0396ce12bf3444f0d209e8436c83373b7af")
     ],
     targets: [
-        .target(name: "DriftLoomPlayback", dependencies: ["YouTubeKit"]),
+        .target(name: "DriftLoomPlayback", dependencies: ["YouTubeKit", "DriftLoomActivity"]),
+        .target(name: "DriftLoomActivity"),
         .executableTarget(name: "PlaybackProbe", dependencies: ["DriftLoomPlayback"]),
         .executableTarget(name: "BrowseProbe", dependencies: ["DriftLoomPlayback"]),
         .testTarget(name: "DriftLoomPlaybackTests", dependencies: ["DriftLoomPlayback"])

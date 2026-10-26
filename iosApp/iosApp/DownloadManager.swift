@@ -102,6 +102,7 @@ final class DownloadManager: ObservableObject {
         guard connected, library.isWritable else { return nil }
         let record = DownloadRecord(item: item, choice: choice, subtitleLanguage: subtitleLanguage)
         guard library.add(record) else { return nil }
+        DownloadNotifier.shared.requestAuthorizationIfNeeded()
         retry(record.id); return record.id
     }
     func retry(_ id: UUID) {
@@ -135,6 +136,15 @@ final class DownloadManager: ObservableObject {
                     // A foreground transfer: SoundCloud's segments are joined into one file as they arrive.
                     current.state = .downloading
                     guard self.library.update(current) else { return }
+                    // Keep going briefly in the background; if iOS ends that time, stop cleanly so the
+                    // job, its Live Activity and its notification say what happened instead of stalling.
+                    var background = UIBackgroundTaskIdentifier.invalid
+                    background = UIApplication.shared.beginBackgroundTask(withName: "SoundCloud download") { [weak self] in
+                        self?.preparations[id]?.cancel(); self?.preparations[id] = nil
+                        self?.failed(transfer, message: "Interrupted while DriftLoom was in the background. Retry to continue.")
+                        UIApplication.shared.endBackgroundTask(background); background = .invalid
+                    }
+                    defer { if background != .invalid { UIApplication.shared.endBackgroundTask(background) } }
                     let configuration = URLSessionConfiguration.ephemeral
                     configuration.allowsCellularAccess = record.network != .wifiOnly
                     configuration.waitsForConnectivity = true; configuration.httpCookieStorage = nil; configuration.urlCache = nil
@@ -277,7 +287,8 @@ final class DownloadManager: ObservableObject {
             partProgress[base] = nil
         }
         discardParts(&record)
-        record.state = .failed; record.error = message; _ = library.update(record)
+        record.state = .failed; record.error = message
+        if library.update(record) { DownloadNotifier.shared.failed(record) }
     }
     /// Delete saved part files of a merged download and forget them on the record.
     private func discardParts(_ record: inout DownloadRecord) {
@@ -333,7 +344,8 @@ final class DownloadManager: ObservableObject {
             record.state = .completed; record.progress = 1; record.error = nil
             var local = location; var values = URLResourceValues(); values.isExcludedFromBackup = true
             try? local.setResourceValues(values)
-            if !library.update(record) { try? FileManager.default.removeItem(at: location) }
+            if library.update(record) { DownloadNotifier.shared.finished(record) }
+            else { try? FileManager.default.removeItem(at: location) }
         } catch { try? FileManager.default.removeItem(at: location); failed(transfer, message: "The downloaded media couldn't be verified for offline playback. Retry the download.") }
     }
 }
@@ -378,6 +390,11 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, AVAs
 }
 
 final class DownloadAppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        DownloadNotifier.shared.install()
+        if #available(iOS 16.1, *) { DownloadActivityController.shared.start() }
+        return true
+    }
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
         DownloadManager.shared.backgroundEvents(identifier: identifier, completion: completionHandler)
     }

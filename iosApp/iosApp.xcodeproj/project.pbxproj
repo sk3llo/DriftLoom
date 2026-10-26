@@ -6,53 +6,57 @@
 	objectVersion = 77;
 	objects = {
 
-        E00000000000000000000001 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = DriftLoomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-        E00000000000000000000002 = {isa = PBXFileSystemSynchronizedRootGroup; path = iosAppUITests; sourceTree = "<group>"; };
-        E00000000000000000000004 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-        E00000000000000000000005 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-        E00000000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-        E00000000000000000000011 = {isa = PBXContainerItemProxy; containerPortal = CE9DC708D8CDDFF57F3EFEE0; proxyType = 1; remoteGlobalIDString = CB7D703B7BE102A8C9442815; remoteInfo = iosApp; };
-        E00000000000000000000010 = {isa = PBXTargetDependency; target = CB7D703B7BE102A8C9442815; targetProxy = E00000000000000000000011; };
-        E00000000000000000000003 = {
-            isa = PBXNativeTarget; buildConfigurationList = E00000000000000000000007;
-            buildPhases = (E00000000000000000000004, E00000000000000000000005, E00000000000000000000006); buildRules = (); dependencies = (E00000000000000000000010);
-            fileSystemSynchronizedGroups = (E00000000000000000000002); name = DriftLoomUITests; productName = DriftLoomUITests;
-            productReference = E00000000000000000000001; productType = "com.apple.product-type.bundle.ui-testing";
-        };
-        E00000000000000000000007 = {isa = XCConfigurationList; buildConfigurations = (E00000000000000000000008, E00000000000000000000009); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-
-        E00000000000000000000008 = {
-            isa = XCBuildConfiguration; name = Debug;
-            buildSettings = {
-                CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = "$(TEAM_ID)"; GENERATE_INFOPLIST_FILE = YES;
-                IPHONEOS_DEPLOYMENT_TARGET = 15.0; PRODUCT_BUNDLE_IDENTIFIER = net.driftloom.app.DriftLoomUITests;
-                PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = iosApp;
-            };
-        };
-
-        E00000000000000000000009 = {
-            isa = XCBuildConfiguration; name = Release;
-            buildSettings = {
-                CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = "$(TEAM_ID)"; GENERATE_INFOPLIST_FILE = YES;
-                IPHONEOS_DEPLOYMENT_TARGET = 15.0; PRODUCT_BUNDLE_IDENTIFIER = net.driftloom.app.DriftLoomUITests;
-                PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = iosApp;
-            };
-        };
-
-
 /* Begin PBXBuildFile section */
-        D11111111111111111111111 /* DriftLoomPlayback in Frameworks */ = {isa = PBXBuildFile; productRef = D22222222222222222222222 /* DriftLoomPlayback */; };
+		1CC0592E0604D7EDC23A5F5D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B2D8EE9EA0281BB2709A1A1 /* WidgetKit.framework */; };
+		364E87CCFF11DC8A336E2C60 /* DriftLoomActivity in Frameworks */ = {isa = PBXBuildFile; productRef = 0EB082581FA112E81B53E42B /* DriftLoomActivity */; };
+		5370965905399643AF9E58D4 /* DownloadActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E01C67DB2A698C6DA4C1D00 /* DownloadActivityWidget.swift */; };
+		83F48F7E7CCF0004CABC8A2D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB578B5F9F6851018024C8DB /* SwiftUI.framework */; };
+		AD1B568042447103A6159561 /* DriftLoomWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BAB7EB6C984C052928D78B57 /* DriftLoomWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D11111111111111111111111 /* DriftLoomPlayback in Frameworks */ = {isa = PBXBuildFile; productRef = D22222222222222222222222 /* DriftLoomPlayback */; };
+		F141945EFE16801045C78B8D /* ActivityKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F741910D87824431BC2B2D9 /* ActivityKit.framework */; };
+		FE27F564634F56C53A964C78 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F3E6EA7AD3781086713A51E /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
-/* Begin XCLocalSwiftPackageReference section */
-        D33333333333333333333333 /* Playback */ = {isa = XCLocalSwiftPackageReference; relativePath = Playback; };
-/* End XCLocalSwiftPackageReference section */
+/* Begin PBXContainerItemProxy section */
+		CA9D6D798DB96CD0D85F99DB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CE9DC708D8CDDFF57F3EFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 158C425E29A3841B45931699;
+			remoteInfo = DriftLoomWidgets;
+		};
+		E00000000000000000000011 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CE9DC708D8CDDFF57F3EFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CB7D703B7BE102A8C9442815;
+			remoteInfo = iosApp;
+		};
+/* End PBXContainerItemProxy section */
 
-/* Begin XCSwiftPackageProductDependency section */
-        D22222222222222222222222 /* DriftLoomPlayback */ = {isa = XCSwiftPackageProductDependency; package = D33333333333333333333333 /* Playback */; productName = DriftLoomPlayback; };
-/* End XCSwiftPackageProductDependency section */
+/* Begin PBXCopyFilesBuildPhase section */
+		A7E22BA52CBAF0293DDEBC8C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AD1B568042447103A6159561 /* DriftLoomWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1F3E6EA7AD3781086713A51E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		3E01C67DB2A698C6DA4C1D00 /* DownloadActivityWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DownloadActivityWidget.swift; sourceTree = "<group>"; };
+		6F741910D87824431BC2B2D9 /* ActivityKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/ActivityKit.framework; sourceTree = DEVELOPER_DIR; };
+		7B2D8EE9EA0281BB2709A1A1 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
+		82528D2917ECDF68B1A4665A /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BAB7EB6C984C052928D78B57 /* DriftLoomWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DriftLoomWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB578B5F9F6851018024C8DB /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
+		E00000000000000000000001 /* DriftLoomUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = DriftLoomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DriftLoom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -75,32 +79,83 @@
 			path = iosApp;
 			sourceTree = "<group>";
 		};
+		E00000000000000000000002 /* iosAppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = iosAppUITests;
+			sourceTree = "<group>";
+		};
 		F0463985A41AA4941DD32D9F /* Configuration */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = Configuration;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		25433D21D36A23F9DF7D26AF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE27F564634F56C53A964C78 /* Foundation.framework in Frameworks */,
+				1CC0592E0604D7EDC23A5F5D /* WidgetKit.framework in Frameworks */,
+				83F48F7E7CCF0004CABC8A2D /* SwiftUI.framework in Frameworks */,
+				F141945EFE16801045C78B8D /* ActivityKit.framework in Frameworks */,
+				364E87CCFF11DC8A336E2C60 /* DriftLoomActivity in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E00000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FDFBDD5BD804F728F46628B8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-                D11111111111111111111111 /* DriftLoomPlayback in Frameworks */,
+				D11111111111111111111111 /* DriftLoomPlayback in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		448FFAFAFA44C352CB4CB5B5 /* DriftLoomWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				3E01C67DB2A698C6DA4C1D00 /* DownloadActivityWidget.swift */,
+				82528D2917ECDF68B1A4665A /* Info.plist */,
+			);
+			name = DriftLoomWidgets;
+			path = DriftLoomWidgets;
+			sourceTree = "<group>";
+		};
+		6275BC16F5C7F43BD462A60E /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				1F3E6EA7AD3781086713A51E /* Foundation.framework */,
+				7B2D8EE9EA0281BB2709A1A1 /* WidgetKit.framework */,
+				BB578B5F9F6851018024C8DB /* SwiftUI.framework */,
+				6F741910D87824431BC2B2D9 /* ActivityKit.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
 		6ED4AC48A20C6EE0784AF47A = {
 			isa = PBXGroup;
 			children = (
 				F0463985A41AA4941DD32D9F /* Configuration */,
 				ABCCA30A0B282AA0C430F5BD /* iosApp */,
-                E00000000000000000000002 /* UI tests */,
+				E00000000000000000000002 /* iosAppUITests */,
 				80BC5A75E8EEBCC3CC64764B /* Products */,
+				9111B41A3923CDC72C9CE38A /* Frameworks */,
+				448FFAFAFA44C352CB4CB5B5 /* DriftLoomWidgets */,
 			);
 			sourceTree = "<group>";
 		};
@@ -108,14 +163,43 @@
 			isa = PBXGroup;
 			children = (
 				E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */,
-                E00000000000000000000001 /* DriftLoomUITests.xctest */,
+				E00000000000000000000001 /* DriftLoomUITests.xctest */,
+				BAB7EB6C984C052928D78B57 /* DriftLoomWidgets.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		9111B41A3923CDC72C9CE38A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6275BC16F5C7F43BD462A60E /* iOS */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		158C425E29A3841B45931699 /* DriftLoomWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D3FDA933A7BFE0614296BED9 /* Build configuration list for PBXNativeTarget "DriftLoomWidgets" */;
+			buildPhases = (
+				F01A7F798A594633A904C9B0 /* Sources */,
+				25433D21D36A23F9DF7D26AF /* Frameworks */,
+				648A895022154020B6A1C39E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DriftLoomWidgets;
+			packageProductDependencies = (
+				0EB082581FA112E81B53E42B /* DriftLoomActivity */,
+			);
+			productName = DriftLoomWidgets;
+			productReference = BAB7EB6C984C052928D78B57 /* DriftLoomWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		CB7D703B7BE102A8C9442815 /* iosApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2E1AAB880620FB3FB6B50768 /* Build configuration list for PBXNativeTarget "iosApp" */;
@@ -123,21 +207,44 @@
 				388E86B7C80E4C58A395F32A /* Sources */,
 				FDFBDD5BD804F728F46628B8 /* Frameworks */,
 				7B2130143F9C3DD4CB6AF311 /* Resources */,
+				A7E22BA52CBAF0293DDEBC8C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AFD14BD9FEB3E44C052D7287 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				ABCCA30A0B282AA0C430F5BD /* iosApp */,
 			);
 			name = iosApp;
 			packageProductDependencies = (
-                D22222222222222222222222 /* DriftLoomPlayback */,
+				D22222222222222222222222 /* DriftLoomPlayback */,
 			);
 			productName = iosApp;
 			productReference = E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */;
 			productType = "com.apple.product-type.application";
+		};
+		E00000000000000000000003 /* DriftLoomUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E00000000000000000000007 /* Build configuration list for PBXNativeTarget "DriftLoomUITests" */;
+			buildPhases = (
+				E00000000000000000000004 /* Sources */,
+				E00000000000000000000005 /* Frameworks */,
+				E00000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E00000000000000000000010 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E00000000000000000000002 /* iosAppUITests */,
+			);
+			name = DriftLoomUITests;
+			productName = DriftLoomUITests;
+			productReference = E00000000000000000000001 /* DriftLoomUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -149,9 +256,12 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-E00000000000000000000003 = { CreatedOnToolsVersion = 26.6; TestTargetID = CB7D703B7BE102A8C9442815; };
 					CB7D703B7BE102A8C9442815 = {
 						CreatedOnToolsVersion = 16.2;
+					};
+					E00000000000000000000003 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = CB7D703B7BE102A8C9442815;
 					};
 				};
 			};
@@ -164,20 +274,37 @@ E00000000000000000000003 = { CreatedOnToolsVersion = 26.6; TestTargetID = CB7D70
 			);
 			mainGroup = 6ED4AC48A20C6EE0784AF47A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D33333333333333333333333 /* XCLocalSwiftPackageReference "Playback" */,
+			);
 			preferredProjectObjectVersion = 77;
-            packageReferences = (D33333333333333333333333 /* Playback */,);
 			productRefGroup = 80BC5A75E8EEBCC3CC64764B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				CB7D703B7BE102A8C9442815 /* iosApp */,
-                E00000000000000000000003 /* DriftLoomUITests */,
+				E00000000000000000000003 /* DriftLoomUITests */,
+				158C425E29A3841B45931699 /* DriftLoomWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		648A895022154020B6A1C39E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7B2130143F9C3DD4CB6AF311 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E00000000000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -194,9 +321,148 @@ E00000000000000000000003 = { CreatedOnToolsVersion = 26.6; TestTargetID = CB7D70
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E00000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F01A7F798A594633A904C9B0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5370965905399643AF9E58D4 /* DownloadActivityWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		AFD14BD9FEB3E44C052D7287 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = DriftLoomWidgets;
+			target = 158C425E29A3841B45931699 /* DriftLoomWidgets */;
+			targetProxy = CA9D6D798DB96CD0D85F99DB /* PBXContainerItemProxy */;
+		};
+		E00000000000000000000010 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CB7D703B7BE102A8C9442815 /* iosApp */;
+			targetProxy = E00000000000000000000011 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		0665CA5FEC66700A6C35B2D1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = F0463985A41AA4941DD32D9F /* Configuration */;
+			baseConfigurationReferenceRelativePath = Config.xcconfig;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		263152656D22EC09900DE6E1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
+				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		2727D7B744DCA6FB045A8451 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "$(TEAM_ID)";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DriftLoomWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DriftLoom;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(TEAM_ID).Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		4CF1E65647AFD6A50CE8B9F1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = F0463985A41AA4941DD32D9F /* Configuration */;
@@ -262,61 +528,58 @@ E00000000000000000000003 = { CreatedOnToolsVersion = 26.6; TestTargetID = CB7D70
 			};
 			name = Debug;
 		};
-		0665CA5FEC66700A6C35B2D1 /* Release */ = {
+		79989B97EEF3CD0DCD46F30B /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = F0463985A41AA4941DD32D9F /* Configuration */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "$(TEAM_ID)";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DriftLoomWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DriftLoom;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(TEAM_ID).Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E00000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "$(TEAM_ID)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.driftloom.app.DriftLoomUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = iosApp;
+			};
+			name = Debug;
+		};
+		E00000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "$(TEAM_ID)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.driftloom.app.DriftLoomUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = iosApp;
 			};
 			name = Release;
 		};
@@ -348,34 +611,6 @@ E00000000000000000000003 = { CreatedOnToolsVersion = 26.6; TestTargetID = CB7D70
 			};
 			name = Debug;
 		};
-		263152656D22EC09900DE6E1 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -397,7 +632,45 @@ E00000000000000000000003 = { CreatedOnToolsVersion = 26.6; TestTargetID = CB7D70
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		D3FDA933A7BFE0614296BED9 /* Build configuration list for PBXNativeTarget "DriftLoomWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				79989B97EEF3CD0DCD46F30B /* Release */,
+				2727D7B744DCA6FB045A8451 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E00000000000000000000007 /* Build configuration list for PBXNativeTarget "DriftLoomUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E00000000000000000000008 /* Debug */,
+				E00000000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D33333333333333333333333 /* XCLocalSwiftPackageReference "Playback" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Playback;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0EB082581FA112E81B53E42B /* DriftLoomActivity */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D33333333333333333333333 /* XCLocalSwiftPackageReference "Playback" */;
+			productName = DriftLoomActivity;
+		};
+		D22222222222222222222222 /* DriftLoomPlayback */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D33333333333333333333333 /* XCLocalSwiftPackageReference "Playback" */;
+			productName = DriftLoomPlayback;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CE9DC708D8CDDFF57F3EFEE0 /* Project object */;
 }
