@@ -21,6 +21,10 @@ final class DownloadNotifier: NSObject, UNUserNotificationCenterDelegate {
         let retry = UNNotificationAction(identifier: Self.retryAction, title: "Retry", options: [])
         center.setNotificationCategories([UNNotificationCategory(identifier: Self.failureCategory, actions: [retry], intentIdentifiers: [])])
     }
+    /// Ask now, for a feature the user just turned on.
+    func requestAuthorization() async -> Bool {
+        (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
+    }
     /// Asked once per launch at most; isolated test runs only ask when explicitly requested.
     func requestAuthorizationIfNeeded() {
         guard !asked else { return }
@@ -61,10 +65,17 @@ final class DownloadNotifier: NSObject, UNUserNotificationCenterDelegate {
     }
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                             withCompletionHandler completionHandler: @escaping () -> Void) {
-        let id = (response.notification.request.content.userInfo["download"] as? String).flatMap(UUID.init(uuidString:))
+        let info = response.notification.request.content.userInfo
+        let id = (info["download"] as? String).flatMap(UUID.init(uuidString:))
+        let feedVideo = info["feedVideo"] as? String, isFeed = info["feed"] != nil
         let action = response.actionIdentifier
         Task { @MainActor in
-            if action == Self.retryAction, let id { DownloadManager.shared.retry(id) }
+            // New-video notifications play the video, or open What's new for a summary.
+            if let feedVideo, (try? VideoRequest(input: feedVideo))?.videoID == feedVideo {
+                NotificationCenter.default.post(name: .driftLoomPlayVideo, object: feedVideo)
+            } else if isFeed {
+                NotificationCenter.default.post(name: .driftLoomOpenFeed, object: nil)
+            } else if action == Self.retryAction, let id { DownloadManager.shared.retry(id) }
             else { NotificationCenter.default.post(name: .driftLoomOpenDownloads, object: nil) }
             completionHandler()
         }

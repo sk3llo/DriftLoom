@@ -452,6 +452,28 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'subscriptions.csv'")).firstMatch.exists)
     }
 
+    func testNewVideoNotificationOpensTheVideo() {
+        let app = application(extraArguments: ["--download-notifications", "--feed-notifications-on", "--feed-check-channel", "UCupvZG-5ko_eiXAupbDfxWw", "--feed-check-smoke"])
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        if springboard.alerts.buttons["Allow"].waitForExistence(timeout: 5) { springboard.alerts.buttons["Allow"].tap() }
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        sleep(8) // the first check only records the current feed
+        app.terminate()
+        app.launchArguments += ["--feed-check-forget", "2"]
+        app.launch()
+        let banner = springboard.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'CNN'")).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: 45), "Recent uploads that weren't seen before are announced")
+        banner.tap()
+        let played = app.buttons["minimizePlayer"].waitForExistence(timeout: 15)
+        XCTAssertTrue(played || app.buttons["WHAT'S NEW"].isSelected, "Tapping plays the video (or opens What's new for a summary)")
+    }
+
+    func testSeekBarShowsYouTubePreviewFrames() {
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "--seek-preview-smoke", "0.3"])
+        XCTAssertTrue(app.descendants(matching: .any)["seekBar"].waitForExistence(timeout: 30), "A seek bar under the video")
+        XCTAssertTrue(app.images["seekPreviewImage"].waitForExistence(timeout: 20), "A storyboard frame while scrubbing")
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

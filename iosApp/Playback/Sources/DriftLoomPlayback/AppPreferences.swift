@@ -54,6 +54,8 @@ public final class AppPreferences: ObservableObject {
     @Published public private(set) var subtitleSize: SubtitleSize
     /// Fall back to YouTube's machine translation when no subtitles exist in the chosen language.
     @Published public private(set) var translatesSubtitles: Bool
+    /// Check subscriptions in the background and notify about new uploads.
+    @Published public private(set) var notifiesNewVideos: Bool
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -61,6 +63,7 @@ public final class AppPreferences: ObservableObject {
         subtitleLanguage = defaults.string(forKey: "subtitleLanguage").flatMap(Self.validLanguage)
         subtitleSize = defaults.string(forKey: "subtitleSize").flatMap(SubtitleSize.init(rawValue:)) ?? .medium
         translatesSubtitles = defaults.bool(forKey: "translatesSubtitles")
+        notifiesNewVideos = defaults.bool(forKey: "notifiesNewVideos")
         feedPeriod = defaults.string(forKey: "feedPeriod").flatMap(FeedPeriod.init(rawValue:)) ?? .all
         hidesWatchedFeed = defaults.bool(forKey: "hidesWatchedFeed")
         contentLocale = .current(defaults: defaults)
@@ -96,6 +99,9 @@ public final class AppPreferences: ObservableObject {
     public func setSubtitleLanguage(_ language: String?) {
         subtitleLanguage = language.flatMap(Self.validLanguage)
         defaults.set(subtitleLanguage ?? "", forKey: "subtitleLanguage")
+    }
+    public func setNotifiesNewVideos(_ enabled: Bool) {
+        notifiesNewVideos = enabled; defaults.set(enabled, forKey: "notifiesNewVideos")
     }
     public func setTranslatesSubtitles(_ enabled: Bool) {
         translatesSubtitles = enabled; defaults.set(enabled, forKey: "translatesSubtitles")

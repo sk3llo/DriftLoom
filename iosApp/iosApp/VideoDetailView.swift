@@ -43,6 +43,9 @@ struct VideoDetailView: View {
                         }.aspectRatio(16 / 9, contentMode: .fit)
                     }
                 }
+                if let storyboard = playback.storyboard, playback.player.currentItem != nil {
+                    StoryboardScrubber(playback: playback, storyboard: storyboard).id(playback.videoID).padding(.top, 8)
+                }
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         Text(playback.title).font(.headline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)

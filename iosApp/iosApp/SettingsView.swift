@@ -7,6 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var library: LibraryStore
     @State private var clearTarget: String?
+    @State private var notificationsDenied = false
     var body: some View {
         AppNavigation {
             List {
@@ -42,6 +43,20 @@ struct SettingsView: View {
                     Toggle("Resume playback position", isOn: Binding(get: { preferences.resumesPlayback }, set: preferences.setResumesPlayback))
                     Text("Playback continues in the mini-player while you browse. Close it to stop playback.")
                         .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section {
+                    Toggle("New videos from subscriptions", isOn: Binding(get: { preferences.notifiesNewVideos }, set: { enabled in
+                        preferences.setNotifiesNewVideos(enabled)
+                        Task {
+                            if enabled, await DownloadNotifier.shared.requestAuthorization() == false { notificationsDenied = true }
+                            FeedRefresher.shared.schedule()
+                        }
+                    })).accessibilityIdentifier("notifyNewVideos")
+                    if notificationsDenied {
+                        Text("Notifications are off for DriftLoom. Turn them on in the Settings app.").font(.footnote).foregroundColor(.red)
+                    }
+                } header: { Text("Notifications") } footer: {
+                    Text("DriftLoom checks your subscriptions in the background and tells you about new videos. iOS decides when checks run, based on how often you use the app; Background App Refresh must be on.")
                 }
                 Section("Subtitles") {
                     Picker("Show subtitles in", selection: Binding(get: { preferences.subtitleLanguage }, set: preferences.setSubtitleLanguage)) {

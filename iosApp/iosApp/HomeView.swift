@@ -166,6 +166,11 @@ struct HomeView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomManageGroups)) { _ in sheet = .groups }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in menuVisible = false; sheet = .downloads }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenFeed)) { _ in
+            menuVisible = false; sheet = nil
+            if !preferences.homeSections.contains(.feed) { preferences.setHomeSections(preferences.homeSections + [.feed]) }
+            selection = .feed
+        }
         .sheet(item: $sheet, onDismiss: {
             if let video = pendingVideo { pendingVideo = nil; onPlay(video) }
         }) { target in

@@ -28,6 +28,8 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var selectedSubtitle: SubtitleTrack?
     @Published public private(set) var subtitleText: String?
     @Published public private(set) var subtitleError: String?
+    /// Seek-bar preview frames for the current video, when YouTube provides them.
+    @Published public private(set) var storyboard: Storyboard?
     /// Language used to pick a track automatically for new videos; nil keeps subtitles off.
     public var preferredSubtitleLanguage: String?
     /// Called when the user picks a track or turns subtitles off, with its base language.
@@ -218,7 +220,9 @@ public final class PlaybackSession: ObservableObject {
         let token = subtitleGeneration
         subtitleTask = Task { [weak self] in
             let catalog = (try? await subtitles.catalog(videoID: videoID)) ?? SubtitleCatalog(tracks: [])
+            let storyboard = await subtitles.storyboard(videoID: videoID)
             guard !Task.isCancelled, let self, self.subtitleGeneration == token, self.videoID == videoID else { return }
+            self.storyboard = storyboard
             self.subtitleCatalog = catalog
             self.subtitleTracks = catalog.tracks
             self.subtitleTranslations = catalog.translations
@@ -272,7 +276,7 @@ public final class PlaybackSession: ObservableObject {
     private func clearSubtitles() {
         subtitleTask?.cancel(); subtitleTask = nil; subtitleGeneration = UUID()
         subtitleTimeline = nil; subtitleTracks = []; selectedSubtitle = nil; subtitleText = nil; subtitleError = nil
-        subtitleTranslations = []; subtitleCatalog = SubtitleCatalog(tracks: [])
+        subtitleTranslations = []; subtitleCatalog = SubtitleCatalog(tracks: []); storyboard = nil
     }
 
     private func rememberPosition() {

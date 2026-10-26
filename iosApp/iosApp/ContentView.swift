@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var linkedPage: LinkedPage?
     @State private var linkError: String?
     @State private var linkTask: Task<Void, Never>?
+    @Environment(\.scenePhase) private var scenePhase
     private struct LinkedPage: Identifiable { let id = UUID(); let route: BrowseRoute }
 
     init() {
@@ -82,6 +83,13 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in expanded = false; closeSearch() }
         .onOpenURL { url in openLink(url) }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenLink)) { if let url = $0.object as? URL { openLink(url) } }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenFeed)) { _ in expanded = false; closeSearch(); linkedPage = nil }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomPlayVideo)) { note in
+            guard let id = note.object as? String, (try? VideoRequest(input: id))?.videoID == id else { return }
+            closeSearch(); linkedPage = nil
+            play(BrowseItem(contentID: id, kind: .video, title: SoundCloudID.isSoundCloud(id) ? "SoundCloud track" : "YouTube video"))
+        }
+        .onChange(of: scenePhase) { if $0 == .background { FeedRefresher.shared.schedule() } }
         .sheet(item: $linkedPage) { page in
             AppNavigation {
                 BrowsePageView(route: page.route, onPlay: { item in linkedPage = nil; play(item) })
@@ -130,6 +138,7 @@ struct ContentView: View {
             await runDownloadSmokeCheck(playback)
             await runKioskSmokeCheck()
             await runSoundCloudSmokeCheck()
+            await FeedRefresher.shared.runSmokeCheck()
             await runImportSmokeCheck(library: library, playlists: playlists, groups: subscriptionGroups, positions: positions,
                                       preferences: preferences, pinnedTabs: pinnedTabs)
 #endif

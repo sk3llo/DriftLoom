@@ -8,7 +8,7 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 
 | Stage | Implemented in this checkpoint | Still required for full parity |
 | --- | --- | --- |
-| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist/local-playlist home tabs with one combined, interleaved order; optional live suggestions; official regional YouTube music chart; opt-in Live, Gaming, Podcasts and Movie trailers kiosks from the same YouTube sources NewPipe's extractor uses | Kiosk pagination; remaining metadata and visual comparison |
+| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist/local-playlist home tabs with one combined, interleaved order; optional live suggestions; official regional YouTube music chart; opt-in Live, Gaming, Podcasts and Movie trailers kiosks from the same YouTube sources NewPipe's extractor uses |  remaining metadata and visual comparison |
 | Video details and mini-player | Inline native player; owner/subscription row; save/share/playlist/speed actions; related/description/comments tabs, replies, views/date; minimizing and returning without discarding search state | Remaining stream metadata; remaining detail actions; full visual parity |
 | Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; YouTube subtitle tracks (manual and auto-generated) with a remembered language, text size and fullscreen overlay; opt-in YouTube machine translation into any offered language; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection; separate video-only + audio formats above the best combined stream, played as an AVComposition (H.264, or AV1 only where hardware decodes it) | Automatic adaptive switching between separate formats; subtitle styling beyond size; exhaustive interruption/headphone/lock-screen/PiP tests |
 | Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved; persisted subscription groups and membership; group filtering in subscriptions/feed; date and watched-video filters; native backup and supported Android group migration | Additional feed sources and controls; group icons and remaining Android settings migration |
@@ -117,6 +117,23 @@ a reason. Downloads join the HLS map and segments into one .m4a/.mp3 file in the
 AVAssetDownloadTask can't store SoundCloud's bare media playlists for offline use; such downloads stop if the app
 is closed and can be retried. NewPipe backups' SoundCloud entries are still skipped (they store permalinks,
 which would need one lookup per item).
+
+Kiosk paging: YouTube serves the Live, Gaming and Podcasts pages as single pages (53, 50 and 48 items on
+26 October 2026) without continuation tokens, and DriftLoom shows all of them; Trending music and Movie trailers
+are fixed-size YouTube Charts lists. SoundCloud trending already pages through next_href. There is nothing further
+to load, so no paging was added.
+
+Seek-bar previews: the storyboard spec (`storyboards.playerStoryboardSpecRenderer.spec`) comes from the same
+iOS InnerTube player response as captions, cached per video, so previews add no YouTube request. Sheets are
+cached in memory (40); the 160 px level is used. AVKit's own scrubber can't show custom frames, so DriftLoom adds
+its own seek bar under the video; fullscreen keeps AVKit's bar without previews.
+
+New-video notifications: BGAppRefreshTask `net.driftloom.app.feedRefresh`, scheduled when the app goes to the
+background (earliest 30 minutes later; iOS chooses the time). It fetches up to 150 subscriptions' RSS/SoundCloud
+feeds four at a time. The first check only records the feed; later checks announce unseen uploads from the last
+three days. Verified: scheduling is accepted on the iPhone 7 (the simulator rejects BGTaskScheduler), the check and
+notifications run on the iPhone 7 and simulator, and tapping opens the video. A run started by iOS itself in the
+background was not observed during testing.
 
 Google Takeout: rows count as subscriptions only when column 1 is a channel ID and column 2 is that channel's
 youtube.com/channel URL, so translated headers and file names work and the export's own channel.csv (your channel)

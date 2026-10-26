@@ -138,10 +138,13 @@ public protocol SubtitleLoading: Sendable {
     func tracks(videoID: String) async throws -> [SubtitleTrack]
     func catalog(videoID: String) async throws -> SubtitleCatalog
     func cues(for track: SubtitleTrack) async throws -> [SubtitleCue]
+    /// Seek-bar preview frames, from the same player response as the captions.
+    func storyboard(videoID: String) async -> Storyboard?
 }
 
 public extension SubtitleLoading {
     func catalog(videoID: String) async throws -> SubtitleCatalog { SubtitleCatalog(tracks: try await tracks(videoID: videoID)) }
+    func storyboard(videoID: String) async -> Storyboard? { nil }
 }
 
 /// Lists YouTube caption tracks through the iOS InnerTube client. Web player caption URLs
@@ -149,6 +152,8 @@ public extension SubtitleLoading {
 public actor YouTubeSubtitleClient: SubtitleLoading {
     static let clientVersion = "20.10.4"
     private let session: URLSession
+    /// The last player response, so captions and storyboards for one video cost one request.
+    private var cached: (videoID: String, root: [String: Any], date: Date)?
     public init(session: URLSession? = nil) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpCookieStorage = nil; configuration.urlCache = nil
@@ -156,8 +161,16 @@ public actor YouTubeSubtitleClient: SubtitleLoading {
         self.session = session ?? URLSession(configuration: configuration)
     }
     public func tracks(videoID: String) async throws -> [SubtitleTrack] { try await catalog(videoID: videoID).tracks }
-    public func catalog(videoID: String) async throws -> SubtitleCatalog {
-        guard (try? VideoRequest(input: videoID).videoID) == videoID else { throw BrowseError.invalidInput }
+    public func catalog(videoID: String) async throws -> SubtitleCatalog { Self.catalog(in: try await playerResponse(videoID)) }
+    public func storyboard(videoID: String) async -> Storyboard? {
+        guard let root = try? await playerResponse(videoID),
+              let spec = ((root["storyboards"] as? [String: Any])?["playerStoryboardSpecRenderer"] as? [String: Any])?["spec"] as? String,
+              spec.count <= 20_000 else { return nil }
+        return Storyboard(spec: spec)
+    }
+    private func playerResponse(_ videoID: String) async throws -> [String: Any] {
+        if let cached, cached.videoID == videoID, Date().timeIntervalSince(cached.date) < 600 { return cached.root }
+        guard (try? VideoRequest(input: videoID).videoID) == videoID, !SoundCloudID.isSoundCloud(videoID) else { throw BrowseError.invalidInput }
         let locale = ContentLocale.current()
         var request = URLRequest(url: URL(string: "https://www.youtube.com/youtubei/v1/player?prettyPrint=false")!)
         request.httpMethod = "POST"
@@ -171,7 +184,8 @@ public actor YouTubeSubtitleClient: SubtitleLoading {
         ])
         let data = try await fetch(request, limit: 4_000_000)
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw BrowseError.unsupportedResponse }
-        return Self.catalog(in: root)
+        cached = (videoID, root, Date())
+        return root
     }
     public func cues(for track: SubtitleTrack) async throws -> [SubtitleCue] {
         guard let url = Self.webVTTURL(for: track) else { throw BrowseError.unsupportedResponse }
