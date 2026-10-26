@@ -179,6 +179,15 @@ Debug and Release; all 10 UI journeys pass on the SE simulator. The physical iPh
 nearby settings, pinned-tab, and search/player checks pass on optimized builds. The live search suite
 encountered an unreadable upstream response on an earlier run; the final full simulator run passed.
 
+Verification on 26 October 2026 (subtitles, download settings, home tabs): 103 package tests pass and all
+14 UI journeys pass on the iPhone SE (3rd generation) simulator in optimized Release. On the physical
+iPhone 7/iOS 15.8.2, Xcode 26.6 refuses to host UI tests ("Logic Testing Unavailable"), so the optimized
+DRIFTLOOM_DEVICE_TESTING build was launched with smoke flags through `pymobiledevice3 developer dvt launch`.
+Playback advanced past 65 seconds over HLS with English subtitles shown at 61 s; an HLS download saved
+English subtitles, and both played from local files, again after a cold relaunch. `--download-smoke-cleanup`
+then removed the test download, and the normal Release build was reinstalled. YouTube's bot check refused
+the usual fixture video on this network, so device checks used `--download-smoke-video dQw4w9WgXcQ`.
+
 ## Development
 
 The project includes the Android app (`app`), shared Kotlin/Compose module (`shared`),
