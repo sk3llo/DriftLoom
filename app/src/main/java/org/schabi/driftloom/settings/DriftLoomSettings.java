@@ -57,7 +57,6 @@ public final class DriftLoomSettings {
         PreferenceManager.setDefaultValues(context, R.xml.history_settings, true);
         PreferenceManager.setDefaultValues(context, R.xml.content_settings, true);
         PreferenceManager.setDefaultValues(context, R.xml.player_notification_settings, true);
-        PreferenceManager.setDefaultValues(context, R.xml.update_settings, true);
         PreferenceManager.setDefaultValues(context, R.xml.debug_settings, true);
         PreferenceManager.setDefaultValues(context, R.xml.backup_restore_settings, true);
 

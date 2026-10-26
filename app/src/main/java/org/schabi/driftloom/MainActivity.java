@@ -27,7 +27,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -81,7 +80,6 @@ import org.schabi.driftloom.player.Player;
 import org.schabi.driftloom.player.event.OnKeyDownListener;
 import org.schabi.driftloom.player.helper.PlayerHolder;
 import org.schabi.driftloom.player.playqueue.PlayQueue;
-import org.schabi.driftloom.settings.UpdateSettingsFragment;
 import org.schabi.driftloom.settings.migration.MigrationManager;
 import org.schabi.driftloom.util.Constants;
 import org.schabi.driftloom.util.DeviceUtils;
@@ -90,7 +88,6 @@ import org.schabi.driftloom.util.Localization;
 import org.schabi.driftloom.util.NavigationHelper;
 import org.schabi.driftloom.util.PeertubeHelper;
 import org.schabi.driftloom.util.PermissionHelper;
-import org.schabi.driftloom.util.ReleaseVersionUtil;
 import org.schabi.driftloom.util.SerializedCache;
 import org.schabi.driftloom.util.ServiceHelper;
 import org.schabi.driftloom.util.StateSaver;
@@ -194,35 +191,11 @@ public class MainActivity extends AppCompatActivity {
             // if this is enabled by the user.
             NotificationWorker.initialize(this);
         }
-        if (!UpdateSettingsFragment.wasUserAskedForConsent(this)
-                && !App.getInstance().isFirstRun()
-                && ReleaseVersionUtil.INSTANCE.isReleaseApk()) {
-            UpdateSettingsFragment.askForConsentToUpdateChecks(this);
-        }
-
-        // ReleaseVersionUtil.INSTANCE.isReleaseApk() will be true only for main official build
-        // We want every release build (nightly, nightly-refactor) to show the popup
         if (!DEBUG) {
             showKeepAndroidDialog();
-            showApi23RequirementDialog();
         }
 
         MigrationManager.showUserInfoIfPresent(this);
-    }
-
-    @Override
-    protected void onPostCreate(final Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-
-        final App app = App.getInstance();
-
-        if (sharedPreferences.getBoolean(app.getString(R.string.update_app_key), false)
-                && sharedPreferences
-                .getBoolean(app.getString(R.string.update_check_consent_key), false)) {
-            // Start the worker which is checking all conditions
-            // and eventually searching for a new version.
-            NewVersionWorker.enqueueNewVersionCheckingWork(app, false);
-        }
     }
 
     @Override
@@ -1031,31 +1004,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showApi23RequirementDialog() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return; // only show dialog on the devices that will stop being supported
-        }
-
-        final var prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        final var shownKey = getString(R.string.api23_requirement_dialog_shown_key);
-        if (prefs.getBoolean(shownKey, false)) {
-            return; // dialog was already shown in the past, no need to show it again
-        }
-
-        final var dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.api23_requirement_dialog_title)
-                .setCancelable(false)
-                .setMessage(R.string.api23_requirement_dialog_message)
-                .setPositiveButton(android.R.string.ok, (d, w) -> prefs.edit()
-                        .putBoolean(shownKey, true)
-                        .apply())
-                .setNegativeButton(R.string.api23_requirement_dialog_blogpost, null)
-                .show();
-
-        // If we use setNegativeButton, dialog will close after pressing the button,
-        // but we want it to close only when positive button is pressed
-        final var blogpostUrl = "https://newpipe.net/blog/pinned/announcement/drop-android-5/";
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                .setOnClickListener(v -> ShareUtils.openUrlInBrowser(this, blogpostUrl));
-    }
 }
