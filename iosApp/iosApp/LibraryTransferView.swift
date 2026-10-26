@@ -38,10 +38,19 @@ struct LibraryTransferView: View {
                 }.disabled(!library.isWritable || !playlists.isWritable || !groups.isWritable)
             }
             Section("Import and merge") {
-                Text("Choose a DriftLoom library backup or a NewPipe subscriptions JSON export or ZIP database backup. Review the import before merging. Existing items and privacy settings are kept; a recovery copy is saved on this device.")
+                Text("Choose a DriftLoom library backup, a NewPipe subscriptions JSON export or ZIP database backup, or a YouTube Google Takeout export. Review the import before merging. Existing items and privacy settings are kept; a recovery copy is saved on this device.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button("Choose import file") { importing = true }.disabled(!library.isWritable || !playlists.isWritable || !groups.isWritable)
                 Text("NewPipe ZIP migration supports YouTube subscriptions, history with resume positions, local playlists, subscription groups, and optionally your NewPipe settings and home tabs. Java-serialized settings files are never read, and downloaded media isn't migrated; unsupported entries are reported in the preview.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("From YouTube (Google Takeout)") {
+                Text("1. Open Google Takeout below and sign in.\n2. Under YouTube, choose \"All YouTube data included\", select only \"subscriptions\", and create the export.\n3. Download the ZIP, then choose it with \"Choose import file\". You can also choose the subscriptions.csv inside it.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Link(destination: URL(string: "https://takeout.google.com/takeout/custom/youtube")!) {
+                    Label("Open Google Takeout", systemImage: "arrow.up.right.square")
+                }.accessibilityIdentifier("openTakeout")
+                Text("Only subscriptions are imported. Google Takeout needs your Google account; DriftLoom never sees it.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             if let pending {
@@ -75,7 +84,7 @@ struct LibraryTransferView: View {
         .fileExporter(isPresented: $exporting, document: backup, contentType: .json, defaultFilename: "DriftLoom-library") { result in
             if case let .failure(error) = result { message = error.localizedDescription }
         }
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .zip], allowsMultipleSelection: false) { result in
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .zip, .commaSeparatedText, .plainText], allowsMultipleSelection: false) { result in
             do {
                 guard let url = try result.get().first else { return }
                 let scoped = url.startAccessingSecurityScopedResource()

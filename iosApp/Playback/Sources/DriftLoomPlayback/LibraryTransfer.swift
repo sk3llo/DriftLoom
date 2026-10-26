@@ -50,7 +50,14 @@ public enum LibraryTransfer {
     }
     public static func preview(_ data: Data) throws -> LibraryImportPlan {
         if data.starts(with: [0x50, 0x4b]) {
-            var plan = try NewPipeDatabase.read(NewPipeArchive.database(data))
+            guard data.count <= 50_000_000 else {
+                throw BrowseError.unavailable("This ZIP is larger than 50 MB. For Takeout, export only YouTube subscriptions or choose the subscriptions.csv file.")
+            }
+            let database: Data
+            do { database = try NewPipeArchive.database(data) }
+            // No NewPipe database inside: it may be a Google Takeout export.
+            catch BrowseError.unavailable { return try YouTubeTakeout.plan(zip: data) }
+            var plan = try NewPipeDatabase.read(database)
             // A malformed preferences file never blocks the library import.
             if let json = try? NewPipeArchive.preferences(data), let settings = try? NewPipePreferences.parse(json), !settings.isEmpty {
                 plan.settings = settings
@@ -58,6 +65,11 @@ public enum LibraryTransfer {
             return plan
         }
         guard data.count <= 20_000_000 else { throw BrowseError.unavailable("This import exceeds the 20 MB limit.") }
+        if let takeout = try YouTubeTakeout.plan(json: data) { return takeout }
+        if let text = String(data: data, encoding: .utf8), !text.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{"),
+           !text.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("[") {
+            return try YouTubeTakeout.plan(csv: text)
+        }
         let decoder = JSONDecoder()
         if let object = try JSONSerialization.jsonObject(with: data) as? [String: Any], object["format"] != nil {
             let backup = try decoder.decode(Backup.self, from: data)

@@ -118,6 +118,11 @@ AVAssetDownloadTask can't store SoundCloud's bare media playlists for offline us
 is closed and can be retried. NewPipe backups' SoundCloud entries are still skipped (they store permalinks,
 which would need one lookup per item).
 
+Google Takeout: rows count as subscriptions only when column 1 is a channel ID and column 2 is that channel's
+youtube.com/channel URL, so translated headers and file names work and the export's own channel.csv (your channel)
+or playlist CSVs are never imported as subscriptions. ZIPs up to 50 MB are read in memory (a subscriptions-only
+export is a few KB); larger exports should be narrowed in Takeout or the CSV chosen directly.
+
 Shared links: the DriftLoomShare extension (iOS 15+) finds the YouTube or SoundCloud link in what was shared and
 opens `driftloom://open?url=<link>`. iOS has no public API for a share extension to open its app, so it asks the
 application object in its responder chain to open the URL (a widely used approach that App Review could question);

@@ -47,6 +47,9 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Download progress: a strip above the mini-player on every screen, notifications when a download finishes or
   fails (with Retry), and on iOS 16.1+ a Live Activity with a progress bar on the lock screen and in the
   Dynamic Island. iOS 15 devices get the strip and notifications only.
+- YouTube Google Takeout import, as in NewPipe: the Takeout ZIP (folder and file names may be translated),
+  its subscriptions.csv, or the older subscriptions.json. Only subscriptions are imported; your own channel
+  file in the ZIP is ignored. Settings → Backup and import has the steps and a link to Takeout.
 - Opening links from other apps: "DriftLoom" in the share sheet (Safari, the YouTube and SoundCloud apps, …) and a
   `driftloom://open?url=<link>` URL scheme (also usable from Shortcuts). Videos and tracks play; YouTube channels,
   @handles and playlists, and SoundCloud profiles and playlists open as pages, including on.soundcloud.com links.

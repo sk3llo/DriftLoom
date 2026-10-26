@@ -17,6 +17,10 @@ enum NewPipeArchive {
     }
     /// Each requested member at most once, size-limited and CRC-checked.
     static func members(_ data: Data, limits: [String: Int]) throws -> [String: Data] {
+        try members(data, limit: { limits[$0] })
+    }
+    /// Members whose name `limit` returns a size limit for (nil skips the member).
+    static func members(_ data: Data, limit: (String) -> Int?) throws -> [String: Data] {
         guard data.count <= 50_000_000, data.count >= 22 else { throw CocoaError(.fileReadCorruptFile) }
         let bytes = [UInt8](data)
         func number(_ offset: Int, _ size: Int) throws -> Int {
@@ -46,7 +50,7 @@ enum NewPipeArchive {
             let name = String(bytes: bytes[nameStart..<(nameStart + nameLength)], encoding: .utf8)
             offset = nameStart + nameLength + extra + comment
             guard offset <= end else { throw CocoaError(.fileReadCorruptFile) }
-            guard let name, let limit = limits[name] else { continue }
+            guard let name, let limit = limit(name) else { continue }
             guard found[name] == nil, flags & 1 == 0, (method == 0 || method == 8), expanded > 0, expanded <= limit,
                   try number(local, 4) == 0x04034b50 else { throw CocoaError(.fileReadCorruptFile) }
             let localNameLength = try number(local + 26, 2), localExtra = try number(local + 28, 2)

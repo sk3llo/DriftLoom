@@ -439,6 +439,19 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 15), "and plays the shared video")
     }
 
+    func testBackupScreenExplainsGoogleTakeoutImport() {
+        let app = application()
+        XCTAssertTrue(app.buttons["More options"].waitForExistence(timeout: 10)); app.buttons["More options"].tap()
+        app.buttons["Settings"].tap()
+        let backup = app.buttons["Backup and import"]
+        for _ in 0..<4 where !backup.isHittable { app.swipeUp() }
+        backup.tap()
+        let takeout = app.descendants(matching: .any)["openTakeout"].firstMatch
+        for _ in 0..<4 where !takeout.exists { app.swipeUp() }
+        XCTAssertTrue(takeout.waitForExistence(timeout: 5), "The Takeout section links to Google Takeout")
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'subscriptions.csv'")).firstMatch.exists)
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
