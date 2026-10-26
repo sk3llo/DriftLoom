@@ -11,6 +11,10 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
     let flag = arguments.firstIndex(of: "--playback-smoke-url")
     guard flag != nil || arguments.contains("--browse-smoke-play") else { return }
     session.player.isMuted = true
+    // --subtitle-smoke LANG: turn on subtitles in that language and require a visible cue.
+    let subtitleFlag = arguments.firstIndex(of: "--subtitle-smoke")
+    if let subtitleFlag, arguments.indices.contains(subtitleFlag + 1) { session.preferredSubtitleLanguage = arguments[subtitleFlag + 1] }
+    var subtitleReported = subtitleFlag == nil
     if let flag, arguments.indices.contains(flag + 1) { session.open(arguments[flag + 1]) }
     var hasSeeked = false
     for _ in 0..<90 {
@@ -20,6 +24,12 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
             return
         }
         let seconds = session.player.currentTime().seconds
+        if !subtitleReported, let error = session.subtitleError {
+            subtitleReported = true; NSLog("DriftLoomSubtitleSmoke: FAIL %@", error)
+        } else if !subtitleReported, hasSeeked, let text = session.subtitleText, let track = session.selectedSubtitle {
+            subtitleReported = true
+            NSLog("DriftLoomSubtitleSmoke: PASS track=%@ of %d at %.1fs: %@", track.id, session.subtitleTracks.count, seconds, text)
+        }
         if !hasSeeked, seconds.isFinite, seconds >= 3 {
             hasSeeked = true
             let finished = await session.player.seek(to: CMTime(seconds: 60, preferredTimescale: 600))
