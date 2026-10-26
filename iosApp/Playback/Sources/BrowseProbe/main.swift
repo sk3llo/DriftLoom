@@ -14,6 +14,14 @@ struct BrowseProbe {
             return
         }
         setvbuf(stdout, nil, _IOLBF, 0)
+        if CommandLine.arguments.contains("--links") {
+            for text in ["https://www.youtube.com/@LofiGirl", "https://youtube.com/playlist?list=PLOHoVaTp8R7dfrJW5pumS0iD_dhlXKv17",
+                         "https://soundcloud.com/lofi_girl", "https://soundcloud.com/nigeldelviero/chill-study-beats-lofi-hip-hop-mix-2018"] {
+                do { print("PASS: \(text) -> \(try await LinkResolver.resolve(URL(string: text)!))") }
+                catch { print("FAIL: \(text) -> \(error.localizedDescription)") }
+            }
+            return
+        }
         if CommandLine.arguments.contains("--soundcloud") {
             let client = YouTubeBrowsingClient()
             func check(_ name: String, _ page: BrowsePage) throws -> BrowsePage {

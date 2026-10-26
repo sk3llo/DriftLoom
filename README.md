@@ -47,6 +47,9 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Download progress: a strip above the mini-player on every screen, notifications when a download finishes or
   fails (with Retry), and on iOS 16.1+ a Live Activity with a progress bar on the lock screen and in the
   Dynamic Island. iOS 15 devices get the strip and notifications only.
+- Opening links from other apps: "DriftLoom" in the share sheet (Safari, the YouTube and SoundCloud apps, …) and a
+  `driftloom://open?url=<link>` URL scheme (also usable from Shortcuts). Videos and tracks play; YouTube channels,
+  @handles and playlists, and SoundCloud profiles and playlists open as pages, including on.soundcloud.com links.
 - When YouTube refuses extraction (for example "confirm you're not a bot" on a rate-limited network),
   playback and downloads report that in plain language. DriftLoom does not try to bypass these checks.
   See [the rework checklist](docs/ios-newpipe-parity.md).

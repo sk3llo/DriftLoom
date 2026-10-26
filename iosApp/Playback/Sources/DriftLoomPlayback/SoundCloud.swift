@@ -168,7 +168,16 @@ public actor SoundCloudClient {
         return try SoundCloudParser.page(try await json(url), title: "")
     }
     /// A soundcloud.com link turned into a track, user or playlist.
-    public func resolve(_ link: URL) async throws -> BrowseItem {
+    public func resolve(_ shared: URL) async throws -> BrowseItem {
+        var link = shared
+        // on.soundcloud.com share links redirect to the permalink.
+        if link.host?.lowercased() == "on.soundcloud.com" {
+            let (_, response) = try await session.data(for: request(link))
+            guard let final = (response as? HTTPURLResponse)?.url, final.host?.hasSuffix("soundcloud.com") == true, final.host != "on.soundcloud.com" else {
+                throw BrowseError.unavailable("This SoundCloud link couldn't be opened.")
+            }
+            link = final
+        }
         guard link.scheme == "https", ["soundcloud.com", "www.soundcloud.com", "m.soundcloud.com"].contains(link.host?.lowercased() ?? "") else {
             throw BrowseError.invalidInput
         }

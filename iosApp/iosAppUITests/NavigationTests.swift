@@ -383,6 +383,62 @@ final class NavigationTests: XCTestCase {
         _ = app.wait(for: .runningForeground, timeout: 1)
     }
 
+    private func openLink(_ app: XCUIApplication, _ link: String) throws {
+        guard #available(iOS 16.4, *) else { throw XCTSkip("Opening URLs from UI tests needs iOS 16.4") }
+        var components = URLComponents(); components.scheme = "driftloom"; components.host = "open"
+        components.queryItems = [URLQueryItem(name: "url", value: link)]
+        app.open(components.url!)
+    }
+
+    func testAppLinksPlayVideosAndOpenChannelAndProfilePages() throws {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        try openLink(app, "https://youtu.be/dQw4w9WgXcQ?si=shared")
+        XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 15), "A shared video opens the player")
+        app.buttons["minimizePlayer"].tap()
+        try openLink(app, "https://www.youtube.com/channel/UCUb-HI7Kd-Dr1fBvYjV1IYg")
+        let subscribe = app.buttons.matching(NSPredicate(format: "label IN {'SUBSCRIBE', 'SUBSCRIBED'}")).firstMatch
+        if !subscribe.waitForExistence(timeout: 30) { print("TREEDUMP-A\n" + app.debugDescription + "\nTREEDUMP-END") }
+        XCTAssertTrue(subscribe.exists, "A shared channel opens its page")
+        app.buttons["Done"].tap()
+        try openLink(app, "https://soundcloud.com/lofi_girl")
+        XCTAssertTrue(app.navigationBars["Lofi Girl"].waitForExistence(timeout: 30), "A shared SoundCloud profile opens its page")
+        app.buttons["Done"].tap()
+        try openLink(app, "https://example.com/not-supported")
+        XCTAssertTrue(app.alerts["Couldn't open link"].waitForExistence(timeout: 10))
+    }
+
+    func testSharingFromSafariOpensTheVideoInDriftLoom() throws {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        safari.launch()
+        let address = safari.textFields["TabBarItemTitle"].exists ? safari.textFields["TabBarItemTitle"] : safari.buttons["Address"]
+        if address.waitForExistence(timeout: 10) { address.tap() }
+        let field = safari.textFields["URL"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10)); field.typeText("https://www.youtube.com/watch?v=dQw4w9WgXcQ\n")
+        let share = safari.buttons["ShareButton"]
+        XCTAssertTrue(share.waitForExistence(timeout: 30)); share.tap()
+        var target = safari.cells["DriftLoom"].firstMatch
+        if !target.waitForExistence(timeout: 10) {
+            // Not among the first share targets: find it under "More".
+            safari.cells["More"].firstMatch.tap()
+            target = safari.cells["DriftLoom"].firstMatch
+        }
+        XCTAssertTrue(target.waitForExistence(timeout: 10), "DriftLoom is in the share sheet"); target.tap()
+        // iOS confirms opening another app from Safari.
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let open = [safari.buttons["Open"], springboard.buttons["Open"]]
+        for _ in 0..<20 where !app.wait(for: .runningForeground, timeout: 0.5) {
+            if let button = open.first(where: { $0.exists }) { button.tap(); break }
+        }
+        if !app.wait(for: .runningForeground, timeout: 15) {
+            print("TREEDUMP-SAFARI\n" + safari.debugDescription + "\nTREEDUMP-SB\n" + springboard.debugDescription + "\nTREEDUMP-END")
+        }
+        XCTAssertTrue(app.state == .runningForeground, "DriftLoom comes to the front")
+        XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 15), "and plays the shared video")
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

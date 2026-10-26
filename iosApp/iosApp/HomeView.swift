@@ -337,14 +337,11 @@ struct OpenVideoLinkView: View {
     }
     private func open() {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let url = URL(string: text), url.scheme == "https", url.host?.hasSuffix("soundcloud.com") == true {
-            Task {
-                do {
-                    let item = try await SoundCloudClient.shared.resolve(url)
-                    guard item.kind == .video else { throw BrowseError.unavailable("Open SoundCloud profiles and playlists from search.") }
-                    onOpen(item)
-                } catch { self.error = error.localizedDescription }
-            }
+        // Channel, playlist and SoundCloud links go through the app-wide link handler.
+        if let url = SharedLink.firstSupportedURL(in: text), (try? VideoRequest(input: text)) == nil {
+            dismiss()
+            // Present the linked page once this sheet has finished closing.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { NotificationCenter.default.post(name: .driftLoomOpenLink, object: url) }
             return
         }
         do {

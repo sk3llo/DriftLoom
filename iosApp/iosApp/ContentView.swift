@@ -8,6 +8,8 @@ extension Notification.Name {
     static let driftLoomManageGroups = Notification.Name("DriftLoom.manageGroups")
     static let driftLoomExpandPlayer = Notification.Name("DriftLoom.expandPlayer")
     static let driftLoomAddToPlaylist = Notification.Name("DriftLoom.addToPlaylist")
+    /// Object: the URL to open (a YouTube/SoundCloud link or a driftloom://open link).
+    static let driftLoomOpenLink = Notification.Name("DriftLoom.openLink")
 }
 
 struct ContentView: View {
@@ -25,6 +27,10 @@ struct ContentView: View {
     @State private var searching = false
     @State private var expanded = false
     @State private var addingToPlaylist: BrowseItem?
+    @State private var linkedPage: LinkedPage?
+    @State private var linkError: String?
+    @State private var linkTask: Task<Void, Never>?
+    private struct LinkedPage: Identifiable { let id = UUID(); let route: BrowseRoute }
 
     init() {
         let positions = PlaybackPositions(defaults: makeAppDefaults())
@@ -74,7 +80,19 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomAddToPlaylist)) { addingToPlaylist = $0.object as? BrowseItem }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomExpandPlayer)) { _ in expanded = true }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in expanded = false; closeSearch() }
-        .onOpenURL { url in openLink(url.absoluteString) }
+        .onOpenURL { url in openLink(url) }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenLink)) { if let url = $0.object as? URL { openLink(url) } }
+        .sheet(item: $linkedPage) { page in
+            AppNavigation {
+                BrowsePageView(route: page.route, onPlay: { item in linkedPage = nil; play(item) })
+                    .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { linkedPage = nil } } }
+            }
+            .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists)
+            .environmentObject(pinnedTabs).environmentObject(subscriptionGroups).environmentObject(positions)
+        }
+        .alert("Couldn't open link", isPresented: Binding(get: { linkError != nil }, set: { if !$0 { linkError = nil } })) {
+            Button("OK") { linkError = nil }
+        } message: { Text(linkError ?? "") }
         .onChange(of: preferences.homeSections) { values in
             if !values.contains(selectedSection), let first = values.first { selectedSection = first }
         }
@@ -121,13 +139,27 @@ struct ContentView: View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         queue.start([item]); expanded = true
     }
-    private func openLink(_ input: String) {
-        if let request = try? VideoRequest(input: input) {
-            play(BrowseItem(contentID: request.videoID, kind: .video, title: "YouTube video")); return
+    /// Links from other apps (share extension, driftloom:// URLs) and from the in-app link box:
+    /// videos and tracks play; channels, profiles and playlists open as a page.
+    private func openLink(_ url: URL) {
+        guard let link = SharedLink.target(of: url) else {
+            linkError = "DriftLoom opens YouTube and SoundCloud links."; return
         }
-        // SoundCloud links are permalinks; ask SoundCloud which track they point to.
-        guard let url = URL(string: input), url.host?.hasSuffix("soundcloud.com") == true else { return }
-        Task { if let item = try? await SoundCloudClient.shared.resolve(url), item.kind == .video { play(item) } }
+        linkTask?.cancel()
+        closeSearch(); linkedPage = nil
+        if let target = LinkResolver.immediate(link) { show(target); return }
+        linkTask = Task {
+            do {
+                let target = try await LinkResolver.resolve(link)
+                if !Task.isCancelled { show(target) }
+            } catch { if !Task.isCancelled { linkError = error.localizedDescription } }
+        }
+    }
+    private func show(_ target: LinkTarget) {
+        switch target {
+        case let .play(item): play(item)
+        case let .browse(route): expanded = false; linkedPage = LinkedPage(route: route)
+        }
     }
     private func closeSearch() {
         searching = false

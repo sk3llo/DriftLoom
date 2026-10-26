@@ -118,6 +118,13 @@ AVAssetDownloadTask can't store SoundCloud's bare media playlists for offline us
 is closed and can be retried. NewPipe backups' SoundCloud entries are still skipped (they store permalinks,
 which would need one lookup per item).
 
+Shared links: the DriftLoomShare extension (iOS 15+) finds the YouTube or SoundCloud link in what was shared and
+opens `driftloom://open?url=<link>`. iOS has no public API for a share extension to open its app, so it asks the
+application object in its responder chain to open the URL (a widely used approach that App Review could question);
+Safari then shows its usual "Open in DriftLoom?" confirmation. The app resolves YouTube @handles from the channel
+page's canonical link with a cookie-less request (a cookie-carrying request is sent to the EU consent page) and
+SoundCloud permalinks and on.soundcloud.com links through SoundCloud's resolve API.
+
 Download progress UI: DownloadSummary (in the DriftLoomActivity package library, shared with the
 DriftLoomWidgets extension) drives an in-app strip, local notifications (permission asked when the first download
 starts; a failure offers Retry; tapping opens Downloads) and, on iOS 16.1+, one Live Activity for all running

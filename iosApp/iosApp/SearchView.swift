@@ -130,15 +130,8 @@ struct SearchView: View {
         if value.contains("://"), let video = try? VideoRequest(input: value) {
             onPlay(BrowseItem(contentID: video.videoID, kind: .video, title: "YouTube video")); return
         }
-        if let link = URL(string: value), link.scheme == "https", link.host?.hasSuffix("soundcloud.com") == true {
-            Task {
-                do {
-                    let item = try await SoundCloudClient.shared.resolve(link)
-                    if item.kind == .video { onPlay(item) }
-                    else { service = .soundCloud; query = item.title; submittedQuery = item.title; soundCloudFilter = item.kind == .channel ? .users : .playlists }
-                } catch { linkError = error.localizedDescription }
-            }
-            return
+        if value.contains("://"), let link = SharedLink.firstSupportedURL(in: value) {
+            NotificationCenter.default.post(name: .driftLoomOpenLink, object: link); return
         }
         preferences.recordSearch(value)
         if submittedQuery == value { Task { await results.load(route) } }
