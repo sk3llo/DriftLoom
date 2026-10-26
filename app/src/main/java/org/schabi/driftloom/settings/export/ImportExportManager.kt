@@ -30,13 +30,12 @@ class ImportExportManager(private val fileLocator: BackupFileLocator) {
         // previous file size, the file will retain part of the previous content and be corrupted
         ZipOutputStream(SharpOutputStream(file.openAndTruncateStream()).buffered()).use { outZip ->
             // add the database
-            val name = BackupFileLocator.FILE_NAME_DB
-            ZipHelper.addFileToZip(outZip, name, fileLocator.db)
+            ZipHelper.addFileToZip(outZip, BackupFileLocator.ZIP_ENTRY_DB, fileLocator.db)
 
             // add the legacy vulnerable serialized preferences (will be removed in the future)
             ZipHelper.addFileToZip(
                 outZip,
-                BackupFileLocator.FILE_NAME_SERIALIZED_PREFS
+                BackupFileLocator.ZIP_ENTRY_SERIALIZED_PREFS
             ) { byteOutput ->
                 ObjectOutputStream(byteOutput).use { output ->
                     output.writeObject(preferences.all)
@@ -73,8 +72,11 @@ class ImportExportManager(private val fileLocator: BackupFileLocator) {
      * @return true if the database was successfully extracted, false otherwise
      */
     fun extractDb(file: StoredFileHelper): Boolean {
-        val name = BackupFileLocator.FILE_NAME_DB
-        val success = ZipHelper.extractFileFromZip(file, name, fileLocator.db)
+        val success = ZipHelper.extractFileFromZip(
+            file,
+            BackupFileLocator.ZIP_ENTRIES_DB,
+            fileLocator.db
+        )
 
         if (success) {
             fileLocator.dbJournal.deleteIfExists()
@@ -90,7 +92,7 @@ class ImportExportManager(private val fileLocator: BackupFileLocator) {
         replaceWith = ReplaceWith("exportHasJsonPrefs")
     )
     fun exportHasSerializedPrefs(zipFile: StoredFileHelper): Boolean {
-        return ZipHelper.zipContainsFile(zipFile, BackupFileLocator.FILE_NAME_SERIALIZED_PREFS)
+        return ZipHelper.zipContainsFile(zipFile, BackupFileLocator.ZIP_ENTRIES_SERIALIZED_PREFS)
     }
 
     fun exportHasJsonPrefs(zipFile: StoredFileHelper): Boolean {
@@ -106,7 +108,10 @@ class ImportExportManager(private val fileLocator: BackupFileLocator) {
     )
     @Throws(IOException::class, ClassNotFoundException::class)
     fun loadSerializedPrefs(zipFile: StoredFileHelper, preferences: SharedPreferences) {
-        ZipHelper.extractFileFromZip(zipFile, BackupFileLocator.FILE_NAME_SERIALIZED_PREFS) {
+        ZipHelper.extractFileFromZip(
+            zipFile,
+            BackupFileLocator.ZIP_ENTRIES_SERIALIZED_PREFS
+        ) {
             PreferencesObjectInputStream(it).use { input ->
                 @Suppress("UNCHECKED_CAST")
                 val entries = input.readObject() as Map<String, *>

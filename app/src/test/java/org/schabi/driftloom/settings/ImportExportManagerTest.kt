@@ -5,7 +5,9 @@ import com.grack.nanojson.JsonParser
 import java.io.File
 import java.io.ObjectInputStream
 import java.nio.file.Paths
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteIfExists
@@ -69,13 +71,13 @@ class ImportExportManagerTest {
         val entries = zipFile.entries().toList()
         assertEquals(3, entries.size)
 
-        zipFile.getInputStream(entries.first { it.name == "driftloom.db" }).use { actual ->
+        zipFile.getInputStream(entries.first { it.name == "newpipe.db" }).use { actual ->
             db.inputStream().use { expected ->
                 assertEquals(expected.reader().readText(), actual.reader().readText())
             }
         }
 
-        zipFile.getInputStream(entries.first { it.name == "driftloom.settings" }).use { actual ->
+        zipFile.getInputStream(entries.first { it.name == "newpipe.settings" }).use { actual ->
             val actualPreferences = ObjectInputStream(actual).readObject()
             assertEquals(expectedPreferences, actualPreferences)
         }
@@ -187,5 +189,41 @@ class ImportExportManagerTest {
         assertThrows(ClassNotFoundException::class.java) {
             ImportExportManager(fileLocator).loadSerializedPrefs(storedFileHelper, preferences)
         }
+    }
+
+    @Test
+    fun `Backups using the DriftLoom entry names must still be imported`() {
+        // Earlier DriftLoom builds exported driftloom.db and driftloom.settings entries
+        val source = ZipFile(File(classloader.getResource("settings/db_ser_json.zip")?.file!!))
+        val zip = File.createTempFile("driftloom_", ".zip")
+        ZipOutputStream(zip.outputStream()).use { out ->
+            source.use {
+                for (entry in it.entries()) {
+                    out.putNextEntry(ZipEntry(entry.name.replace("newpipe.", "driftloom.")))
+                    it.getInputStream(entry).use { input -> input.copyTo(out) }
+                    out.closeEntry()
+                }
+            }
+        }
+
+        val db = createTempFile("driftloom_", "")
+        `when`(fileLocator.db).thenReturn(db)
+        `when`(fileLocator.dbJournal).thenReturn(createTempFile("driftloom_", ""))
+        `when`(fileLocator.dbShm).thenReturn(createTempFile("driftloom_", ""))
+        `when`(fileLocator.dbWal).thenReturn(createTempFile("driftloom_", ""))
+        `when`(storedFileHelper.stream).thenReturn(FileStream(zip))
+        assertTrue(ImportExportManager(fileLocator).extractDb(storedFileHelper))
+        assertTrue("database file size is zero", db.fileSize() > 0)
+
+        `when`(storedFileHelper.stream).thenReturn(FileStream(zip))
+        assertTrue(ImportExportManager(fileLocator).exportHasSerializedPrefs(storedFileHelper))
+
+        val preferences = Mockito.mock(SharedPreferences::class.java, withSettings().stubOnly())
+        val editor = Mockito.mock(SharedPreferences.Editor::class.java)
+        `when`(preferences.edit()).thenReturn(editor)
+        `when`(editor.commit()).thenReturn(true)
+        `when`(storedFileHelper.stream).thenReturn(FileStream(zip))
+        ImportExportManager(fileLocator).loadSerializedPrefs(storedFileHelper, preferences)
+        verify(editor, atLeastOnce()).putString(anyString(), anyString())
     }
 }

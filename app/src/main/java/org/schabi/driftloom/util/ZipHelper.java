@@ -17,6 +17,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -97,7 +99,22 @@ public final class ZipHelper {
     public static boolean extractFileFromZip(final StoredFileHelper zipFile,
                                              final String nameInZip,
                                              final Path path) throws IOException {
-        return extractFileFromZip(zipFile, nameInZip, input ->
+        return extractFileFromZip(zipFile, Collections.singletonList(nameInZip), path);
+    }
+
+    /**
+     * Like {@link #extractFileFromZip(StoredFileHelper, String, Path)}, but extracts the first
+     * entry whose path matches any of the given names.
+     *
+     * @param zipFile    the zip file to extract from
+     * @param namesInZip the accepted paths of the file inside the zip
+     * @param path       the path of the file on the disk where the data should be extracted to
+     * @return will return true if a matching file was found within the zip file
+     */
+    public static boolean extractFileFromZip(final StoredFileHelper zipFile,
+                                             final List<String> namesInZip,
+                                             final Path path) throws IOException {
+        return extractFileFromZip(zipFile, namesInZip, input ->
                 Files.copy(input, path, StandardCopyOption.REPLACE_EXISTING));
     }
 
@@ -113,11 +130,27 @@ public final class ZipHelper {
                                              final String nameInZip,
                                              final InputStreamConsumer streamConsumer)
             throws IOException {
+        return extractFileFromZip(zipFile, Collections.singletonList(nameInZip), streamConsumer);
+    }
+
+    /**
+     * Like {@link #extractFileFromZip(StoredFileHelper, String, InputStreamConsumer)}, but
+     * consumes the first entry whose path matches any of the given names.
+     *
+     * @param zipFile        the zip file to extract from
+     * @param namesInZip     the accepted paths of the file inside the zip
+     * @param streamConsumer will be called with the input stream from the file inside the zip
+     * @return will return true if a matching file was found within the zip file
+     */
+    public static boolean extractFileFromZip(final StoredFileHelper zipFile,
+                                             final List<String> namesInZip,
+                                             final InputStreamConsumer streamConsumer)
+            throws IOException {
         try (ZipInputStream inZip = new ZipInputStream(new BufferedInputStream(
                 new SharpInputStream(zipFile.getStream())))) {
             ZipEntry ze;
             while ((ze = inZip.getNextEntry()) != null) {
-                if (ze.getName().equals(nameInZip)) {
+                if (namesInZip.contains(ze.getName())) {
                     streamConsumer.acceptStream(inZip);
                     return true;
                 }
@@ -134,12 +167,22 @@ public final class ZipHelper {
      */
     public static boolean zipContainsFile(final StoredFileHelper zipFile, final String fileInZip)
             throws Exception {
+        return zipContainsFile(zipFile, Collections.singletonList(fileInZip));
+    }
+
+    /**
+     * @param zipFile    the zip file
+     * @param filesInZip the filenames to check
+     * @return whether any of the provided filenames is in the zip; only the first level is checked
+     */
+    public static boolean zipContainsFile(final StoredFileHelper zipFile,
+                                          final List<String> filesInZip) throws Exception {
         try (ZipInputStream inZip = new ZipInputStream(new BufferedInputStream(
                 new SharpInputStream(zipFile.getStream())))) {
             ZipEntry ze;
 
             while ((ze = inZip.getNextEntry()) != null) {
-                if (ze.getName().equals(fileInZip)) {
+                if (filesInZip.contains(ze.getName())) {
                     return true;
                 }
             }
