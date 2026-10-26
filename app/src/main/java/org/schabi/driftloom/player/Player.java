@@ -122,6 +122,7 @@ import org.schabi.driftloom.player.ui.PopupPlayerUi;
 import org.schabi.driftloom.player.ui.VideoPlayerUi;
 import org.schabi.driftloom.util.DependentPreferenceHelper;
 import org.schabi.driftloom.util.ExtractorHelper;
+import org.schabi.driftloom.util.InfoCache;
 import org.schabi.driftloom.util.ListHelper;
 import org.schabi.driftloom.util.NavigationHelper;
 import org.schabi.driftloom.util.SerializedCache;
@@ -1552,11 +1553,23 @@ public final class Player implements PlaybackListener, Listener {
                 onBuffering();
                 break;
             case ERROR_CODE_IO_BAD_HTTP_STATUS:
-                if (currentItem != null && getCurrentStreamInfo()
-                        .filter(info -> currentItem.getUrl().equals(info.getUrl()))
-                        .map(info -> youtubeHlsFallback.tryEnable(currentItem, info, error))
-                        .orElse(false)) {
-                    Log.i(TAG, "YouTube HTTP 403: resuming this queue item using HLS");
+                final YoutubeHlsFallback.Recovery recovery = currentItem == null
+                        ? YoutubeHlsFallback.Recovery.NONE
+                        : getCurrentStreamInfo()
+                                .filter(info -> currentItem.getUrl().equals(info.getUrl()))
+                                .map(info -> youtubeHlsFallback.onHttpError(
+                                        currentItem, info, error))
+                                .orElse(YoutubeHlsFallback.Recovery.NONE);
+                if (recovery != YoutubeHlsFallback.Recovery.NONE) {
+                    if (recovery == YoutubeHlsFallback.Recovery.REFRESH_HLS) {
+                        // The HLS manifest was rejected as well, most likely because the cached
+                        // stream info expired: extract it again before the last attempt
+                        Log.i(TAG, "YouTube HTTP 403 on HLS: retrying with fresh stream info");
+                        InfoCache.getInstance().removeInfo(currentItem.getServiceId(),
+                                currentItem.getUrl(), InfoCache.Type.STREAM);
+                    } else {
+                        Log.i(TAG, "YouTube HTTP 403: resuming this queue item using HLS");
+                    }
                     isCatchableException = true;
                     setRecovery();
                     reloadPlayQueueManager();
@@ -2023,7 +2036,8 @@ public final class Player implements PlaybackListener, Listener {
     @Override // own playback listener
     @Nullable
     public MediaSource sourceOf(final PlayQueueItem item, final StreamInfo info) {
-        final MediaSource fallback = youtubeHlsFallback.resolve(item, info);
+        final MediaSource fallback = youtubeHlsFallback.resolve(item, info,
+                isAudioOnly || audioPlayerSelected());
         if (fallback != null) {
             return fallback;
         }
@@ -2236,7 +2250,10 @@ public final class Player implements PlaybackListener, Listener {
                 setRecovery();
             }
 
-            if (playQueueManagerReloadingNeeded(sourceType, info, getVideoRendererIndex())) {
+            // An HLS fallback source is built for the current mode (see sourceOf)
+            if (youtubeHlsFallback.isEnabled(item)
+                    || playQueueManagerReloadingNeeded(sourceType, info,
+                    getVideoRendererIndex())) {
                 reloadPlayQueueManager();
             }
         }, () -> {
@@ -2378,6 +2395,10 @@ public final class Player implements PlaybackListener, Listener {
     public void setPlaybackQuality(@Nullable final String quality) {
         saveStreamProgressState();
         setRecovery();
+        // An explicit quality choice applies to the regular streams again
+        if (playQueue != null) {
+            youtubeHlsFallback.disable(playQueue.getItem());
+        }
         videoResolver.setPlaybackQuality(quality);
         reloadPlayQueueManager();
     }

@@ -18,24 +18,22 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.schabi.driftloom.MainActivity
-import org.schabi.driftloom.player.helper.PlayerDataSource
-import org.schabi.driftloom.player.helper.YoutubeHlsFallback
 import org.schabi.driftloom.player.mediaitem.MediaItemTag
-import org.schabi.driftloom.player.playqueue.PlayQueueItem
 import org.schabi.driftloom.player.playqueue.SinglePlayQueue
 import org.schabi.driftloom.util.InfoCache
 import org.schabi.driftloom.util.NavigationHelper
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamType
 
-/** Opt-in live regression: pass -e youtubePlaybackUrl URL when invoking the test runner. */
+/**
+ * Opt-in live regression: pass -e youtubePlaybackUrl URL when invoking the test runner.
+ * The fallback's decision logic is covered by the JVM test YoutubeHlsFallbackTest.
+ */
 @RunWith(AndroidJUnit4::class)
 class YoutubePlaybackRegressionTest {
     @Test
@@ -43,45 +41,6 @@ class YoutubePlaybackRegressionTest {
 
     @Test
     fun backgroundAudioRecoversFrom403At59Seconds() = checkPlayback(audioOnly = true)
-
-    @Test
-    fun fallbackIsLimitedToOne403RecoveryPerQueueEntry() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val fallback = YoutubeHlsFallback(PlayerDataSource(context, null))
-        val url = "https://www.youtube.com/watch?v=11-9ZaYiTPE"
-        val info = StreamInfo(
-            ServiceList.YouTube.serviceId,
-            url,
-            url,
-            StreamType.VIDEO_STREAM,
-            "11-9ZaYiTPE",
-            "Regression fixture",
-            0
-        )
-        info.hlsUrl = "https://example.invalid/master.m3u8"
-        val item = PlayQueueItem(info)
-        assertFalse(fallback.tryEnable(item, info, httpError(404)))
-        assertTrue(fallback.tryEnable(item, info, httpError(403)))
-        assertFalse("A failed HLS source must not loop", fallback.tryEnable(item, info, httpError(403)))
-        val nextItem = PlayQueueItem(info)
-        assertTrue("A separate queue entry gets its own attempt", fallback.tryEnable(nextItem, info, httpError(403)))
-        info.streamType = StreamType.LIVE_STREAM
-        assertFalse(fallback.tryEnable(PlayQueueItem(info), info, httpError(403)))
-        info.streamType = StreamType.VIDEO_STREAM
-        info.hlsUrl = ""
-        assertFalse(fallback.tryEnable(PlayQueueItem(info), info, httpError(403)))
-        val otherService = StreamInfo(
-            ServiceList.SoundCloud.serviceId,
-            url,
-            url,
-            StreamType.VIDEO_STREAM,
-            "fixture",
-            "Regression fixture",
-            0
-        )
-        otherService.hlsUrl = "https://example.invalid/master.m3u8"
-        assertFalse(fallback.tryEnable(PlayQueueItem(otherService), otherService, httpError(403)))
-    }
 
     private fun httpError(code: Int) = ExoPlaybackException.createForSource(
         HttpDataSource.InvalidResponseCodeException(
