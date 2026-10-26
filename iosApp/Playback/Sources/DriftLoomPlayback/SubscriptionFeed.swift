@@ -21,6 +21,7 @@ public actor YouTubeFeedClient: FeedLoading {
         session = URLSession(configuration: config)
     }
     public func videos(channelID: String) async throws -> [FeedVideo] {
+        if SoundCloudID.userNumber(channelID) != nil { return try await SoundCloudClient.shared.feed(channelID) }
         guard channelID.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil else { throw BrowseError.invalidInput }
         var url = URLComponents(string: "https://www.youtube.com/feeds/videos.xml")!
         url.queryItems = [URLQueryItem(name: "channel_id", value: channelID)]

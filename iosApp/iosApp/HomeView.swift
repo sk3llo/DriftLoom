@@ -97,6 +97,7 @@ struct HomeView: View {
                         PinnedPageView(item: tab.item, store: pinnedPage, onPlay: onPlay)
                     } else if selection == .trending { TrendingMusicView(onPlay: onPlay) }
                     else if let kiosk = selection.kiosk { KioskView(kiosk: kiosk, onPlay: onPlay).id(kiosk) }
+                    else if selection == .soundCloud { SoundCloudTrendingView(onPlay: onPlay) }
                     else if selection == .feed { FeedView(store: feed, onPlay: onPlay) }
                     else if selection == .bookmarks { BookmarksView(onPlay: onPlay) }
                     else { LibrarySectionView(section: selection, onPlay: onPlay).id(selection) }
@@ -112,7 +113,7 @@ struct HomeView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             VStack(alignment: .leading, spacing: 10) {
                                 Label("DriftLoom", systemImage: "play.rectangle.fill").font(.title2.weight(.bold))
-                                Text("YouTube").font(.subheadline)
+                                Text("YouTube · SoundCloud").font(.subheadline)
                             }
                             .foregroundColor(.white).frame(maxWidth: .infinity, alignment: .leading).padding(24).background(AppStyle.accent)
                             ScrollView {
@@ -198,6 +199,17 @@ private struct KioskView: View {
                 .accessibilityIdentifier("kioskSource")
             BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(.kiosk(kiosk)) } })
         }.task(id: preferences.contentLocale) { await store.load(.kiosk(kiosk)) }
+    }
+}
+
+private struct SoundCloudTrendingView: View {
+    let onPlay: (BrowseItem) -> Void
+    @StateObject private var store = BrowseStore()
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("SoundCloud · Trending").font(.caption).foregroundStyle(.secondary).padding(8).accessibilityIdentifier("kioskSource")
+            BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(.soundCloudTrending) } })
+        }.task { await store.load(.soundCloudTrending) }
     }
 }
 
@@ -313,7 +325,7 @@ struct OpenVideoLinkView: View {
     var body: some View {
         AppNavigation {
             Form {
-                TextField("YouTube video link", text: $input).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
+                TextField("YouTube or SoundCloud link", text: $input).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                     .submitLabel(.go).onSubmit(open)
                 if let error { Text(error).foregroundColor(.red).font(.footnote) }
                 Button("Open", action: open).disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -323,8 +335,19 @@ struct OpenVideoLinkView: View {
         }
     }
     private func open() {
+        let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let url = URL(string: text), url.scheme == "https", url.host?.hasSuffix("soundcloud.com") == true {
+            Task {
+                do {
+                    let item = try await SoundCloudClient.shared.resolve(url)
+                    guard item.kind == .video else { throw BrowseError.unavailable("Open SoundCloud profiles and playlists from search.") }
+                    onOpen(item)
+                } catch { self.error = error.localizedDescription }
+            }
+            return
+        }
         do {
-            let video = try VideoRequest(input: input)
+            let video = try VideoRequest(input: text)
             onOpen(BrowseItem(contentID: video.videoID, kind: .video, title: "YouTube video"))
         } catch { self.error = error.localizedDescription }
     }

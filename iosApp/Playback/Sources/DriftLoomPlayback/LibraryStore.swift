@@ -157,7 +157,7 @@ public final class LibraryStore: ObservableObject {
         if kind == .video {
             return (try? VideoRequest(input: item.contentID).videoID) == item.contentID
         }
-        return item.contentID.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil
+        return ChannelIDs.valid(item.contentID)
     }
 }
 

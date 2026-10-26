@@ -13,7 +13,7 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 | Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; YouTube subtitle tracks (manual and auto-generated) with a remembered language, text size and fullscreen overlay; opt-in YouTube machine translation into any offered language; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection; separate video-only + audio formats above the best combined stream, played as an AVComposition (H.264, or AV1 only where hardware decodes it) | Automatic adaptive switching between separate formats; subtitle styling beyond size; exhaustive interruption/headphone/lock-screen/PiP tests |
 | Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved; persisted subscription groups and membership; group filtering in subscriptions/feed; date and watched-video filters; native backup and supported Android group migration | Additional feed sources and controls; group icons and remaining Android settings migration |
 | Downloads | Available HLS/muxed/audio format discovery; versioned job records; cancellation/retry with fresh URLs; iOS background transfer reconnection; delete controls; completed HLS cache validation and local playback verified on iPhone 7; Wi-Fi-only/any-network policy per job with waiting and relaunch recovery; storage usage; subtitles saved with a download for offline playback; separate video+audio downloads (two transfers, parts kept across relaunch, combined by passthrough export into one MP4) | broader file/audio and interrupted/background transfer tests |
-| Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup;  remaining player/download settings; additional services |
+| Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup;  remaining player/download settings; services beyond YouTube and SoundCloud (PeerTube, Bandcamp, media.ccc.de); SoundCloud entries in NewPipe backups |
 
 ## Storage and compatibility
 
@@ -107,6 +107,16 @@ playlist tabs, feed-group tabs and other services' tabs are reported as skipped.
 Real NewPipe backups store the database in WAL mode. The importer now converts its private temporary copy to
 a rollback-journal header before opening it read-only; before this, every real Android backup failed to
 import on iOS (the earlier tests used synthetic databases).
+
+SoundCloud (service ID 1 in NewPipe) is implemented with service-prefixed IDs so existing stores, queues and
+downloads keep working: tracks "sc:<id>", users "sc:user:<id>", playlists "sc:playlist:<id>". Libraries that
+contain SoundCloud items are refused (and left untouched) by builds from before this change. The web client ID is
+read from soundcloud.com's asset scripts as NewPipe does, cached in memory and refreshed once on 401/403.
+Playback uses the full-length HLS AAC (or MP3) stream; encrypted (DRM) and preview-only tracks are refused with
+a reason. Downloads join the HLS map and segments into one .m4a/.mp3 file in the foreground, because
+AVAssetDownloadTask can't store SoundCloud's bare media playlists for offline use; such downloads stop if the app
+is closed and can be retried. NewPipe backups' SoundCloud entries are still skipped (they store permalinks,
+which would need one lookup per item).
 
 Download network policy is fixed per job when it starts or is retried; changing the preference does not move
 existing transfers. Wi-Fi-only jobs wait while only cellular is available.

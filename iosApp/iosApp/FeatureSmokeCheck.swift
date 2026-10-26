@@ -16,6 +16,31 @@ func runKioskSmokeCheck() async {
     NSLog("DriftLoomKioskSmoke: DONE")
 }
 
+/// --soundcloud-smoke: client ID discovery, search, profile, playlist, related and trending on the device.
+@MainActor
+func runSoundCloudSmokeCheck() async {
+    guard ProcessInfo.processInfo.arguments.contains("--soundcloud-smoke") else { return }
+    let client = YouTubeBrowsingClient()
+    do {
+        let tracks = try await client.page(for: .soundCloudSearch("lofi hip hop", .tracks))
+        NSLog("DriftLoomSoundCloudSmoke: PASS search tracks=%d first=%@", tracks.items.count, tracks.items.first?.contentID ?? "-")
+        let users = try await client.page(for: .soundCloudSearch("lofi", .users))
+        for user in users.items.prefix(6) {
+            if let page = try? await client.page(for: user.destination!), !page.items.isEmpty {
+                NSLog("DriftLoomSoundCloudSmoke: PASS profile %@ tracks=%d", page.title, page.items.count); break
+            }
+        }
+        if let playlist = try await client.page(for: .soundCloudSearch("lofi", .playlists)).items.first?.destination {
+            NSLog("DriftLoomSoundCloudSmoke: PASS playlist tracks=%d", try await client.page(for: playlist).items.count)
+        }
+        if let first = tracks.items.first {
+            NSLog("DriftLoomSoundCloudSmoke: PASS related=%d", try await client.page(for: .related(first.contentID)).items.count)
+        }
+        NSLog("DriftLoomSoundCloudSmoke: PASS trending=%d", try await client.page(for: .soundCloudTrending).items.count)
+    } catch { NSLog("DriftLoomSoundCloudSmoke: FAIL %@", error.localizedDescription) }
+    NSLog("DriftLoomSoundCloudSmoke: DONE")
+}
+
 /// --import-smoke NAME: preview and merge Documents/NAME into the isolated smoke library,
 /// applying NewPipe settings too, then report what changed.
 @MainActor

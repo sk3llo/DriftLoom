@@ -25,13 +25,14 @@ struct VideoDetailView: View {
                     Button(action: onCollapse) { Image(systemName: "chevron.down").frame(width: 44, height: 44) }
                         .accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
                     Spacer()
-                    Text("YouTube").font(.headline)
+                    Text(playback.currentItemMetadata?.isSoundCloud == true ? "SoundCloud" : "YouTube").font(.headline)
                     Spacer()
                     playbackOptions
                 }.padding(.horizontal, 6).background(Color(.systemBackground))
                 Group {
                     if playback.player.currentItem != nil {
-                        NativeVideoPlayer(player: playback.player, subtitles: SubtitleOverlay(playback: playback, size: preferences.subtitleSize))
+                        NativeVideoPlayer(player: playback.player, subtitles: SubtitleOverlay(playback: playback, size: preferences.subtitleSize,
+                                                                                         artwork: playback.currentItemMetadata.flatMap { $0.isSoundCloud ? $0.thumbnail : nil }))
                             .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
                             .accessibilityIdentifier("videoPlayer")
                     } else {
@@ -62,7 +63,7 @@ struct VideoDetailView: View {
                                         library.toggleSubscription(BrowseItem(contentID: id, kind: .channel,
                                                                               title: item.subtitle.isEmpty ? "Channel" : item.subtitle))
                                     }.font(.caption.weight(.semibold)).disabled(!library.isWritable)
-                                } else { Text("YouTube").font(.caption).foregroundStyle(.secondary) }
+                                } else { Text(item.isSoundCloud ? "SoundCloud" : "YouTube").font(.caption).foregroundStyle(.secondary) }
                             }
                             HStack(spacing: 0) {
                                 detailAction(library.isSaved(item.contentID) ? "Saved" : "Save",
@@ -112,7 +113,7 @@ struct VideoDetailView: View {
         }
         .id(playback.videoID)
         .sheet(isPresented: $sharing) {
-            if let id = playback.videoID, let url = URL(string: "https://www.youtube.com/watch?v=\(id)") { ShareSheet(items: [url]) }
+            if let url = playback.currentItemMetadata?.shareURL { ShareSheet(items: [url]) }
         }
         .sheet(isPresented: $choosingFormat) { PlaybackFormatPicker(playback: playback) }
         .sheet(isPresented: $downloading) {
@@ -127,15 +128,17 @@ struct VideoDetailView: View {
                         if playback.currentItemMetadata != nil {
                             IconButton("Download", systemImage: "arrow.down.circle") { downloading = true }
                         }
-                        if playback.video?.streamURL.isFileURL != true {
+                        if playback.video?.streamURL.isFileURL != true, playback.currentItemMetadata?.isSoundCloud != true {
                             IconButton("Playback format", systemImage: "film") { choosingFormat = true }
                         }
+                        if playback.currentItemMetadata?.isSoundCloud != true {
                         Menu("Maximum video resolution") {
                             ForEach([0, 360, 480, 720, 1080], id: \.self) { height in
                                 Button((height == 0 ? "Auto" : "Up to \(height)p") + (playback.maximumHeight == height ? " ✓" : "")) {
                                     playback.setMaximumHeight(height)
                                 }
                             }
+                        }
                         }
                         if !playback.subtitleTracks.isEmpty {
                             Menu("Subtitles") {
@@ -235,8 +238,14 @@ private struct QueuePanel: View {
 struct SubtitleOverlay: View {
     @ObservedObject var playback: PlaybackSession
     let size: SubtitleSize
+    /// Cover art for audio-only items, drawn where the video would be.
+    var artwork: URL? = nil
     var body: some View {
         GeometryReader { proxy in
+            if let artwork {
+                AsyncImage(url: artwork) { $0.resizable().scaledToFit() } placeholder: { Image(systemName: "music.note").font(.largeTitle).foregroundColor(.gray) }
+                    .frame(width: proxy.size.width, height: proxy.size.height).accessibilityIdentifier("audioArtwork")
+            }
             VStack {
                 Spacer()
                 if let text = playback.subtitleText {

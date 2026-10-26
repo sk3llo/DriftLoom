@@ -34,11 +34,16 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   stream positions, downloaded bytes, and unsupported services are excluded and reported.
 - Resolutions above the best combined stream (typically 480p–2160p, limited to codecs the device decodes)
   play and download from YouTube's separate video and audio streams, combined without re-encoding; 1080p merged playback and a merged download were verified on the iPhone 7.
-- This is an incremental parity rework, not a complete NewPipe port. Extra services
+- This is an incremental parity rework, not a complete NewPipe port. Services beyond YouTube and SoundCloud
   and remaining settings and device scenarios still need implementation or verification.
 - Opt-in Live, Gaming, Podcasts and Movie trailers kiosks; opt-in auto-translated subtitles (YouTube currently
   rate-limits these from the test network); NewPipe ZIP imports can also apply NewPipe's settings and home tabs
   from `preferences.json`. Real (WAL-mode) NewPipe backups now import; earlier builds rejected them.
+- SoundCloud: search (tracks, users, playlists), profiles with paged tracks, playlists of any size, related
+  tracks, comments, a trending home section, opening soundcloud.com links, playback with artwork, saving,
+  history, local playlists, queues, subscriptions with feed entries, and offline downloads. Access follows
+  NewPipe: the public client ID from soundcloud.com's own scripts and SoundCloud's web API (api-v2).
+  DRM-only tracks (about 1 in 15 in a sample) and preview-only tracks can't be played and say so.
 - When YouTube refuses extraction (for example "confirm you're not a bot" on a rate-limited network),
   playback and downloads report that in plain language. DriftLoom does not try to bypass these checks.
   See [the rework checklist](docs/ios-newpipe-parity.md).

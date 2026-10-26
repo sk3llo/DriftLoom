@@ -125,8 +125,8 @@ public final class PlaybackSession: ObservableObject {
         return BrowseItem(contentID: videoID, kind: .video,
                           title: title == "YouTube video" ? (sourceItem?.title ?? title) : title,
                           subtitle: sourceItem?.subtitle ?? "",
-                          thumbnail: sourceItem?.thumbnail ?? URL(string: "https://i.ytimg.com/vi/\(videoID)/hqdefault.jpg"),
-                          duration: sourceItem?.duration, channelID: sourceItem?.channelID)
+                          thumbnail: sourceItem?.thumbnail ?? (SoundCloudID.isSoundCloud(videoID) ? nil : URL(string: "https://i.ytimg.com/vi/\(videoID)/hqdefault.jpg")),
+                          duration: sourceItem?.duration, channelID: sourceItem?.channelID, webURL: sourceItem?.webURL)
     }
 
     /// Restore metadata without extraction or unsolicited audio on launch.
@@ -139,7 +139,7 @@ public final class PlaybackSession: ObservableObject {
     public func retry() {
         guard let currentRequest else { return }
         if let sourceItem { open(sourceItem) }
-        else { open(currentRequest.watchURL.absoluteString) }
+        else { open(currentRequest.videoID) }
     }
 
     public func resume() {
@@ -213,7 +213,8 @@ public final class PlaybackSession: ObservableObject {
             if SubtitleSelection.preferred([local.0], language: preferredSubtitleLanguage) != nil { install(local.0, cues: local.1) }
             return
         }
-        guard let subtitles else { return }
+        // SoundCloud tracks have no subtitles.
+        guard let subtitles, !SoundCloudID.isSoundCloud(videoID) else { return }
         let token = subtitleGeneration
         subtitleTask = Task { [weak self] in
             let catalog = (try? await subtitles.catalog(videoID: videoID)) ?? SubtitleCatalog(tracks: [])
@@ -311,6 +312,7 @@ public final class PlaybackSession: ObservableObject {
         clearItemObservers()
         self.video = video
         title = video.title
+        if sourceItem == nil, let item = video.item, item.contentID == videoID { sourceItem = item }
         phase = .loading
         let item = asset.map { AVPlayerItem(asset: $0) } ?? AVPlayerItem(url: video.streamURL)
         item.preferredMaximumResolution = resolutionLimit

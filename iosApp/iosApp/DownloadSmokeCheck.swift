@@ -41,7 +41,7 @@ func runDownloadSmokeCheck(_ playback: PlaybackSession) async {
         } else {
             let choices = try await YouTubeDownloadResolver().choices(videoID: item.contentID)
             // --download-smoke-merged: download the lowest separate video+audio format and combine it.
-            let kind: DownloadChoice.Kind = arguments.contains("--download-smoke-merged") ? .merged : .hls
+            let kind: DownloadChoice.Kind = SoundCloudID.isSoundCloud(videoID) ? .audio : arguments.contains("--download-smoke-merged") ? .merged : .hls
             guard let choice = choices.first(where: { $0.kind == kind }),
                   let started = manager.start(item: item, choice: choice, subtitleLanguage: subtitleLanguage) else { throw PlaybackError.noPlayableStream }
             id = started

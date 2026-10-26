@@ -14,10 +14,19 @@ struct SearchView: View {
     @State private var order = SearchOrder.relevance
     @State private var date = SearchDate.any
     @State private var duration = SearchDuration.any
+    @State private var service = SearchService.youTube
+    @State private var soundCloudFilter = SoundCloudSearchFilter.tracks
+    @State private var linkError: String?
     @FocusState private var focused: Bool
+    enum SearchService: String, CaseIterable { case youTube = "YouTube", soundCloud = "SoundCloud" }
     private struct SuggestionInput: Hashable { let query: String; let focused: Bool; let enabled: Bool; let locale: ContentLocale }
-    private var suggestionInput: SuggestionInput { SuggestionInput(query: query, focused: focused, enabled: preferences.usesSearchSuggestions, locale: preferences.contentLocale) }
-    private var route: BrowseRoute { .advancedSearch(submittedQuery, SearchOptions(type: filter, order: order, date: date, duration: duration)) }
+    private var suggestionInput: SuggestionInput {
+        SuggestionInput(query: query, focused: focused, enabled: preferences.usesSearchSuggestions && service == .youTube, locale: preferences.contentLocale)
+    }
+    private var route: BrowseRoute {
+        service == .soundCloud ? .soundCloudSearch(submittedQuery, soundCloudFilter)
+            : .advancedSearch(submittedQuery, SearchOptions(type: filter, order: order, date: date, duration: duration))
+    }
 
     var body: some View {
         AppNavigation {
@@ -25,7 +34,7 @@ struct SearchView: View {
                 HStack(spacing: 8) {
                     Button(action: onClose) { Image(systemName: "arrow.left").frame(width: 40, height: 44) }
                         .accessibilityLabel("Back to home")
-                    TextField("Search YouTube", text: $query)
+                    TextField("Search \(service.rawValue)", text: $query)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .submitLabel(.search).focused($focused).onSubmit(submit)
                         .accessibilityIdentifier("searchQuery")
@@ -37,7 +46,14 @@ struct SearchView: View {
                         .accessibilityLabel("Search").accessibilityIdentifier("submitSearch")
                         .disabled(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.padding(.horizontal, 8)
+                Picker("Service", selection: $service) {
+                    ForEach(SearchService.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }.pickerStyle(.segmented).padding(.horizontal, 12).padding(.bottom, 6).accessibilityIdentifier("searchService")
                 Divider()
+                if let linkError { Text(linkError).font(.footnote).foregroundStyle(.secondary).padding(8) }
+                if service == .soundCloud {
+                    SectionStrip(values: SoundCloudSearchFilter.allCases, selection: $soundCloudFilter, title: { $0.rawValue })
+                } else {
                 HStack(spacing: 0) {
                     SectionStrip(values: SearchFilter.allCases, selection: $filter, title: { $0.rawValue })
                     Menu {
@@ -49,6 +65,7 @@ struct SearchView: View {
                         Button("Reset filters") { order = .relevance; date = .any; duration = .any }
                     } label: { Image(systemName: "line.3.horizontal.decrease.circle").frame(width: 44, height: 46) }
                     .accessibilityLabel("Search filters")
+                }
                 }
                 if focused, !suggestions.suggestions.isEmpty {
                     List {
@@ -62,7 +79,7 @@ struct SearchView: View {
                     }.listStyle(.plain)
                 } else if submittedQuery.isEmpty {
                     if preferences.searchHistory.isEmpty {
-                        EmptyStateView("Search", systemImage: "magnifyingglass", message: "Find videos, channels, and playlists, or paste a video link.")
+                        EmptyStateView("Search", systemImage: "magnifyingglass", message: "Find videos, channels, tracks and playlists, or paste a YouTube or SoundCloud link.")
                     } else {
                         List {
                             ForEach(preferences.searchHistory.filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }, id: \.self) { text in
@@ -96,6 +113,7 @@ struct SearchView: View {
             .task {
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
                 let arguments = ProcessInfo.processInfo.arguments
+                if arguments.contains("--browse-smoke-soundcloud") { service = .soundCloud }
                 if submittedQuery.isEmpty, let flag = arguments.firstIndex(of: "--browse-smoke-query"), arguments.indices.contains(flag + 1) {
                     query = arguments[flag + 1]; submit()
                 }
@@ -108,8 +126,19 @@ struct SearchView: View {
         guard !value.isEmpty else { return }
         focused = false
         suggestions.clear()
+        linkError = nil
         if value.contains("://"), let video = try? VideoRequest(input: value) {
             onPlay(BrowseItem(contentID: video.videoID, kind: .video, title: "YouTube video")); return
+        }
+        if let link = URL(string: value), link.scheme == "https", link.host?.hasSuffix("soundcloud.com") == true {
+            Task {
+                do {
+                    let item = try await SoundCloudClient.shared.resolve(link)
+                    if item.kind == .video { onPlay(item) }
+                    else { service = .soundCloud; query = item.title; submittedQuery = item.title; soundCloudFilter = item.kind == .channel ? .users : .playlists }
+                } catch { linkError = error.localizedDescription }
+            }
+            return
         }
         preferences.recordSearch(value)
         if submittedQuery == value { Task { await results.load(route) } }
@@ -152,7 +181,9 @@ struct BrowsePageView: View {
                         }.buttonStyle(.plain)
                     }
                 }.padding(12)
-                SectionStrip(values: channelHeader?.tabs.isEmpty == false ? channelHeader!.tabs : [.videos], selection: $tab, title: { $0.rawValue })
+                if !SoundCloudID.isSoundCloud(id) {
+                    SectionStrip(values: channelHeader?.tabs.isEmpty == false ? channelHeader!.tabs : [.videos], selection: $tab, title: { $0.rawValue })
+                }
             } else if isPlaylist, !store.items.isEmpty {
                 HStack {
                     Button {
@@ -165,7 +196,7 @@ struct BrowsePageView: View {
             }
             BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(effectiveRoute) } })
         }
-        .navigationTitle(store.title.isEmpty ? "YouTube" : store.title)
+        .navigationTitle(store.title.isEmpty ? (channelID.map(SoundCloudID.isSoundCloud) == true ? "SoundCloud" : "YouTube") : store.title)
         .navigationBarTitleDisplayMode(.inline).navigationBarHidden(false)
         .task(id: effectiveRoute) { await store.load(effectiveRoute) }
         .onReceive(store.$header) { header in
@@ -303,10 +334,13 @@ struct BrowseRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(item.title).font(.subheadline.weight(.medium)).lineLimit(typeSize.isAccessibilitySize ? nil : 3).foregroundStyle(.primary)
             if !item.subtitle.isEmpty { Text(item.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
-            if item.kind != .video {
-                Text(item.kind == .channel ? "Channel" : "Playlist").font(.caption2).foregroundStyle(.secondary)
+            if item.kind != .video || item.isSoundCloud {
+                Text([item.isSoundCloud ? "SoundCloud" : nil, item.kind == .channel ? "Channel" : item.kind == .playlist ? "Playlist" : nil]
+                    .compactMap { $0 }.joined(separator: " · ")).font(.caption2).foregroundStyle(.secondary)
             }
         }
     }
-    private var symbol: String { item.kind == .video ? "play.rectangle" : item.kind == .channel ? "person.crop.circle" : "rectangle.stack" }
+    private var symbol: String {
+        item.kind == .video ? (item.isSoundCloud ? "music.note" : "play.rectangle") : item.kind == .channel ? "person.crop.circle" : "rectangle.stack"
+    }
 }

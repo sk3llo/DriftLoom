@@ -20,6 +20,11 @@ public struct DownloadSource: Sendable {
 public struct YouTubeDownloadResolver: Sendable {
     public init() {}
     public func choices(videoID: String) async throws -> [DownloadChoice] {
+        if SoundCloudID.isSoundCloud(videoID) {
+            guard SoundCloudID.trackNumber(videoID) != nil else { throw PlaybackError.invalidURL }
+            // Saved as one audio file assembled from SoundCloud's HLS segments.
+            return [DownloadChoice(id: "soundcloud", name: "Audio · SoundCloud stream", kind: .audio)]
+        }
         do { return try await findChoices(videoID: videoID) } catch { throw PlaybackError.readable(error) }
     }
     private func findChoices(videoID: String) async throws -> [DownloadChoice] {
@@ -69,6 +74,9 @@ public struct YouTubeDownloadResolver: Sendable {
         URLComponents(url: stream.url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "itag" }?.value
     }
     public func source(videoID: String, choice: DownloadChoice) async throws -> DownloadSource {
+        if SoundCloudID.isSoundCloud(videoID) {
+            return DownloadSource(url: try await SoundCloudClient.shared.stream(videoID).url, choice: choice)
+        }
         do { return try await findSource(videoID: videoID, choice: choice) } catch { throw PlaybackError.readable(error) }
     }
     private func findSource(videoID: String, choice: DownloadChoice) async throws -> DownloadSource {

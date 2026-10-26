@@ -5,6 +5,7 @@ import Foundation
 public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
     case subscriptions = "Subscriptions", feed = "What's new", bookmarks = "Bookmarked", history = "History", trending = "Trending music"
     case live = "Live", gaming = "Gaming", podcasts = "Podcasts", trailers = "Movie trailers"
+    case soundCloud = "SoundCloud trending"
     public var id: String { rawValue }
     /// Shown on a fresh install; the YouTube kiosks are opt-in from the drawer or settings.
     public static let defaultSections: [HomeSection] = [.subscriptions, .feed, .bookmarks, .history, .trending]
@@ -29,6 +30,7 @@ public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
         case .gaming: return "gamecontroller"
         case .podcasts: return "mic"
         case .trailers: return "film"
+        case .soundCloud: return "waveform"
         }
     }
 }

@@ -7,6 +7,7 @@ public enum BrowseRoute: Hashable, Sendable {
     case advancedSearch(String, SearchOptions)
     case trendingMusic
     case kiosk(YouTubeKiosk)
+    case soundCloudSearch(String, SoundCloudSearchFilter), soundCloudTrending
     case filteredSearch(String, SearchFilter), channelTab(String, ChannelTab)
     case mix(playlist: String, seed: String)
 }
@@ -61,7 +62,19 @@ public struct BrowseItem: Identifiable, Equatable, Codable, Sendable {
     public let duration: String?
     public let channelID: String?
     public let playlistSeed: String?
+    /// The item's page on its service's website (set for SoundCloud, where links aren't derivable from IDs).
+    public let webURL: URL?
     public var id: String { kind.rawValue + ":" + contentID }
+    public var isSoundCloud: Bool { SoundCloudID.isSoundCloud(contentID) }
+    /// Link for sharing.
+    public var shareURL: URL? {
+        if let webURL { return webURL }
+        switch kind {
+        case .video: return isSoundCloud ? nil : URL(string: "https://www.youtube.com/watch?v=\(contentID)")
+        case .channel: return isSoundCloud ? nil : URL(string: "https://www.youtube.com/channel/\(contentID)")
+        case .playlist: return isSoundCloud ? nil : URL(string: "https://www.youtube.com/playlist?list=\(contentID)")
+        }
+    }
     public var destination: BrowseRoute? {
         switch kind {
         case .video: return nil
@@ -73,10 +86,10 @@ public struct BrowseItem: Identifiable, Equatable, Codable, Sendable {
     }
 
     public init(contentID: String, kind: Kind, title: String, subtitle: String = "",
-                thumbnail: URL? = nil, duration: String? = nil, channelID: String? = nil, playlistSeed: String? = nil) {
+                thumbnail: URL? = nil, duration: String? = nil, channelID: String? = nil, playlistSeed: String? = nil, webURL: URL? = nil) {
         self.contentID = contentID; self.kind = kind; self.title = title
         self.subtitle = subtitle; self.thumbnail = thumbnail
-        self.duration = duration; self.channelID = channelID; self.playlistSeed = playlistSeed
+        self.duration = duration; self.channelID = channelID; self.playlistSeed = playlistSeed; self.webURL = webURL
     }
 }
 
@@ -132,6 +145,15 @@ public actor YouTubeBrowsingClient: Browsing {
     public func page(for route: BrowseRoute) async throws -> BrowsePage {
         if route == .trendingMusic { return try await YouTubeChartsClient(session: session).music(locale: .current()) }
         if route == .kiosk(.trailers) { return try await YouTubeChartsClient(session: session).trailers(locale: .current()) }
+        switch route {
+        case let .soundCloudSearch(query, filter): return try await SoundCloudClient.shared.search(query, filter: filter)
+        case .soundCloudTrending: return try await SoundCloudClient.shared.trending()
+        case let .channel(id) where SoundCloudID.isSoundCloud(id), let .channelTab(id, _) where SoundCloudID.isSoundCloud(id):
+            return try await SoundCloudClient.shared.user(id)
+        case let .playlist(id) where SoundCloudID.isSoundCloud(id): return try await SoundCloudClient.shared.playlist(id)
+        case let .related(id) where SoundCloudID.isSoundCloud(id): return try await SoundCloudClient.shared.related(id)
+        default: break
+        }
         var components = URLComponents(string: "https://www.youtube.com")!
         let title: String
         let isSearch: Bool
@@ -140,7 +162,7 @@ public actor YouTubeBrowsingClient: Browsing {
         let locale = ContentLocale.current()
         var query = [URLQueryItem(name: "hl", value: locale.language), URLQueryItem(name: "gl", value: locale.country)]
         switch route {
-        case .trendingMusic: throw BrowseError.invalidInput // Handled by the verified Charts source above.
+        case .trendingMusic, .soundCloudSearch, .soundCloudTrending: throw BrowseError.invalidInput // Handled above.
         case let .kiosk(kiosk):
             guard let path = kiosk.path else { throw BrowseError.invalidInput }
             components.path = path
@@ -189,6 +211,7 @@ public actor YouTubeBrowsingClient: Browsing {
     }
 
     public func nextPage(_ cursor: BrowseCursor) async throws -> BrowsePage {
+        if cursor.clientVersion == SoundCloudClient.paginationMarker { return try await SoundCloudClient.shared.nextPage(cursor) }
         let endpoint = cursor.isRelated ? "next" : cursor.isSearch ? "search" : "browse"
         var request = URLRequest(url: URL(string: "https://www.youtube.com/youtubei/v1/\(endpoint)?prettyPrint=false")!)
         request.httpMethod = "POST"

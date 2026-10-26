@@ -131,6 +131,22 @@ final class DownloadManager: ObservableObject {
                 try Task.checkCancellation()
                 await self?.saveSubtitles(record, transfer: transfer)
                 guard let self, var current = self.matching(transfer), current.state == .preparing else { return }
+                if record.item.isSoundCloud {
+                    // A foreground transfer: SoundCloud's segments are joined into one file as they arrive.
+                    current.state = .downloading
+                    guard self.library.update(current) else { return }
+                    let configuration = URLSessionConfiguration.ephemeral
+                    configuration.allowsCellularAccess = record.network != .wifiOnly
+                    configuration.waitsForConnectivity = true; configuration.httpCookieStorage = nil; configuration.urlCache = nil
+                    let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DriftLoom/Media")
+                    let file = try await SoundCloudDownload.save(playlist: source.url, directory: directory, baseName: id.uuidString + "-" + UUID().uuidString,
+                                                                 session: URLSession(configuration: configuration)) { [weak self] value in
+                        Task { @MainActor in self?.progress(transfer, value: value) }
+                    }
+                    await self.completed(transfer, location: file, hls: false)
+                    if self.records.first(where: { $0.id == id })?.transferID == record.transferID { self.preparations[id] = nil }
+                    return
+                }
                 var tasks: [URLSessionTask] = []
                 if source.choice.kind == .merged, let audioURL = source.audioURL {
                     let session = record.network == .wifiOnly ? self.wifiFiles! : self.files!

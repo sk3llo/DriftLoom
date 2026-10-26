@@ -114,8 +114,9 @@ public final class PlaylistStore: ObservableObject {
             && (try? VideoRequest(input: item.contentID).videoID) == item.contentID
     }
     private static func bookmark(_ item: BrowseItem) -> Bool {
-        guard item.kind == .playlist, !item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              item.contentID.range(of: "^[A-Za-z0-9_-]{2,150}$", options: .regularExpression) != nil else { return false }
+        guard item.kind == .playlist, !item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        if SoundCloudID.playlistNumber(item.contentID) != nil { return true }
+        guard item.contentID.range(of: "^[A-Za-z0-9_-]{2,150}$", options: .regularExpression) != nil else { return false }
         if item.contentID.hasPrefix("RD") { return item.playlistSeed.map { (try? VideoRequest(input: $0).videoID) == $0 } ?? false }
         return true
     }

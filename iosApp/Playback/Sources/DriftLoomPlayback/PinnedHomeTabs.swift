@@ -112,7 +112,8 @@ public final class PinnedHomeTabs: ObservableObject {
     public func dismissError() { error = nil }
     private static func valid(_ item: BrowseItem) -> Bool {
         guard !item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, item.title.count <= 5000 else { return false }
-        if item.kind == .channel { return item.contentID.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil }
+        if item.kind == .channel { return ChannelIDs.valid(item.contentID) }
+        if item.kind == .playlist, SoundCloudID.playlistNumber(item.contentID) != nil { return true }
         guard item.kind == .playlist, item.contentID.range(of: "^[A-Za-z0-9_-]{2,150}$", options: .regularExpression) != nil else { return false }
         if item.contentID.hasPrefix("RD") { return item.playlistSeed.map { (try? VideoRequest(input: $0).videoID) == $0 } ?? false }
         return true

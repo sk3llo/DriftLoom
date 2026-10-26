@@ -69,7 +69,7 @@ public final class SubscriptionGroups: ObservableObject {
             && document.groups.allSatisfy { group in
                 !group.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && group.name.count <= 100
                     && group.channelIDs.count <= 5000 && Set(group.channelIDs).count == group.channelIDs.count
-                    && group.channelIDs.allSatisfy { $0.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil }
+                    && group.channelIDs.allSatisfy(ChannelIDs.valid)
             }
     }
     private func save(_ next: [SubscriptionGroup]) -> Bool {

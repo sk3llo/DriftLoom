@@ -43,6 +43,7 @@ public actor YouTubeDiscussionClient: DiscussionLoading {
         self.session = session ?? URLSession(configuration: configuration)
     }
     public func details(videoID: String) async throws -> VideoDetails {
+        if SoundCloudID.isSoundCloud(videoID) { return try await SoundCloudClient.shared.details(videoID) }
         guard (try? VideoRequest(input: videoID).videoID) == videoID else { throw BrowseError.invalidInput }
         let locale = ContentLocale.current()
         var components = URLComponents(string: "https://www.youtube.com/watch")!
@@ -55,6 +56,7 @@ public actor YouTubeDiscussionClient: DiscussionLoading {
         return DiscussionParser.details(root, version: version)
     }
     public func comments(_ cursor: CommentCursor) async throws -> CommentPage {
+        if cursor.clientVersion == SoundCloudClient.paginationMarker { return try await SoundCloudClient.shared.comments(cursor) }
         var request = URLRequest(url: URL(string: "https://www.youtube.com/youtubei/v1/next?prettyPrint=false")!)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

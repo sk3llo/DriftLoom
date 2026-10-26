@@ -13,6 +13,40 @@ struct BrowseProbe {
             print("PASS: official YouTube chart returned \(page.items.count) videos in published order")
             return
         }
+        setvbuf(stdout, nil, _IOLBF, 0)
+        if CommandLine.arguments.contains("--soundcloud") {
+            let client = YouTubeBrowsingClient()
+            func check(_ name: String, _ page: BrowsePage) throws -> BrowsePage {
+                guard !page.items.isEmpty else { throw BrowseError.unavailable("SoundCloud \(name) returned nothing") }
+                print("PASS: SoundCloud \(name) items=\(page.items.count) more=\(page.next != nil) first=\(page.items[0].kind) \(page.items[0].title.prefix(40))")
+                return page
+            }
+            let tracks = try check("track search", try await client.page(for: .soundCloudSearch("lofi hip hop", .tracks)))
+            _ = try check("next page", try await client.nextPage(try XCTUnwrapOrThrow(tracks.next)))
+            let users = try check("user search", try await client.page(for: .soundCloudSearch("lofi", .users)))
+            let playlists = try check("playlist search", try await client.page(for: .soundCloudSearch("lofi", .playlists)))
+            _ = try check("mixed search", try await client.page(for: .soundCloudSearch("lofi", .all)))
+            var userPage: BrowsePage?
+            for user in users.items.prefix(6) where userPage == nil {
+                if let page = try? await client.page(for: user.destination!), !page.items.isEmpty { userPage = page }
+            }
+            _ = try check("user", try XCTUnwrapOrThrow(userPage))
+            _ = try check("playlist", try await client.page(for: playlists.items[0].destination!))
+            _ = try check("related", try await client.page(for: .related(tracks.items[0].contentID)))
+            _ = try check("trending", try await client.page(for: .soundCloudTrending))
+            let details = try await YouTubeDiscussionClient().details(videoID: tracks.items[0].contentID)
+            print("PASS: SoundCloud details plays=\(details.views) date=\(details.date) comments=\(details.comments != nil)")
+            if let cursor = details.comments {
+                let page = try await YouTubeDiscussionClient().comments(cursor)
+                print("PASS: SoundCloud comments=\(page.comments.count) more=\(page.next != nil)")
+            }
+            let feed = try await YouTubeFeedClient().videos(channelID: try XCTUnwrapOrThrow(userPage?.items.first?.channelID))
+            print("PASS: SoundCloud feed entries=\(feed.count) newest=\(feed.map(\.published).max().map { "\($0)" } ?? "-")")
+            let resolved = try await SoundCloudClient.shared.resolve(URL(string: tracks.items[0].webURL!.absoluteString)!)
+            print("PASS: SoundCloud link resolves to \(resolved.contentID) == \(tracks.items[0].contentID)")
+            print("TRACK: \(tracks.items[0].contentID)")
+            return
+        }
         if CommandLine.arguments.contains("--kiosks") {
             for kiosk in YouTubeKiosk.allCases {
                 do {
@@ -118,3 +152,6 @@ struct BrowseProbe {
         }
     }
 }
+
+private struct MissingValue: Error {}
+private func XCTUnwrapOrThrow<T>(_ value: T?) throws -> T { guard let value else { throw MissingValue() }; return value }

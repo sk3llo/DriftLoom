@@ -108,6 +108,7 @@ struct ContentView: View {
             await runBackgroundSmokeCheck(playback)
             await runDownloadSmokeCheck(playback)
             await runKioskSmokeCheck()
+            await runSoundCloudSmokeCheck()
             await runImportSmokeCheck(library: library, playlists: playlists, groups: subscriptionGroups, positions: positions,
                                       preferences: preferences, pinnedTabs: pinnedTabs)
 #endif
@@ -118,8 +119,12 @@ struct ContentView: View {
         queue.start([item]); expanded = true
     }
     private func openLink(_ input: String) {
-        guard let request = try? VideoRequest(input: input) else { return }
-        play(BrowseItem(contentID: request.videoID, kind: .video, title: "YouTube video"))
+        if let request = try? VideoRequest(input: input) {
+            play(BrowseItem(contentID: request.videoID, kind: .video, title: "YouTube video")); return
+        }
+        // SoundCloud links are permalinks; ask SoundCloud which track they point to.
+        guard let url = URL(string: input), url.host?.hasSuffix("soundcloud.com") == true else { return }
+        Task { if let item = try? await SoundCloudClient.shared.resolve(url), item.kind == .video { play(item) } }
     }
     private func closeSearch() {
         searching = false

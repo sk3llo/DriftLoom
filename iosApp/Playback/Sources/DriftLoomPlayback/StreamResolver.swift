@@ -9,8 +9,11 @@ public struct ResolvedVideo: Sendable {
     public let description: String
     /// Separate audio stream to play alongside a video-only `streamURL`.
     public let audioURL: URL?
+    /// Metadata found while resolving (artist, artwork, link), for items opened by ID alone.
+    public var item: BrowseItem?
 
-    public init(title: String, streamURL: URL, usesHLS: Bool, description: String = "", audioURL: URL? = nil) {
+    public init(title: String, streamURL: URL, usesHLS: Bool, description: String = "", audioURL: URL? = nil, item: BrowseItem? = nil) {
+        self.item = item
         self.title = title
         self.streamURL = streamURL
         self.usesHLS = usesHLS
@@ -35,7 +38,13 @@ public struct YouTubeStreamResolver: StreamResolving {
     public init() {}
 
     public func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+        if request.isSoundCloud { return try await soundCloud(request) }
         do { return try await resolveChoice(request, choice: choice) } catch { throw PlaybackError.readable(error) }
+    }
+    /// SoundCloud tracks have a single HLS audio stream; every format choice resolves to it.
+    private func soundCloud(_ request: VideoRequest) async throws -> ResolvedVideo {
+        let stream = try await SoundCloudClient.shared.stream(request.videoID)
+        return ResolvedVideo(title: stream.title, streamURL: stream.url, usesHLS: true, description: stream.description, item: stream.item)
     }
     private func resolveChoice(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
         guard let choice else { return try await resolveDefault(request) }
@@ -46,6 +55,7 @@ public struct YouTubeStreamResolver: StreamResolving {
     }
 
     public func resolve(_ request: VideoRequest) async throws -> ResolvedVideo {
+        if request.isSoundCloud { return try await soundCloud(request) }
         do { return try await resolveDefault(request) } catch { throw PlaybackError.readable(error) }
     }
     private func resolveDefault(_ request: VideoRequest) async throws -> ResolvedVideo {

@@ -5,10 +5,11 @@ import YouTubeKit
 public struct VideoRequest: Equatable, Sendable {
     public let videoID: String
     public var watchURL: URL { URL(string: "https://www.youtube.com/watch?v=\(videoID)")! }
+    public var isSoundCloud: Bool { SoundCloudID.isSoundCloud(videoID) }
 
     public init(input: String) throws {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        if Self.validID(text) { videoID = text; return }
+        if Self.validID(text) || SoundCloudID.trackNumber(text) != nil { videoID = text; return }
         guard let url = URLComponents(string: text),
               ["https", "http"].contains(url.scheme?.lowercased() ?? ""),
               url.user == nil, url.password == nil, url.port == nil,

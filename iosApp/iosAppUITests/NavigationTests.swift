@@ -327,6 +327,34 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["LIVE"].waitForExistence(timeout: 10), "Opening a kiosk from the drawer adds it to home")
     }
 
+    func testSoundCloudSearchPlaysTracksAndOpensProfiles() {
+        let app = application()
+        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 10)); app.buttons["openSearch"].tap()
+        app.segmentedControls["searchService"].buttons["SoundCloud"].tap()
+        let query = app.textFields["searchQuery"]
+        XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("lofi hip hop")
+        app.buttons["submitSearch"].tap()
+        let track = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'searchVideo-sc:'")).firstMatch
+        XCTAssertTrue(track.waitForExistence(timeout: 45), "SoundCloud search should list tracks")
+        track.tap()
+        XCTAssertTrue(app.staticTexts["SoundCloud"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.descendants(matching: .any)["audioArtwork"].waitForExistence(timeout: 20))
+        XCTAssertFalse(app.staticTexts["playbackError"].waitForExistence(timeout: 8), "The track should play")
+        app.buttons["minimizePlayer"].tap()
+        XCTAssertTrue(app.buttons["expandMiniPlayer"].waitForExistence(timeout: 5))
+        app.buttons["USERS"].tap()
+        let profile = app.buttons.matching(NSPredicate(format: "label CONTAINS 'SoundCloud · Channel'")).firstMatch
+        XCTAssertTrue(profile.waitForExistence(timeout: 45)); profile.tap()
+        let subscribe = app.buttons["SUBSCRIBE"]
+        XCTAssertTrue(subscribe.waitForExistence(timeout: 30)); subscribe.tap()
+        XCTAssertTrue(app.buttons["SUBSCRIBED"].waitForExistence(timeout: 5))
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'SoundCloud'")).firstMatch.waitForExistence(timeout: 10),
+                      "The SoundCloud subscription survives relaunch")
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
