@@ -17,6 +17,8 @@ struct SettingsView: View {
                     NavigationLink("Home tabs") { HomeTabsSettings() }
                 }
                 Section("YouTube content") {
+                    Toggle("Show search suggestions", isOn: Binding(get: { preferences.usesSearchSuggestions }, set: preferences.setUsesSearchSuggestions))
+
                     Picker("Content language", selection: Binding(get: { preferences.contentLocale.language }, set: {
                         preferences.setContentLocale(language: $0, country: preferences.contentLocale.country)
                     })) {
@@ -65,6 +67,7 @@ struct SettingsView: View {
 
 private struct HomeTabsSettings: View {
     @EnvironmentObject private var preferences: AppPreferences
+    @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
     var body: some View {
         List {
             Section("Visible tabs · drag to reorder") {
@@ -73,6 +76,15 @@ private struct HomeTabsSettings: View {
                         var sections = preferences.homeSections
                         sections.move(fromOffsets: offsets, toOffset: destination)
                         preferences.setHomeSections(sections)
+                    }
+            }
+            Section("Pinned channels and playlists") {
+                if pinnedTabs.tabs.isEmpty { Text("Use Add to home in a channel or playlist menu.").font(.footnote).foregroundStyle(.secondary) }
+                ForEach(pinnedTabs.tabs) { tab in Label(tab.item.title, systemImage: tab.item.kind == .channel ? "person.crop.circle" : "rectangle.stack") }
+                    .onMove(perform: pinnedTabs.move)
+                    .onDelete { offsets in
+                        let ids = offsets.filter { pinnedTabs.tabs.indices.contains($0) }.map { pinnedTabs.tabs[$0].id }
+                        ids.forEach(pinnedTabs.remove)
                     }
             }
             Section("Show on home") {

@@ -5,6 +5,7 @@ import Foundation
 public enum BrowseRoute: Hashable, Sendable {
     case search(String), channel(String), playlist(String), related(String)
     case advancedSearch(String, SearchOptions)
+    case trendingMusic
     case filteredSearch(String, SearchFilter), channelTab(String, ChannelTab)
     case mix(playlist: String, seed: String)
 }
@@ -114,6 +115,7 @@ public actor YouTubeBrowsingClient: Browsing {
     }
 
     public func page(for route: BrowseRoute) async throws -> BrowsePage {
+        if route == .trendingMusic { return try await YouTubeChartsClient(session: session).music(locale: .current()) }
         var components = URLComponents(string: "https://www.youtube.com")!
         let title: String
         let isSearch: Bool
@@ -122,6 +124,7 @@ public actor YouTubeBrowsingClient: Browsing {
         let locale = ContentLocale.current()
         var query = [URLQueryItem(name: "hl", value: locale.language), URLQueryItem(name: "gl", value: locale.country)]
         switch route {
+        case .trendingMusic: throw BrowseError.invalidInput // Handled by the verified Charts source above.
         case let .search(value), let .filteredSearch(value, _), let .advancedSearch(value, _):
             let value = value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !value.isEmpty, value.count <= 500 else { throw BrowseError.invalidInput }

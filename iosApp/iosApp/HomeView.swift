@@ -17,7 +17,7 @@ struct SectionStrip<Value: Hashable>: View {
                     ForEach(values, id: \.self) { value in
                         Button { selection = value } label: {
                             VStack(spacing: 0) {
-                                Text(title(value).uppercased()).font(.caption.weight(.semibold))
+                                Text(title(value).uppercased()).font(.caption.weight(.semibold)).lineLimit(1).frame(maxWidth: 200)
                                     .foregroundColor(selection == value ? AppStyle.accent : .secondary)
                                     .padding(.horizontal, 16).frame(minHeight: 46)
                                 Rectangle().fill(selection == value ? AppStyle.accent : .clear).frame(height: 2)
@@ -38,8 +38,11 @@ private enum HomeSheet: String, Identifiable {
     var id: String { rawValue }
 }
 
+private enum HomeTabSelection: Hashable { case section(HomeSection), pinned(String) }
+
 struct HomeView: View {
     @EnvironmentObject private var preferences: AppPreferences
+    @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
     @Binding var selection: HomeSection
     let onSearch: () -> Void
     let onPlay: (BrowseItem) -> Void
@@ -47,6 +50,19 @@ struct HomeView: View {
     @State private var sheet: HomeSheet?
     @State private var pendingVideo: BrowseItem?
     @StateObject private var feed = SubscriptionFeedStore()
+    @StateObject private var pinnedPage = BrowseStore()
+    @State private var selectedPinned: String?
+    private var homeTabs: [HomeTabSelection] { preferences.homeSections.map(HomeTabSelection.section) + pinnedTabs.tabs.map { .pinned($0.id) } }
+    private var currentTab: Binding<HomeTabSelection> {
+        Binding(get: { selectedPinned.map(HomeTabSelection.pinned) ?? .section(selection) }, set: { tab in
+            switch tab { case let .section(section): selectedPinned = nil; selection = section
+            case let .pinned(id): selectedPinned = id }
+        })
+    }
+    private func tabTitle(_ tab: HomeTabSelection) -> String {
+        switch tab { case let .section(section): return section.rawValue
+        case let .pinned(id): return pinnedTabs.tabs.first { $0.id == id }?.item.title ?? "Home" }
+    }
     var body: some View {
         ZStack(alignment: .leading) {
             AppNavigation {
@@ -66,8 +82,11 @@ struct HomeView: View {
                         } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }
                         .accessibilityLabel("More options")
                     }.padding(.horizontal, 6).background(Color(.systemBackground))
-                    SectionStrip(values: preferences.homeSections, selection: $selection, title: { $0.rawValue })
-                    if selection == .feed { FeedView(store: feed, onPlay: onPlay) }
+                    SectionStrip(values: homeTabs, selection: currentTab, title: tabTitle)
+                    if let id = selectedPinned, let tab = pinnedTabs.tabs.first(where: { $0.id == id }) {
+                        PinnedPageView(item: tab.item, store: pinnedPage, onPlay: onPlay)
+                    } else if selection == .trending { TrendingMusicView(onPlay: onPlay) }
+                    else if selection == .feed { FeedView(store: feed, onPlay: onPlay) }
                     else if selection == .bookmarks { BookmarksView(onPlay: onPlay) }
                     else { LibrarySectionView(section: selection, onPlay: onPlay).id(selection) }
                 }
@@ -90,13 +109,17 @@ struct HomeView: View {
                                     ForEach(HomeSection.allCases) { section in
                                         Button {
                                             if !preferences.homeSections.contains(section) { preferences.setHomeSections(preferences.homeSections + [section]) }
-                                            selection = section; menuVisible = false
+                                            selectedPinned = nil; selection = section; menuVisible = false
                                         } label: {
                                             Label(section.rawValue, systemImage: section.symbol)
                                                 .frame(maxWidth: .infinity, alignment: .leading).padding(16)
                                                 .foregroundColor(selection == section ? AppStyle.accent : .primary)
                                                 .background(selection == section ? AppStyle.accent.opacity(0.08) : .clear)
                                         }.buttonStyle(.plain).accessibilityIdentifier("drawer-section-" + section.rawValue)
+                                    }
+                                    ForEach(pinnedTabs.tabs) { tab in
+                                        drawerButton(tab.item.title, symbol: tab.item.kind == .channel ? "person.crop.circle" : "rectangle.stack") { selectedPinned = tab.id }
+                                            .accessibilityIdentifier("drawer-pinned-" + tab.id)
                                     }
                                     Divider().padding(.vertical, 8)
                                     drawerButton("Search", symbol: "magnifyingglass") { onSearch() }
@@ -113,6 +136,13 @@ struct HomeView: View {
                     }
                 }.zIndex(1)
             }
+        }
+        .onChange(of: selection) { _ in selectedPinned = nil }
+        .onChange(of: pinnedTabs.tabs) { tabs in
+            if let selectedPinned, !tabs.contains(where: { $0.id == selectedPinned }) { self.selectedPinned = nil }
+        }
+        .task(id: selectedPinned) {
+            if let id = selectedPinned, let route = pinnedTabs.tabs.first(where: { $0.id == id })?.item.destination { await pinnedPage.load(route) }
         }
         .sheet(item: $sheet, onDismiss: {
             if let video = pendingVideo { pendingVideo = nil; onPlay(video) }
@@ -133,6 +163,50 @@ struct HomeView: View {
         Button { menuVisible = false; action() } label: {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading).padding(16).foregroundStyle(.primary)
         }.buttonStyle(.plain).accessibilityIdentifier("drawer-" + title)
+    }
+}
+
+private struct TrendingMusicView: View {
+    let onPlay: (BrowseItem) -> Void
+    @EnvironmentObject private var preferences: AppPreferences
+    @StateObject private var store = BrowseStore()
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("YouTube Charts · " + preferences.contentLocale.country).font(.caption).foregroundStyle(.secondary).padding(8)
+            BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(.trendingMusic) } })
+        }.task(id: preferences.contentLocale) { await store.load(.trendingMusic) }
+    }
+}
+
+private struct PinnedPageView: View {
+    let item: BrowseItem
+    @ObservedObject var store: BrowseStore
+    let onPlay: (BrowseItem) -> Void
+    @EnvironmentObject private var queue: PlaybackQueue
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(store.title.isEmpty ? item.title : store.title).font(.headline).lineLimit(2)
+                    .accessibilityIdentifier("pinnedPageTitle")
+                Spacer()
+                Menu { BrowseItemMenu(item: item, onPlay: onPlay) } label: {
+                    Image(systemName: "ellipsis").frame(width: 44, height: 44)
+                }.accessibilityLabel("Pinned tab options")
+            }.padding(.horizontal, 12)
+            if item.kind == .playlist, !store.items.isEmpty {
+                HStack {
+                    Button("Play all") {
+                        queue.start(store.items)
+                        NotificationCenter.default.post(name: .driftLoomExpandPlayer, object: nil)
+                    }
+                    Spacer()
+                    Button("Enqueue") { for item in store.items { queue.enqueue(item) } }
+                }.padding(12)
+            }
+            BrowseResults(store: store, onPlay: onPlay, retry: {
+                Task { if let route = item.destination { await store.load(route) } }
+            })
+        }
     }
 }
 

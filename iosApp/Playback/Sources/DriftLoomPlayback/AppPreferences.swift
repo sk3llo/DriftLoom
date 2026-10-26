@@ -3,7 +3,7 @@ import Combine
 import Foundation
 
 public enum HomeSection: String, CaseIterable, Identifiable, Codable {
-    case subscriptions = "Subscriptions", feed = "What's new", bookmarks = "Bookmarked", history = "History"
+    case subscriptions = "Subscriptions", feed = "What's new", bookmarks = "Bookmarked", history = "History", trending = "Trending music"
     public var id: String { rawValue }
     public var symbol: String {
         switch self {
@@ -11,6 +11,7 @@ public enum HomeSection: String, CaseIterable, Identifiable, Codable {
         case .feed: return "tray"
         case .bookmarks: return "bookmark"
         case .history: return "clock"
+        case .trending: return "chart.line.uptrend.xyaxis"
         }
     }
 }
@@ -19,6 +20,7 @@ public enum HomeSection: String, CaseIterable, Identifiable, Codable {
 public final class AppPreferences: ObservableObject {
     @Published public private(set) var homeSections: [HomeSection]
     @Published public private(set) var searchHistory: [String]
+    @Published public private(set) var usesSearchSuggestions: Bool
     @Published public private(set) var recordsSearchHistory: Bool
     @Published public private(set) var appearance: String
     @Published public private(set) var contentLocale: ContentLocale
@@ -35,6 +37,7 @@ public final class AppPreferences: ObservableObject {
         searchHistory = Array((defaults.stringArray(forKey: "searchHistory") ?? []).filter {
             !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.count <= 500 && queries.insert($0).inserted
         }.prefix(50))
+        usesSearchSuggestions = defaults.object(forKey: "usesSearchSuggestions") as? Bool ?? true
         recordsSearchHistory = defaults.object(forKey: "recordsSearchHistory") as? Bool ?? true
         resumesPlayback = defaults.object(forKey: "resumesPlayback") as? Bool ?? true
         let savedAppearance = defaults.string(forKey: "appearance") ?? "System"
@@ -61,6 +64,9 @@ public final class AppPreferences: ObservableObject {
         searchHistory.removeAll { $0 == query }; defaults.set(searchHistory, forKey: "searchHistory")
     }
     public func clearSearchHistory() { searchHistory = []; defaults.set([], forKey: "searchHistory") }
+    public func setUsesSearchSuggestions(_ enabled: Bool) {
+        usesSearchSuggestions = enabled; defaults.set(enabled, forKey: "usesSearchSuggestions")
+    }
     public func setRecordsSearchHistory(_ enabled: Bool) {
         recordsSearchHistory = enabled; defaults.set(enabled, forKey: "recordsSearchHistory")
     }

@@ -121,6 +121,7 @@ private struct LocalPlaylistView: View {
                 }.listStyle(.plain)
             } else { EmptyStateView("Playlist unavailable", systemImage: "music.note.list", message: "This playlist is no longer in your library.") }
         }
+        .navigationBarHidden(false)
         .navigationTitle(playlist?.name ?? "Playlist").navigationBarTitleDisplayMode(.inline)
         .toolbar {
             EditButton().disabled(!playlists.isWritable)

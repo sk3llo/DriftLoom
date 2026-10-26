@@ -7,6 +7,18 @@ import Foundation
 struct BrowseProbe {
     @MainActor
     static func main() async throws {
+        if CommandLine.arguments.contains("--charts") {
+            let page = try await YouTubeChartsClient().music(locale: ContentLocale())
+            guard !page.items.isEmpty, page.items.allSatisfy({ $0.kind == .video }), page.next == nil else { throw BrowseError.unavailable("Expected a verified music chart") }
+            print("PASS: official YouTube chart returned \(page.items.count) videos in published order")
+            return
+        }
+        if CommandLine.arguments.contains("--suggestions") {
+            let suggestions = try await YouTubeSuggestionsClient().suggestions(for: "newpipe", locale: ContentLocale())
+            guard !suggestions.isEmpty else { throw BrowseError.unavailable("Expected search suggestions") }
+            print("PASS: \(suggestions.count) nonempty YouTube search suggestions")
+            return
+        }
         if CommandLine.arguments.contains("--advanced-search") {
             let page = try await YouTubeBrowsingClient().page(for: .advancedSearch("swift programming", SearchOptions(type: .videos, order: .views, date: .year, duration: .short)))
             guard !page.items.isEmpty, page.items.allSatisfy({ $0.kind == .video }) else { throw BrowseError.unavailable("Advanced search returned no matching videos") }

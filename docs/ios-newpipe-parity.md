@@ -8,7 +8,7 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 
 | Stage | Implemented in this checkpoint | Still required for full parity |
 | --- | --- | --- |
-| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination | Verified kiosk/trending sources; custom channel/playlist home tabs; network suggestions; remaining metadata and visual comparison |
+| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination; persisted channel/remote-playlist home tabs; optional live suggestions; official regional YouTube music chart | Local-playlist home tabs and interleaved tab ordering; other kiosk sources; remaining metadata and visual comparison |
 | Video details and mini-player | Inline native player; owner/subscription row; save/share/playlist/speed actions; related/description/comments tabs, replies, views/date; minimizing and returning without discarding search state | Remaining stream metadata; remaining detail actions; full visual parity |
 | Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection | Separate adaptive video/audio selection and merging; external subtitle extraction; exhaustive interruption/headphone/lock-screen/PiP tests |
 | Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved | Subscription groups; additional feed controls; group migration and feed settings |
@@ -50,7 +50,7 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 
 ## Verification notes and next batch
 
-The package suite currently contains 63 tests, including real-media pause/seek preservation on format
+The package suite currently contains 71 tests, including real-media pause/seek preservation on format
 changes, queue restoration, both comment response shapes, ZIP/SQLite migration fixtures, corrupt data,
 failed import rollback, and interrupted-import recovery. Live probes verify comments/replies and
 combined search filters. HLS download/local playback is tested on hardware; simulator tests cover the
@@ -60,7 +60,11 @@ On iOS 15, native toolbar accessibility frames moved outside their visible bound
 sheets. Home/player controls now live in app headers with explicit hit areas. The physical download
 and settings/import journeys are regression checks for that failure.
 
-Continue with external subtitles, subscription groups/custom content tabs, and remaining download
+Live probes also verify suggestions and the official YouTube music chart. Pinned channel/remote-playlist
+tabs use a separate versioned home-tabs.json; unreadable files remain untouched. The chart is explicitly
+labeled as music from YouTube Charts, rather than general YouTube trending. Suggestions can be disabled.
+
+Continue with external subtitles, subscription groups, remaining custom tab controls, and download
 controls, then introduce additional services behind explicit service-aware models. Do not label whole
 milestones or full NewPipe parity complete while the gaps above remain. Validate format/codec and
 background behavior on hardware before claiming support.

@@ -7,6 +7,7 @@ struct SearchView: View {
     let onPlay: (BrowseItem) -> Void
     var onClose: () -> Void = {}
     @StateObject private var results = BrowseStore()
+    @StateObject private var suggestions = SuggestionStore()
     @State private var query = ""
     @State private var submittedQuery = ""
     @State private var filter = SearchFilter.all
@@ -14,6 +15,8 @@ struct SearchView: View {
     @State private var date = SearchDate.any
     @State private var duration = SearchDuration.any
     @FocusState private var focused: Bool
+    private struct SuggestionInput: Hashable { let query: String; let focused: Bool; let enabled: Bool; let locale: ContentLocale }
+    private var suggestionInput: SuggestionInput { SuggestionInput(query: query, focused: focused, enabled: preferences.usesSearchSuggestions, locale: preferences.contentLocale) }
     private var route: BrowseRoute { .advancedSearch(submittedQuery, SearchOptions(type: filter, order: order, date: date, duration: duration)) }
 
     var body: some View {
@@ -31,7 +34,7 @@ struct SearchView: View {
                             .accessibilityLabel("Clear search")
                     }
                     Button(action: submit) { Image(systemName: "magnifyingglass").frame(width: 40, height: 44) }
-                        .accessibilityLabel("Search")
+                        .accessibilityLabel("Search").accessibilityIdentifier("submitSearch")
                         .disabled(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.padding(.horizontal, 8)
                 Divider()
@@ -47,7 +50,17 @@ struct SearchView: View {
                     } label: { Image(systemName: "line.3.horizontal.decrease.circle").frame(width: 44, height: 46) }
                     .accessibilityLabel("Search filters")
                 }
-                if submittedQuery.isEmpty {
+                if focused, !suggestions.suggestions.isEmpty {
+                    List {
+                        Section("Suggestions") {
+                            ForEach(suggestions.suggestions, id: \.self) { text in
+                                Button { query = text; submit() } label: {
+                                    Label(text, systemImage: "magnifyingglass").foregroundStyle(.primary).padding(.vertical, 5)
+                                }.accessibilityLabel(text).accessibilityIdentifier("searchSuggestion-" + text)
+                            }
+                        }
+                    }.listStyle(.plain)
+                } else if submittedQuery.isEmpty {
                     if preferences.searchHistory.isEmpty {
                         EmptyStateView("Search", systemImage: "magnifyingglass", message: "Find videos, channels, and playlists, or paste a video link.")
                     } else {
@@ -70,6 +83,9 @@ struct SearchView: View {
                 }
             }
             .navigationBarHidden(true)
+            .task(id: suggestionInput) {
+                await suggestions.load(query: query, locale: preferences.contentLocale, enabled: focused && preferences.usesSearchSuggestions && query != submittedQuery)
+            }
             .task(id: route) {
                 guard !submittedQuery.isEmpty else { return }
                 await results.load(route)
@@ -91,6 +107,7 @@ struct SearchView: View {
         let value = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return }
         focused = false
+        suggestions.clear()
         if value.contains("://"), let video = try? VideoRequest(input: value) {
             onPlay(BrowseItem(contentID: video.videoID, kind: .video, title: "YouTube video")); return
         }
@@ -228,6 +245,7 @@ struct BrowseResultRow: View {
 struct BrowseItemMenu: View {
     @EnvironmentObject private var queue: PlaybackQueue
     @EnvironmentObject private var playlists: PlaylistStore
+    @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
     let item: BrowseItem
     let onPlay: (BrowseItem) -> Void
     var body: some View {
@@ -247,6 +265,10 @@ struct BrowseItemMenu: View {
             IconButton(playlists.isBookmarked(item.contentID) ? "Remove bookmark" : "Bookmark playlist", systemImage: "bookmark") {
                 playlists.toggleBookmark(item)
             }.disabled(!playlists.isWritable)
+        }
+        if item.kind == .channel || item.kind == .playlist {
+            IconButton(pinnedTabs.contains(item) ? "Remove from home" : "Add to home", systemImage: "pin") { pinnedTabs.toggle(item) }
+                .disabled(!pinnedTabs.isWritable)
         }
         LibraryItemActions(item: item)
     }

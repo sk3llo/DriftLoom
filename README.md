@@ -159,6 +159,12 @@ historical Android backup version has been tested. The current signed app is bui
 without verification flags; the temporary test runner and isolated download test assets are removed
 after testing.
 
+The browsing checkpoint adds persistent channel/remote-playlist home tabs, optional live search
+suggestions, and the official regional YouTube music chart. All 71 package tests pass in Debug and
+Release. Eight UI journeys pass on the SE simulator. On the physical iPhone 7, seven journeys passed
+in the full run, and the search/player journey passed on focused rerun; both the app search button
+and keyboard submission were checked separately. These checks do not imply full NewPipe parity.
+
 ## Development
 
 The project includes the Android app (`app`), shared Kotlin/Compose module (`shared`),

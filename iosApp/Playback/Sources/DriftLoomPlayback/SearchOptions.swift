@@ -28,7 +28,7 @@ public struct SearchOptions: Hashable, Sendable {
     }
 }
 
-public struct ContentLocale: Equatable, Sendable {
+public struct ContentLocale: Hashable, Sendable {
     public let language: String
     public let country: String
     public init(language: String = "en", country: String = "PT") {

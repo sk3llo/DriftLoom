@@ -34,6 +34,14 @@ struct LibrarySectionView: View {
     }
     var body: some View {
         VStack(spacing: 0) {
+            if section == .history, !records.isEmpty {
+                HStack {
+                    Text("\(records.count) videos").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button { confirmsClearHistory = true } label: { Image(systemName: "trash").frame(width: 44, height: 44) }
+                        .accessibilityLabel("Clear history").disabled(!library.isWritable)
+                }.padding(.horizontal, 12)
+            }
             if !library.isWritable {
                 VStack(spacing: 8) {
                     Text("Your saved library is unavailable. Its file has been left untouched.").font(.footnote)
@@ -54,12 +62,6 @@ struct LibrarySectionView: View {
                             .disabled(!library.isWritable)
                     }
                 }.listStyle(.plain)
-            }
-        }
-        .toolbar {
-            if section == .history, !records.isEmpty {
-                Button { confirmsClearHistory = true } label: { Image(systemName: "trash") }
-                    .accessibilityLabel("Clear history").disabled(!library.isWritable)
             }
         }
         .confirmationDialog("Clear watch history?", isPresented: $confirmsClearHistory, titleVisibility: .visible) {

@@ -22,8 +22,9 @@ final class NavigationTests: XCTestCase {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
         app.buttons["mainMenu"].tap()
-        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 3))
-        app.buttons["Settings"].tap()
+        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
+        if !settings.isHittable { app.swipeUp() }
+        XCTAssertTrue(settings.waitForExistence(timeout: 5)); settings.tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         for _ in 0..<3 where !app.switches["Record watch history"].exists { app.swipeUp() }
         XCTAssertTrue(app.switches["Record watch history"].exists)
@@ -49,9 +50,12 @@ final class NavigationTests: XCTestCase {
         app.buttons["openSearch"].tap()
         let query = app.textFields["searchQuery"]
         XCTAssertTrue(query.waitForExistence(timeout: 5))
-        query.tap(); query.typeText("NDLS404 SENSOJI\n")
+        query.tap(); query.typeText("NDLS404 SENSOJI")
+        app.buttons["submitSearch"].tap()
         let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch
-        XCTAssertTrue(result.waitForExistence(timeout: 45))
+        let hasResults = result.waitForExistence(timeout: 45)
+        if !hasResults { captureDeviceState("search-no-results", app: app) }
+        XCTAssertTrue(hasResults)
         let results = XCTAttachment(screenshot: app.screenshot())
         results.name = "Search results"; results.lifetime = .keepAlways; add(results)
         result.tap()
@@ -84,6 +88,19 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["expandMiniPlayer"].exists)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Home with mini player"; screenshot.lifetime = .keepAlways; add(screenshot)
+    }
+
+    func testKeyboardSearchSubmissionLoadsResults() {
+        let app = application()
+        app.buttons["openSearch"].tap()
+        let query = app.textFields["searchQuery"]
+        XCTAssertTrue(query.waitForExistence(timeout: 5))
+        query.tap(); query.typeText("NDLS404 SENSOJI\n")
+        let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch
+        let hasResults = result.waitForExistence(timeout: 45)
+        if !hasResults { captureDeviceState("keyboard-search-no-results", app: app) }
+        XCTAssertTrue(hasResults)
+        XCTAssertEqual(query.value as? String, "NDLS404 SENSOJI")
     }
 
     func testCommentsLoadForKnownVideo() {
@@ -151,6 +168,48 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(offline.waitForExistence(timeout: 180)); offline.tap()
         XCTAssertTrue(app.staticTexts["Offline playback"].waitForExistence(timeout: 15))
 #endif
+    }
+
+    func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
+        let actions = app.buttons["itemActions-channel:UCUb-HI7Kd-Dr1fBvYjV1IYg"].firstMatch
+        XCTAssertTrue(actions.waitForExistence(timeout: 10)); actions.tap()
+        app.buttons["Add to home"].tap()
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        let pinned = app.descendants(matching: .any)["drawer-pinned-channel:UCUb-HI7Kd-Dr1fBvYjV1IYg"].firstMatch
+        if !pinned.isHittable { app.swipeUp() }
+        XCTAssertTrue(pinned.waitForExistence(timeout: 5)); pinned.tap()
+        XCTAssertTrue(app.staticTexts["pinnedPageTitle"].waitForExistence(timeout: 10))
+        app.buttons["Pinned tab options"].tap(); app.buttons["Remove from home"].tap()
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        XCTAssertFalse(app.descendants(matching: .any)["drawer-pinned-channel:UCUb-HI7Kd-Dr1fBvYjV1IYg"].firstMatch.exists)
+    }
+
+    func testSuggestionSelectionSubmitsTheSuggestedQuery() {
+        let app = application()
+        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 10)); app.buttons["openSearch"].tap()
+        let query = app.textFields["searchQuery"]
+        XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("newpipe")
+        let suggestion = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchSuggestion-")).firstMatch
+        XCTAssertTrue(suggestion.waitForExistence(timeout: 20))
+        let text = String(suggestion.identifier.dropFirst("searchSuggestion-".count))
+        suggestion.tap()
+        XCTAssertEqual(query.value as? String, text)
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch.waitForExistence(timeout: 45))
+    }
+
+    func testTrendingMusicUsesOfficialChart() {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        let trending = app.descendants(matching: .any)["drawer-section-Trending music"].firstMatch
+        if !trending.isHittable { app.swipeUp() }
+        XCTAssertTrue(trending.waitForExistence(timeout: 5)); trending.tap()
+        XCTAssertTrue(app.staticTexts["YouTube Charts · PT"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browseVideo-")).firstMatch.waitForExistence(timeout: 35))
     }
 
 }
