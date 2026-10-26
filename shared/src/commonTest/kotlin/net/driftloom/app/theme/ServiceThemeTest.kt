@@ -8,25 +8,21 @@ package net.driftloom.app.theme
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runComposeUiTest
 import com.russhwolf.settings.MapSettings
-import com.russhwolf.settings.Settings
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import net.driftloom.app.Constants.KEY_STREAMING_SERVICE
+import net.driftloom.app.extensions.ComposeTest
+import net.driftloom.app.extensions.settingsModule
 import net.driftloom.app.extensions.withKoin
-import org.koin.dsl.module
 
 @OptIn(ExperimentalTestApi::class)
-class ServiceThemeTest {
+class ServiceThemeTest : ComposeTest() {
 
     @Test
     fun testDefaultServiceIsYouTube() = runComposeUiTest {
-        val emptySettings = module {
-            single<Settings> { MapSettings() }
-        }
-
         withKoin(
-            modules = listOf(emptySettings),
+            modules = listOf(settingsModule()),
             content = {
                 assertEquals(currentService(), Service.YOUTUBE)
             }
@@ -35,14 +31,8 @@ class ServiceThemeTest {
 
     @Test
     fun testServiceSwitchingWorks() = runComposeUiTest {
-        val settings = module {
-            single<Settings> {
-                MapSettings(KEY_STREAMING_SERVICE to "PeerTube")
-            }
-        }
-
         withKoin(
-            modules = listOf(settings),
+            modules = listOf(settingsModule(MapSettings(KEY_STREAMING_SERVICE to "PeerTube"))),
             content = {
                 assertNotEquals(currentService(), Service.YOUTUBE)
                 assertEquals(currentService(), Service.PEERTUBE)

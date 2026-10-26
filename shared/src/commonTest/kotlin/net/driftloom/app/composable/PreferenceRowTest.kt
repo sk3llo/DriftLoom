@@ -12,9 +12,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import net.driftloom.app.extensions.ComposeTest
 
 @OptIn(ExperimentalTestApi::class)
-class PreferenceRowTest {
+class PreferenceRowTest : ComposeTest() {
 
     @Test
     fun testPreferenceRowTitleAndClick() = runComposeUiTest {

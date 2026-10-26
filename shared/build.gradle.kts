@@ -127,6 +127,14 @@ kotlin {
             implementation(libs.androidx.preference)
             implementation(libs.androidx.browser)
         }
+        val androidHostTest by getting {
+            dependencies {
+                // Compose UI tests run on Robolectric on the host
+                implementation(libs.robolectric)
+                implementation(libs.junit)
+                implementation(libs.androidx.compose.test.ui.manifest)
+            }
+        }
         val androidDeviceTest by getting {
             dependencies {
                 implementation(libs.androidx.compose.test.ui.manifest)

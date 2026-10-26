@@ -10,8 +10,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
-import com.russhwolf.settings.MapSettings
-import com.russhwolf.settings.Settings
+import net.driftloom.app.extensions.ComposeTest
+import net.driftloom.app.extensions.settingsModule
 import net.driftloom.app.extensions.withKoin
 import net.driftloom.app.screen.settings.model.SettingsCategory
 import kotlin.test.Test
@@ -21,19 +21,14 @@ import driftloom.shared.generated.resources.ic_headset
 import driftloom.shared.generated.resources.settings
 import driftloom.shared.generated.resources.settings_category_video_audio_title
 import org.jetbrains.compose.resources.getString
-import org.koin.dsl.module
 
 @OptIn(ExperimentalTestApi::class)
-class SettingsHomeScreenTest {
-
-    private val emptySettings = module {
-        single<Settings> { MapSettings() }
-    }
+class SettingsHomeScreenTest : ComposeTest() {
 
     @Test
     fun testTitleAndCategoriesRender() = runComposeUiTest {
         withKoin(
-            modules = listOf(emptySettings),
+            modules = listOf(settingsModule()),
             content = { SettingsHomeScreenContent() },
             onContent = {
                 onNodeWithText(getString(Res.string.settings)).assertIsDisplayed()
@@ -54,7 +49,7 @@ class SettingsHomeScreenTest {
             )
         )
         withKoin(
-            modules = listOf(emptySettings),
+            modules = listOf(settingsModule()),
             content = { SettingsHomeScreenContent(categories = categories) },
             onContent = {
                 onNodeWithText(getString(Res.string.settings_category_video_audio_title))

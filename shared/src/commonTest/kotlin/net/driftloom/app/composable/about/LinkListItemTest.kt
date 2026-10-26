@@ -12,10 +12,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import net.driftloom.app.extensions.ComposeTest
 import net.driftloom.app.model.Link
 
 @OptIn(ExperimentalTestApi::class)
-class LinkListItemTest {
+class LinkListItemTest : ComposeTest() {
 
     @Test
     fun testLinkListItem() = runComposeUiTest {

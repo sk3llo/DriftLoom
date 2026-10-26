@@ -15,13 +15,14 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.v2.runComposeUiTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import net.driftloom.app.extensions.ComposeTest
 import net.driftloom.app.model.License
 import driftloom.shared.generated.resources.Res
 import driftloom.shared.generated.resources.website_title
 import org.jetbrains.compose.resources.getString
 
 @OptIn(ExperimentalTestApi::class)
-class LicenseDialogTest {
+class LicenseDialogTest : ComposeTest() {
 
     @Test
     fun testLicenseDialog() = runComposeUiTest {

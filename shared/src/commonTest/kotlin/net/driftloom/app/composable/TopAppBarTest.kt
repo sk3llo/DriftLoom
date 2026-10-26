@@ -11,29 +11,24 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
-import com.russhwolf.settings.MapSettings
-import com.russhwolf.settings.Settings
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import net.driftloom.app.extensions.ComposeTest
+import net.driftloom.app.extensions.settingsModule
 import net.driftloom.app.extensions.withKoin
 import driftloom.shared.generated.resources.Res
 import driftloom.shared.generated.resources.navigate_back
 import driftloom.shared.generated.resources.title_activity_about
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import org.koin.dsl.module
 
 @OptIn(ExperimentalTestApi::class)
-class TopAppBarTest {
-
-    private val emptySettings = module {
-        single<Settings> { MapSettings() }
-    }
+class TopAppBarTest : ComposeTest() {
 
     @Test
     fun testTopAppBarHasNoNavigationByDefault() = runComposeUiTest {
         withKoin(
-            modules = listOf(emptySettings),
+            modules = listOf(settingsModule()),
             content = {
                 TopAppBar()
             },
@@ -48,7 +43,7 @@ class TopAppBarTest {
     fun testTopAppBarCanHaveNavigation() = runComposeUiTest {
         var navigationBackClicked = false
         withKoin(
-            modules = listOf(emptySettings),
+            modules = listOf(settingsModule()),
             content = {
                 TopAppBar(
                     title = stringResource(Res.string.title_activity_about),

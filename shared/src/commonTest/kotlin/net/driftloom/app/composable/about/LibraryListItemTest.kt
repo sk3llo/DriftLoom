@@ -12,11 +12,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import net.driftloom.app.extensions.ComposeTest
 import net.driftloom.app.model.Developer
 import net.driftloom.app.model.Library
 
 @OptIn(ExperimentalTestApi::class)
-class LibraryListItemTest {
+class LibraryListItemTest : ComposeTest() {
 
     @Test
     fun testLibraryListItem() = runComposeUiTest {
