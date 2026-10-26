@@ -18,10 +18,26 @@ public struct ResolvedVideo: Sendable {
 
 public protocol StreamResolving: Sendable {
     func resolve(_ request: VideoRequest) async throws -> ResolvedVideo
+    func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo
+}
+
+public extension StreamResolving {
+    func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+        guard choice == nil else { throw PlaybackError.noPlayableStream }
+        return try await resolve(request)
+    }
 }
 
 public struct YouTubeStreamResolver: StreamResolving {
     public init() {}
+
+    public func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+        guard let choice else { return try await resolve(request) }
+        let source = try await YouTubeDownloadResolver().source(videoID: request.videoID, choice: choice)
+        let metadata = try? await YouTube(videoID: request.videoID, methods: [.local]).metadata
+        return ResolvedVideo(title: metadata?.title ?? "YouTube video", streamURL: source.url,
+                             usesHLS: choice.kind == .hls, description: metadata?.description ?? "")
+    }
 
     public func resolve(_ request: VideoRequest) async throws -> ResolvedVideo {
         // A new instance for every resolution avoids reusing expired signed URLs.

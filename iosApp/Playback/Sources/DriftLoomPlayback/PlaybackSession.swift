@@ -18,6 +18,8 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var sourceItem: BrowseItem?
     @Published public private(set) var playbackRate: Float = 1
     @Published public private(set) var maximumHeight = 0
+    @Published public private(set) var selectedFormat: DownloadChoice?
+    public var localMedia: ((String) -> URL?)?
     public var remembersPositions = true
     public var resumesPositions = true
     private let positions: PlaybackPositions?
@@ -73,14 +75,21 @@ public final class PlaybackSession: ObservableObject {
             didRecover = false
             title = "YouTube video"
             let saved = remembersPositions && resumesPositions ? positions?.seconds(for: request.videoID) ?? 0 : 0
-            resolve(request, position: CMTime(seconds: saved, preferredTimescale: 600))
+            let position = CMTime(seconds: saved, preferredTimescale: 600)
+            if let url = localMedia?(request.videoID), url.isFileURL {
+#if os(iOS)
+                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+                try AVAudioSession.sharedInstance().setActive(true)
+#endif
+                install(ResolvedVideo(title: "Downloaded video", streamURL: url, usesHLS: url.pathExtension == "movpkg"), position: position)
+            } else { resolve(request, position: position) }
         } catch { phase = .failed(error.localizedDescription) }
     }
 
     public func open(_ item: BrowseItem) {
         guard item.kind == .video else { open(""); return }
         open(item.contentID)
-        if videoID == item.contentID { sourceItem = item }
+        if videoID == item.contentID { sourceItem = item; if video?.streamURL.isFileURL == true { title = item.title } }
     }
 
     public var currentItemMetadata: BrowseItem? {
@@ -92,6 +101,13 @@ public final class PlaybackSession: ObservableObject {
                           duration: sourceItem?.duration, channelID: sourceItem?.channelID)
     }
 
+    /// Restore metadata without extraction or unsolicited audio on launch.
+    public func prepare(_ item: BrowseItem) {
+        guard item.kind == .video, let request = try? VideoRequest(input: item.contentID) else { return }
+        stop(); currentRequest = request; videoID = request.videoID; sourceItem = item
+        title = item.title; phase = .paused
+    }
+
     public func retry() {
         guard let currentRequest else { return }
         if let sourceItem { open(sourceItem) }
@@ -99,7 +115,7 @@ public final class PlaybackSession: ObservableObject {
     }
 
     public func resume() {
-        guard player.currentItem != nil else { return }
+        guard player.currentItem != nil else { retry(); return }
         player.playImmediately(atRate: playbackRate)
     }
     public func togglePlayPause() {
@@ -109,6 +125,14 @@ public final class PlaybackSession: ObservableObject {
         guard [Float(0.25), 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].contains(value) else { return }
         playbackRate = value
         if phase == .playing { player.rate = value }
+    }
+    public func selectFormat(_ choice: DownloadChoice?) {
+        guard let currentRequest else { return }
+        let position = player.currentTime()
+        let autoplay = phase == .playing || phase == .loading
+        selectedFormat = choice
+        clearItemObservers(); player.pause(); player.replaceCurrentItem(with: nil)
+        resolve(currentRequest, position: position, autoplay: autoplay)
     }
     public func setMaximumHeight(_ height: Int) {
         guard [0, 360, 480, 720, 1080].contains(height) else { return }
@@ -136,6 +160,7 @@ public final class PlaybackSession: ObservableObject {
         title = "DriftLoom"
         didRecover = false
         video = nil
+        selectedFormat = nil
         phase = .idle
     }
 
@@ -144,21 +169,22 @@ public final class PlaybackSession: ObservableObject {
         positions?.record(id: id, seconds: player.currentTime().seconds, duration: item.duration.seconds)
     }
 
-    private func resolve(_ request: VideoRequest, position: CMTime) {
+    private func resolve(_ request: VideoRequest, position: CMTime, autoplay: Bool = true) {
         generation = UUID()
         let token = generation
         resolveTask?.cancel()
         phase = .resolving
+        let choice = selectedFormat
         resolveTask = Task { [weak self, resolver] in
             do {
-                let video = try await resolver.resolve(request)
+                let video = try await resolver.resolve(request, choice: choice)
                 try Task.checkCancellation()
                 guard let self, self.generation == token else { return }
 #if os(iOS)
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
                 try AVAudioSession.sharedInstance().setActive(true)
 #endif
-                self.install(video, position: position)
+                self.install(video, position: position, autoplay: autoplay)
             } catch is CancellationError {
                 // A newer request owns the UI now.
             } catch {
@@ -168,7 +194,7 @@ public final class PlaybackSession: ObservableObject {
         }
     }
 
-    private func install(_ video: ResolvedVideo, position: CMTime) {
+    private func install(_ video: ResolvedVideo, position: CMTime, autoplay: Bool = true) {
         clearItemObservers()
         self.video = video
         title = video.title
@@ -185,7 +211,7 @@ public final class PlaybackSession: ObservableObject {
                         await self.player.seek(to: position)
                     }
                     guard self.player.currentItem === item else { return }
-                    self.resume()
+                    if autoplay { self.resume() }
                 }
             }
         }

@@ -42,7 +42,7 @@ enum BrowseParser {
         return String(html[range])
     }
 
-    static func page(_ root: Object, fallbackTitle: String, clientVersion: String?, isSearch: Bool, isRelated: Bool = false, isMix: Bool = false) throws -> BrowsePage {
+    static func page(_ root: Object, fallbackTitle: String, clientVersion: String?, isSearch: Bool, isRelated: Bool = false, isMix: Bool = false, locale: ContentLocale = .current()) throws -> BrowsePage {
         if let alerts = root["alerts"] as? [Object] {
             for alert in alerts {
                 if let renderer = alert["alertRenderer"] as? Object, renderer["type"] as? String == "ERROR" {
@@ -75,7 +75,7 @@ enum BrowseParser {
         let playlist = metadata?["playlistMetadataRenderer"] as? Object
         let title = (channel?["title"] ?? playlist?["title"]) as? String ?? fallbackTitle
         let next = continuation.flatMap { token in
-            clientVersion.map { BrowseCursor(token: token, clientVersion: $0, isSearch: isSearch, isRelated: isRelated || isMix) }
+            clientVersion.map { BrowseCursor(token: token, clientVersion: $0, isSearch: isSearch, isRelated: isRelated || isMix, locale: locale) }
         }
         let browseContents = ((root["contents"] as? Object)?["twoColumnBrowseResultsRenderer"] as? Object)
         let tabs = (browseContents?["tabs"] as? [Object] ?? []).compactMap {

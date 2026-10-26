@@ -21,10 +21,12 @@ public final class AppPreferences: ObservableObject {
     @Published public private(set) var searchHistory: [String]
     @Published public private(set) var recordsSearchHistory: Bool
     @Published public private(set) var appearance: String
+    @Published public private(set) var contentLocale: ContentLocale
     @Published public private(set) var resumesPlayback: Bool
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        contentLocale = .current(defaults: defaults)
         let saved = defaults.stringArray(forKey: "homeSections")?.compactMap(HomeSection.init(rawValue:)) ?? HomeSection.allCases
         var seen = Set<HomeSection>()
         let valid = saved.filter { seen.insert($0).inserted }
@@ -37,6 +39,11 @@ public final class AppPreferences: ObservableObject {
         resumesPlayback = defaults.object(forKey: "resumesPlayback") as? Bool ?? true
         let savedAppearance = defaults.string(forKey: "appearance") ?? "System"
         appearance = ["System", "Light", "Dark"].contains(savedAppearance) ? savedAppearance : "System"
+    }
+    public func setContentLocale(language: String, country: String) {
+        let locale = ContentLocale(language: language, country: country)
+        contentLocale = locale
+        defaults.set(locale.language, forKey: "contentLanguage"); defaults.set(locale.country, forKey: "contentCountry")
     }
     public func setHomeSections(_ sections: [HomeSection]) {
         var seen = Set<HomeSection>()

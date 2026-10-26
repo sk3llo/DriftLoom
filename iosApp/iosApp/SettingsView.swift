@@ -16,6 +16,19 @@ struct SettingsView: View {
                     }
                     NavigationLink("Home tabs") { HomeTabsSettings() }
                 }
+                Section("YouTube content") {
+                    Picker("Content language", selection: Binding(get: { preferences.contentLocale.language }, set: {
+                        preferences.setContentLocale(language: $0, country: preferences.contentLocale.country)
+                    })) {
+                        ForEach(Locale.isoLanguageCodes.sorted(), id: \.self) { code in Text(Locale.current.localizedString(forLanguageCode: code) ?? code).tag(code) }
+                    }
+                    Picker("Content region", selection: Binding(get: { preferences.contentLocale.country }, set: {
+                        preferences.setContentLocale(language: preferences.contentLocale.language, country: $0)
+                    })) {
+                        ForEach(Locale.isoRegionCodes.sorted(), id: \.self) { code in Text(Locale.current.localizedString(forRegionCode: code) ?? code).tag(code) }
+                    }
+                    Text("Used for new YouTube browsing requests. App interface translations are separate.").font(.footnote).foregroundStyle(.secondary)
+                }
                 Section("History") {
                     Toggle("Record watch history", isOn: Binding(get: { library.historyEnabled }, set: library.setHistoryEnabled))
                         .disabled(!library.isWritable)
@@ -27,6 +40,9 @@ struct SettingsView: View {
                     Toggle("Resume playback position", isOn: Binding(get: { preferences.resumesPlayback }, set: preferences.setResumesPlayback))
                     Text("Playback continues in the mini-player while you browse. Close it to stop playback.")
                         .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section("Your data") {
+                    NavigationLink("Backup and import") { LibraryTransferView() }
                 }
                 Section("About") {
                     Text("DriftLoom · iOS 15 and later")

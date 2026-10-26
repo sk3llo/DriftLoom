@@ -57,6 +57,11 @@ public final class LibraryStore: ObservableObject {
         }
     }
 
+    public func blockForRecovery(_ message: String) { isWritable = false; lastError = message }
+    func snapshotData() throws -> Data {
+        guard isWritable else { throw CocoaError(.fileReadCorruptFile) }
+        return try JSONEncoder().encode(document)
+    }
     public func dismissError() { lastError = nil }
     public func isSaved(_ id: String) -> Bool { saved.contains { $0.item.contentID == id } }
     public func isSubscribed(_ id: String) -> Bool { subscriptions.contains { $0.item.contentID == id } }
@@ -143,7 +148,7 @@ public final class LibraryStore: ObservableObject {
         return false
     }
 
-    private static func valid(_ records: [LibraryRecord], kind: BrowseItem.Kind) -> Bool {
+    static func valid(_ records: [LibraryRecord], kind: BrowseItem.Kind) -> Bool {
         Set(records.map(\.id)).count == records.count
             && records.allSatisfy { validItem($0.item, kind: kind) && $0.date.timeIntervalSince1970.isFinite }
     }

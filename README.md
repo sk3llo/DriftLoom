@@ -10,17 +10,26 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - YouTube HTTP 403 recovery: retry eligible videos with the available HLS stream once per queue item.
 - Regression coverage for the playback recovery is included in the Android instrumentation tests.
 - iOS 15+ native app with NewPipe-style main menu, configurable home tabs, compact rows, and search history.
-- YouTube browsing: server-side video/channel/playlist filters, channel tabs exposed by the channel,
+- YouTube browsing: server-side type/date/duration/sort filters, selectable content language/region, and channel tabs,
   playlist/Mix contents, related videos, and pagination. Subscription feeds use dated channel RSS entries.
-- Video details, description, persistent mini-player, editable queue, play-next/enqueue, finite shuffle,
-  repeat, playback speed, maximum-resolution caps, and captions exposed by the current media asset.
+- Video details, description, views/date, comments and replies, and a persistent mini-player.
+- Editable queues survive relaunch without automatically playing; play-next/enqueue, finite shuffle,
+  repeat, speed, resolution limits, and supported extracted playback formats are available.
+  Captions exposed by the current media asset use native controls; external subtitle extraction is pending.
 - Background-audio configuration, Now Playing/remote command integration, and AVKit Picture in Picture support.
   Physical background playback has been verified; not every system control or PiP scenario has been tested.
 - Saved videos, subscriptions, history, local playlists, and remote playlist bookmarks persist locally.
   Resume positions are bounded, tied to history recording, and removed with deleted history.
 - Appearance, home-tab ordering/visibility, search/watch history controls, and resume preferences are implemented.
-- This is an incremental parity rework, not a complete NewPipe port. Downloads, comments, full format/caption
-  extraction, subscription groups, backup migration, extra services, and remaining settings are still pending.
+- Downloads have persisted jobs, cancellation/retry, native HLS/file background transfers, and local playback.
+  HLS download completion and offline playback have been verified on a physical iPhone 7.
+- Library JSON backup/export and reviewed merge imports preserve a pre-import recovery copy.
+  NewPipe subscription JSON and ZIP database migration support YouTube subscriptions, history,
+  ordered local playlists (including duplicates), and remote playlist bookmarks. Android preferences,
+  stream positions, downloaded bytes, and unsupported services are excluded and reported.
+- This is an incremental parity rework, not a complete NewPipe port. External subtitle extraction,
+  separate video/audio merging, subscription groups, custom content tabs, extra services, and remaining
+  settings and device scenarios still need implementation or verification.
   See [the rework checklist](docs/ios-newpipe-parity.md).
 
 The earlier playback fix was verified on an Android phone before this rebrand.
@@ -126,8 +135,8 @@ its optional remote service is disabled. MIT attribution is included in the app'
 screen. The `StreamResolving` interface allows replacing the extractor independently of the UI.
 Browsing is a separate `Browsing` interface. Its client reads YouTube page data directly and
 keeps continuation context in memory; it does not use a third-party browsing server or a
-hard-coded web client version. Metadata currently uses English with Portugal as its content
-region. Full localization and user-selectable regions remain future work.
+hard-coded web client version. Browsing defaults to English/Portugal, with content language and
+region controls for new requests. App-interface localization remains future work.
 
 Verification on 25 October 2026: all 43 package tests pass in Debug and Release. Three optimized
 UI journeys pass on iPhone SE (3rd generation)/iOS 17.5: drawer/settings/subscriptions; search,
@@ -138,6 +147,17 @@ eight seconds while another app was foreground. All three core tap-based UI jour
 that physical device. The normal signed Release build was installed in place after testing.
 Portrait and landscape were checked on the SE simulator. Broader parity and device coverage remain work
 in progress. iOS 15.0 simulator execution is unavailable on this Mac's current macOS version.
+
+Verification on 26 October 2026: 63 package tests pass in Debug and Release. Five optimized UI
+journeys pass on both iPhone SE (3rd generation)/iOS 17.5 and physical iPhone 7/iOS 15.8.2:
+comments, playlist/queue relaunch, download controls, settings/backup navigation, and search/player
+restoration. The physical download journey completes an HLS download and opens its local asset;
+simulator coverage of downloads stops at chooser/job UI. Separate phone checks verified that the
+HLS cache is playable offline and local playback advances, including after cold launch.
+NewPipe ZIP migration is covered by stored/deflated SQLite schema fixtures, not a claim that every
+historical Android backup version has been tested. The current signed app is built as normal Release
+without verification flags; the temporary test runner and isolated download test assets are removed
+after testing.
 
 ## Development
 

@@ -6,6 +6,7 @@ public struct PlaylistVideo: Codable, Equatable, Identifiable, Sendable {
     public let id: UUID
     public let item: BrowseItem
     public init(item: BrowseItem) { id = UUID(); self.item = item }
+    init(id: UUID, item: BrowseItem) { self.id = id; self.item = item }
 }
 
 public struct LocalPlaylist: Codable, Equatable, Identifiable, Sendable {
@@ -13,6 +14,7 @@ public struct LocalPlaylist: Codable, Equatable, Identifiable, Sendable {
     public var name: String
     public var entries: [PlaylistVideo]
     public init(name: String, entries: [PlaylistVideo] = []) { id = UUID(); self.name = name; self.entries = entries }
+    init(id: UUID, name: String, entries: [PlaylistVideo]) { self.id = id; self.name = name; self.entries = entries }
 }
 
 struct PlaylistDocument: Codable {
@@ -42,6 +44,11 @@ public final class PlaylistStore: ObservableObject {
         } catch {
             isWritable = false; lastError = "Your playlists couldn't be read. Their saved file has been left untouched."
         }
+    }
+    public func blockForRecovery(_ message: String) { isWritable = false; lastError = message }
+    func snapshotData() throws -> Data {
+        guard isWritable else { throw CocoaError(.fileReadCorruptFile) }
+        return try JSONEncoder().encode(document)
     }
     public func dismissError() { lastError = nil }
     @discardableResult public func create(name: String, item: BrowseItem? = nil) -> UUID? {
@@ -112,7 +119,7 @@ public final class PlaylistStore: ObservableObject {
         if item.contentID.hasPrefix("RD") { return item.playlistSeed.map { (try? VideoRequest(input: $0).videoID) == $0 } ?? false }
         return true
     }
-    private static func valid(_ value: PlaylistDocument) -> Bool {
+    static func valid(_ value: PlaylistDocument) -> Bool {
         Set(value.playlists.map(\.id)).count == value.playlists.count
             && Set(value.bookmarks.map(\.id)).count == value.bookmarks.count
             && value.bookmarks.allSatisfy(bookmark)

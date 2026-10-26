@@ -4,6 +4,7 @@ import Foundation
 
 public enum BrowseRoute: Hashable, Sendable {
     case search(String), channel(String), playlist(String), related(String)
+    case advancedSearch(String, SearchOptions)
     case filteredSearch(String, SearchFilter), channelTab(String, ChannelTab)
     case mix(playlist: String, seed: String)
 }
@@ -68,7 +69,9 @@ public struct BrowseCursor: Equatable, Sendable {
     public let clientVersion: String
     public let isSearch: Bool
     public let isRelated: Bool
-    public init(token: String, clientVersion: String, isSearch: Bool, isRelated: Bool = false) {
+    public let locale: ContentLocale
+    public init(token: String, clientVersion: String, isSearch: Bool, isRelated: Bool = false, locale: ContentLocale = .current()) {
+        self.locale = locale
         self.token = token; self.clientVersion = clientVersion
         self.isSearch = isSearch; self.isRelated = isRelated
     }
@@ -116,14 +119,18 @@ public actor YouTubeBrowsingClient: Browsing {
         let isSearch: Bool
         var isRelated = false
         var isMix = false
-        var query = [URLQueryItem(name: "hl", value: "en"), URLQueryItem(name: "gl", value: "PT")]
+        let locale = ContentLocale.current()
+        var query = [URLQueryItem(name: "hl", value: locale.language), URLQueryItem(name: "gl", value: locale.country)]
         switch route {
-        case let .search(value), let .filteredSearch(value, _):
+        case let .search(value), let .filteredSearch(value, _), let .advancedSearch(value, _):
             let value = value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !value.isEmpty, value.count <= 500 else { throw BrowseError.invalidInput }
             components.path = "/results"
             query.append(URLQueryItem(name: "search_query", value: value))
             if case let .filteredSearch(_, filter) = route, let parameter = filter.parameter {
+                query.append(URLQueryItem(name: "sp", value: parameter))
+            }
+            if case let .advancedSearch(_, options) = route, let parameter = options.parameter {
                 query.append(URLQueryItem(name: "sp", value: parameter))
             }
             title = value; isSearch = true
@@ -155,7 +162,7 @@ public actor YouTubeBrowsingClient: Browsing {
         guard let html = String(data: data, encoding: .utf8) else { throw BrowseError.unsupportedResponse }
         let root = try BrowseParser.initialData(in: html)
         let version = BrowseParser.clientVersion(in: html)
-        return try BrowseParser.page(root, fallbackTitle: title, clientVersion: version, isSearch: isSearch, isRelated: isRelated, isMix: isMix)
+        return try BrowseParser.page(root, fallbackTitle: title, clientVersion: version, isSearch: isSearch, isRelated: isRelated, isMix: isMix, locale: locale)
     }
 
     public func nextPage(_ cursor: BrowseCursor) async throws -> BrowsePage {
@@ -168,7 +175,7 @@ public actor YouTubeBrowsingClient: Browsing {
         request.setValue(cursor.clientVersion, forHTTPHeaderField: "X-Youtube-Client-Version")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "context": ["client": ["clientName": "WEB", "clientVersion": cursor.clientVersion,
-                                     "hl": "en", "gl": "PT"]],
+                                     "hl": cursor.locale.language, "gl": cursor.locale.country]],
             "continuation": cursor.token
         ])
         let data = try await fetch(request)
@@ -176,7 +183,7 @@ public actor YouTubeBrowsingClient: Browsing {
             throw BrowseError.unsupportedResponse
         }
         return try BrowseParser.page(root, fallbackTitle: "", clientVersion: cursor.clientVersion,
-                                     isSearch: cursor.isSearch, isRelated: cursor.isRelated)
+                                     isSearch: cursor.isSearch, isRelated: cursor.isRelated, locale: cursor.locale)
     }
 
     private func fetch(_ original: URLRequest) async throws -> Data {

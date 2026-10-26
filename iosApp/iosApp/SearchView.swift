@@ -10,8 +10,11 @@ struct SearchView: View {
     @State private var query = ""
     @State private var submittedQuery = ""
     @State private var filter = SearchFilter.all
+    @State private var order = SearchOrder.relevance
+    @State private var date = SearchDate.any
+    @State private var duration = SearchDuration.any
     @FocusState private var focused: Bool
-    private var route: BrowseRoute { .filteredSearch(submittedQuery, filter) }
+    private var route: BrowseRoute { .advancedSearch(submittedQuery, SearchOptions(type: filter, order: order, date: date, duration: duration)) }
 
     var body: some View {
         AppNavigation {
@@ -32,7 +35,18 @@ struct SearchView: View {
                         .disabled(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.padding(.horizontal, 8)
                 Divider()
-                SectionStrip(values: SearchFilter.allCases, selection: $filter, title: { $0.rawValue })
+                HStack(spacing: 0) {
+                    SectionStrip(values: SearchFilter.allCases, selection: $filter, title: { $0.rawValue })
+                    Menu {
+                        Picker("Sort by", selection: $order) { ForEach(SearchOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
+                        Picker("Upload date", selection: $date) { ForEach(SearchDate.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
+                        if filter == .videos || filter == .all {
+                            Picker("Duration", selection: $duration) { ForEach(SearchDuration.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
+                        }
+                        Button("Reset filters") { order = .relevance; date = .any; duration = .any }
+                    } label: { Image(systemName: "line.3.horizontal.decrease.circle").frame(width: 44, height: 46) }
+                    .accessibilityLabel("Search filters")
+                }
                 if submittedQuery.isEmpty {
                     if preferences.searchHistory.isEmpty {
                         EmptyStateView("Search", systemImage: "magnifyingglass", message: "Find videos, channels, and playlists, or paste a video link.")

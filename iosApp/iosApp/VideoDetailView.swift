@@ -10,13 +10,24 @@ struct VideoDetailView: View {
     let onCollapse: () -> Void
     let onPlay: (BrowseItem) -> Void
     @StateObject private var related = BrowseStore()
+    @StateObject private var discussion = DiscussionStore()
     @State private var tab = DetailTab.related
     @State private var sharing = false
-    private enum DetailTab: String, CaseIterable { case related = "Related", description = "Description", queue = "Queue" }
+    @State private var downloading = false
+    @State private var choosingFormat = false
+    private enum DetailTab: String, CaseIterable { case related = "Related", comments = "Comments", description = "Description", queue = "Queue" }
 
     var body: some View {
         AppNavigation {
             VStack(spacing: 0) {
+                HStack {
+                    Button(action: onCollapse) { Image(systemName: "chevron.down").frame(width: 44, height: 44) }
+                        .accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
+                    Spacer()
+                    Text("YouTube").font(.headline)
+                    Spacer()
+                    playbackOptions
+                }.padding(.horizontal, 6).background(Color(.systemBackground))
                 Group {
                     if playback.player.currentItem != nil {
                         NativeVideoPlayer(player: playback.player)
@@ -33,6 +44,10 @@ struct VideoDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         Text(playback.title).font(.headline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                        if let details = discussion.details {
+                            Text([details.views, details.date].filter { !$0.isEmpty }.joined(separator: " · "))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
                         playbackStatus
                         if let item = playback.currentItemMetadata {
                             HStack {
@@ -81,21 +96,39 @@ struct VideoDetailView: View {
                                 Button(related.isLoadingMore ? "Loading…" : "Load more") { Task { await related.loadMore() } }.disabled(related.isLoadingMore)
                             }
                         }.padding(12)
+                    case .comments:
+                        CommentsPanel(store: discussion)
                     case .description:
-                        Text(playback.video?.description.isEmpty == false ? playback.video!.description : "No description is available.")
+                        Text(discussion.details?.description.isEmpty == false ? discussion.details!.description : playback.video?.description.isEmpty == false ? playback.video!.description : "No description is available.")
                             .font(.subheadline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
                     case .queue:
                         QueuePanel()
                     }
                 }
             }
-            .navigationTitle("YouTube").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: onCollapse) { Image(systemName: "chevron.down") }.accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
+            .navigationBarHidden(true)
+
+        }
+        .id(playback.videoID)
+        .sheet(isPresented: $sharing) {
+            if let id = playback.videoID, let url = URL(string: "https://www.youtube.com/watch?v=\(id)") { ShareSheet(items: [url]) }
+        }
+        .sheet(isPresented: $choosingFormat) { PlaybackFormatPicker(playback: playback) }
+        .sheet(isPresented: $downloading) {
+            if let item = playback.currentItemMetadata { DownloadPicker(item: item) }
+        }
+        .task(id: playback.videoID) { if let id = playback.videoID { await related.load(.related(id)) } }
+        .task(id: playback.videoID) { if let id = playback.videoID { await discussion.load(videoID: id) } }
+    }
+
+    private var playbackOptions: some View {
                     Menu {
+                        if playback.currentItemMetadata != nil {
+                            IconButton("Download", systemImage: "arrow.down.circle") { downloading = true }
+                        }
+                        if playback.video?.streamURL.isFileURL != true {
+                            IconButton("Playback format", systemImage: "film") { choosingFormat = true }
+                        }
                         Menu("Maximum video resolution") {
                             ForEach([0, 360, 480, 720, 1080], id: \.self) { height in
                                 Button((height == 0 ? "Auto" : "Up to \(height)p") + (playback.maximumHeight == height ? " ✓" : "")) {
@@ -112,18 +145,13 @@ struct VideoDetailView: View {
                             }
                         }
                         IconButton("Stop playback", systemImage: "stop") { queue.stop(); onCollapse() }
-                    } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)) }.accessibilityLabel("Playback options")
-                }
-            }
-        }
-        .id(playback.videoID)
-        .sheet(isPresented: $sharing) {
-            if let id = playback.videoID, let url = URL(string: "https://www.youtube.com/watch?v=\(id)") { ShareSheet(items: [url]) }
-        }
-        .task(id: playback.videoID) { if let id = playback.videoID { await related.load(.related(id)) } }
+                    } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }.accessibilityLabel("Playback options")
     }
 
     @ViewBuilder private var playbackStatus: some View {
+        if playback.video?.streamURL.isFileURL == true {
+            Label("Offline playback", systemImage: "arrow.down.circle.fill").font(.caption).foregroundStyle(.secondary)
+        }
         if case let .failed(message) = playback.phase {
             Text(message).font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("playbackError")
             Button("Try again", action: playback.retry)
@@ -188,14 +216,67 @@ private struct NativeVideoPlayer: UIViewControllerRepresentable {
         let controller = AVPlayerViewController()
         controller.player = player
         controller.allowsPictureInPicturePlayback = true
-        controller.canStartPictureInPictureAutomaticallyFromInline = true
+        // Minimizing the app player must not start a new system presentation on iOS 15.
+        controller.canStartPictureInPictureAutomaticallyFromInline = false
+        controller.entersFullScreenWhenPlaybackBegins = false
+        controller.view.clipsToBounds = true
         return controller
     }
     func updateUIViewController(_ controller: AVPlayerViewController, context: Context) { controller.player = player }
+    static func dismantleUIViewController(_ controller: AVPlayerViewController, coordinator: ()) {
+        // The session retains AVPlayer for the mini-player and background audio.
+        // Release AVKit's presentation ownership when SwiftUI removes the video surface.
+        controller.player = nil
+        if controller.presentedViewController != nil { controller.dismiss(animated: false) }
+    }
 }
 
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+private struct CommentsPanel: View {
+    @ObservedObject var store: DiscussionStore
+    var body: some View {
+        LazyVStack(alignment: .leading, spacing: 18) {
+            if let error = store.error {
+                Text(error).font(.footnote).foregroundStyle(.secondary)
+                Button("Try comments again") { Task { await store.loadMore() } }
+            }
+            if store.loading { ProgressView("Loading comments…") }
+            if store.details != nil, !store.loading, !store.canLoadMore, store.comments.isEmpty {
+                Text("Comments are unavailable for this video.").foregroundStyle(.secondary)
+            }
+            ForEach(store.comments) { comment in
+                VStack(alignment: .leading, spacing: 8) {
+                    commentBody(comment)
+                    if store.hasMoreReplies(comment) {
+                        Button(store.loadingReplies.contains(comment.id) ? "Loading replies…" : "View replies") {
+                            Task { await store.loadReplies(comment) }
+                        }.disabled(store.loadingReplies.contains(comment.id))
+                    }
+                    ForEach(store.replies[comment.id] ?? []) { reply in
+                        commentBody(reply).padding(.leading, 24)
+                    }
+                }
+                Divider()
+            }
+            if store.canLoadMore, !store.loading {
+                Button(store.hasLoadedComments ? "More comments" : "Load comments") { Task { await store.loadMore() } }
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading).padding()
+        .task(id: store.details?.comments?.token) {
+            if !store.hasLoadedComments { await store.loadMore() }
+        }
+    }
+    private func commentBody(_ comment: VideoComment) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(comment.author).font(.subheadline.weight(.semibold))
+            Text([comment.published, comment.likes.isEmpty ? "" : "\(comment.likes) likes"].filter { !$0.isEmpty }.joined(separator: " · "))
+                .font(.caption).foregroundStyle(.secondary)
+            Text(comment.text).font(.subheadline).textSelection(.enabled).accessibilityIdentifier("commentText")
+        }
+    }
 }

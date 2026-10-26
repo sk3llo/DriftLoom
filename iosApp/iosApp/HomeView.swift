@@ -34,7 +34,7 @@ struct SectionStrip<Value: Hashable>: View {
 }
 
 private enum HomeSheet: String, Identifiable {
-    case settings, about, link
+    case settings, about, link, downloads
     var id: String { rawValue }
 }
 
@@ -51,31 +51,29 @@ struct HomeView: View {
         ZStack(alignment: .leading) {
             AppNavigation {
                 VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        Button { menuVisible = true } label: { Image(systemName: "line.3.horizontal").frame(width: 44, height: 44) }
+                            .accessibilityLabel("Main menu").accessibilityIdentifier("mainMenu")
+                        Spacer()
+                        Text("DriftLoom").font(.headline).lineLimit(1)
+                        Spacer()
+                        Button(action: onSearch) { Image(systemName: "magnifyingglass").frame(width: 44, height: 44) }
+                            .accessibilityLabel("Search").accessibilityIdentifier("openSearch")
+                        Menu {
+                            IconButton("Open a link", systemImage: "link") { sheet = .link }
+                            IconButton("Settings", systemImage: "gearshape") { sheet = .settings }
+                            IconButton("About", systemImage: "info.circle") { sheet = .about }
+                        } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }
+                        .accessibilityLabel("More options")
+                    }.padding(.horizontal, 6).background(Color(.systemBackground))
                     SectionStrip(values: preferences.homeSections, selection: $selection, title: { $0.rawValue })
                     if selection == .feed { FeedView(store: feed, onPlay: onPlay) }
                     else if selection == .bookmarks { BookmarksView(onPlay: onPlay) }
                     else { LibrarySectionView(section: selection, onPlay: onPlay).id(selection) }
                 }
-                .navigationTitle("DriftLoom").navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button { menuVisible = true } label: { Image(systemName: "line.3.horizontal") }
-                            .accessibilityLabel("Main menu").accessibilityIdentifier("mainMenu")
-                    }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: onSearch) { Image(systemName: "magnifyingglass") }
-                            .accessibilityLabel("Search").accessibilityIdentifier("openSearch")
-                    }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Menu {
-                            IconButton("Open a link", systemImage: "link") { sheet = .link }
-                            IconButton("Settings", systemImage: "gearshape") { sheet = .settings }
-                            IconButton("About", systemImage: "info.circle") { sheet = .about }
-                        } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)) }
-                        .accessibilityLabel("More options")
-                    }
-                }
+                .navigationBarHidden(true)
             }
+            .accessibilityHidden(menuVisible).allowsHitTesting(!menuVisible)
             if menuVisible {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
@@ -98,11 +96,12 @@ struct HomeView: View {
                                                 .frame(maxWidth: .infinity, alignment: .leading).padding(16)
                                                 .foregroundColor(selection == section ? AppStyle.accent : .primary)
                                                 .background(selection == section ? AppStyle.accent.opacity(0.08) : .clear)
-                                        }
+                                        }.buttonStyle(.plain).accessibilityIdentifier("drawer-section-" + section.rawValue)
                                     }
                                     Divider().padding(.vertical, 8)
                                     drawerButton("Search", symbol: "magnifyingglass") { onSearch() }
                                     drawerButton("Open a link", symbol: "link") { sheet = .link }
+                                    drawerButton("Downloads", symbol: "arrow.down.circle") { sheet = .downloads }
                                     drawerButton("Settings", symbol: "gearshape") { sheet = .settings }
                                     drawerButton("About", symbol: "info.circle") { sheet = .about }
                                 }
@@ -110,7 +109,7 @@ struct HomeView: View {
                         }
                         .frame(width: min(320, geometry.size.width * 0.85), height: geometry.size.height)
                         .background(Color(.systemBackground)).shadow(radius: 10)
-                        .accessibilityIdentifier("navigationDrawer")
+                        .accessibilityElement(children: .contain).accessibilityIdentifier("navigationDrawer")
                     }
                 }.zIndex(1)
             }
@@ -119,6 +118,11 @@ struct HomeView: View {
             if let video = pendingVideo { pendingVideo = nil; onPlay(video) }
         }) { target in
             switch target {
+            case .downloads:
+                AppNavigation {
+                    DownloadsView { video in pendingVideo = video; sheet = nil }
+                        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { sheet = nil } } }
+                }
             case .settings: SettingsView()
             case .about: AboutView()
             case .link: OpenVideoLinkView { video in pendingVideo = video; sheet = nil }
@@ -128,7 +132,7 @@ struct HomeView: View {
     private func drawerButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button { menuVisible = false; action() } label: {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading).padding(16).foregroundStyle(.primary)
-        }
+        }.buttonStyle(.plain).accessibilityIdentifier("drawer-" + title)
     }
 }
 

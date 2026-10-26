@@ -4,16 +4,28 @@ import Foundation
 
 @MainActor
 func makeLibraryStore() -> LibraryStore {
-    LibraryStore(fileURL: libraryFileURL())
+    let url = libraryFileURL()
+    let recoveryError: String?
+    do { try LibraryTransfer.recover(directory: url.deletingLastPathComponent()); recoveryError = nil }
+    catch { recoveryError = "An interrupted import couldn't be recovered. Your files have been preserved; library edits are disabled." }
+    let store = LibraryStore(fileURL: url)
+    if let recoveryError { store.blockForRecovery(recoveryError) }
+    return store
 }
 
 @MainActor
 func makePlaylistStore() -> PlaylistStore {
-    PlaylistStore(fileURL: libraryFileURL().deletingLastPathComponent().appendingPathComponent("playlists.json"))
+    let directory = libraryFileURL().deletingLastPathComponent()
+    let recoveryError: String?
+    do { try LibraryTransfer.recover(directory: directory); recoveryError = nil }
+    catch { recoveryError = "An interrupted import couldn't be recovered. Your files have been preserved; playlist edits are disabled." }
+    let store = PlaylistStore(fileURL: directory.appendingPathComponent("playlists.json"))
+    if let recoveryError { store.blockForRecovery(recoveryError) }
+    return store
 }
 
 @MainActor
-private func libraryFileURL() -> URL {
+func libraryFileURL() -> URL {
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
     let arguments = ProcessInfo.processInfo.arguments
     if let flag = arguments.firstIndex(of: "--library-smoke-run"), arguments.indices.contains(flag + 1),

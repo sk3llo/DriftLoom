@@ -26,9 +26,13 @@ struct ContentView: View {
     init() {
         let positions = PlaybackPositions(defaults: makeAppDefaults())
         let playback = PlaybackSession(positions: positions)
+        playback.localMedia = { id in
+            let manager = DownloadManager.shared
+            return manager.records.first(where: { $0.item.contentID == id && manager.localURL($0) != nil }).flatMap(manager.localURL)
+        }
         _positions = StateObject(wrappedValue: positions)
         _playback = StateObject(wrappedValue: playback)
-        _queue = StateObject(wrappedValue: PlaybackQueue(playback: playback))
+        _queue = StateObject(wrappedValue: PlaybackQueue(playback: playback, archiveURL: libraryFileURL().deletingLastPathComponent().appendingPathComponent("queue.json")))
     }
     var body: some View {
         ZStack {
@@ -44,6 +48,7 @@ struct ContentView: View {
                     MiniPlayer(playback: playback, onExpand: { expanded = true }, onStop: queue.stop)
                 }
             }
+            .accessibilityHidden(expanded).allowsHitTesting(!expanded)
             if expanded {
                 VideoDetailView(playback: playback, onCollapse: { expanded = false }, onPlay: play)
                     .background(Color(.systemBackground)).transition(.move(edge: .bottom)).zIndex(2)
@@ -53,9 +58,9 @@ struct ContentView: View {
         .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists)
         .tint(AppStyle.accent).accentColor(AppStyle.accent)
         .preferredColorScheme(preferences.appearance == "Dark" ? .dark : preferences.appearance == "Light" ? .light : nil)
-        .alert("Library", isPresented: Binding(get: { library.lastError != nil || playlists.lastError != nil }, set: {
-            if !$0 { library.dismissError(); playlists.dismissError() }
-        })) { Button("OK") { library.dismissError(); playlists.dismissError() } } message: { Text(library.lastError ?? playlists.lastError ?? "") }
+        .alert("Library", isPresented: Binding(get: { library.lastError != nil || playlists.lastError != nil || queue.storageError != nil }, set: {
+            if !$0 { library.dismissError(); playlists.dismissError(); queue.dismissStorageError() }
+        })) { Button("OK") { library.dismissError(); playlists.dismissError(); queue.dismissStorageError() } } message: { Text(library.lastError ?? playlists.lastError ?? queue.storageError ?? "") }
         .sheet(item: $addingToPlaylist) { item in PlaylistPickerView(item: item).environmentObject(playlists) }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomAddToPlaylist)) { addingToPlaylist = $0.object as? BrowseItem }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomExpandPlayer)) { _ in expanded = true }
@@ -88,6 +93,7 @@ struct ContentView: View {
             if arguments.contains("--playback-smoke-url") { expanded = true }
             await runPlaybackSmokeCheck(playback)
             await runBackgroundSmokeCheck(playback)
+            await runDownloadSmokeCheck(playback)
 #endif
         }
     }

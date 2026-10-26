@@ -242,3 +242,50 @@ final class PlaybackPositionTests: XCTestCase {
         XCTAssertNil(store.seconds(for: items[0].contentID))
     }
 }
+
+@MainActor
+final class QueuePersistenceTests: XCTestCase {
+    func testQueueRestoresDuplicatesOrderAndSettingsWithoutPlayback() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appendingPathComponent("queue.json")
+        let playback = PlaybackSession(resolver: UnavailableResolver())
+        let queue = PlaybackQueue(playback: playback, archiveURL: file)
+        let a = BrowseItem(contentID: "11-9ZaYiTPE", kind: .video, title: "A")
+        let b = BrowseItem(contentID: "dQw4w9WgXcQ", kind: .video, title: "B")
+        playback.setPlaybackRate(1.5); playback.setMaximumHeight(720)
+        queue.start([a, b, a], at: 1)
+        queue.shuffled = true; queue.repeatMode = .all
+        let ids = queue.entries.map(\.id)
+        let current = queue.currentID
+        let restoredPlayback = PlaybackSession(resolver: UnavailableResolver())
+        let restored = PlaybackQueue(playback: restoredPlayback, archiveURL: file)
+        XCTAssertEqual(restored.entries.map(\.id), ids)
+        XCTAssertEqual(restored.currentID, current)
+        XCTAssertTrue(restored.shuffled)
+        XCTAssertEqual(restored.repeatMode, .all)
+        XCTAssertEqual(restoredPlayback.playbackRate, 1.5)
+        XCTAssertEqual(restoredPlayback.maximumHeight, 720)
+        XCTAssertEqual(restoredPlayback.videoID, b.contentID)
+        XCTAssertEqual(restoredPlayback.phase, .paused)
+        XCTAssertNil(restoredPlayback.player.currentItem)
+        XCTAssertFalse(String(decoding: try Data(contentsOf: file), as: UTF8.self).contains("googlevideo"))
+        restored.stop()
+        let empty = PlaybackQueue(playback: PlaybackSession(resolver: UnavailableResolver()), archiveURL: file)
+        XCTAssertTrue(empty.entries.isEmpty)
+        queue.stop()
+    }
+
+    func testCorruptQueueRemainsUntouchedWhileTemporaryQueueWorks() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let bytes = Data("{\"version\":200}".utf8)
+        try bytes.write(to: file)
+        let queue = PlaybackQueue(playback: PlaybackSession(resolver: UnavailableResolver()), archiveURL: file)
+        XCTAssertNotNil(queue.storageError)
+        queue.start([BrowseItem(contentID: "11-9ZaYiTPE", kind: .video, title: "A")])
+        XCTAssertEqual(queue.entries.count, 1)
+        queue.stop()
+        XCTAssertEqual(try Data(contentsOf: file), bytes)
+    }
+}

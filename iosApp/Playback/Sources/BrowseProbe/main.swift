@@ -7,6 +7,26 @@ import Foundation
 struct BrowseProbe {
     @MainActor
     static func main() async throws {
+        if CommandLine.arguments.contains("--advanced-search") {
+            let page = try await YouTubeBrowsingClient().page(for: .advancedSearch("swift programming", SearchOptions(type: .videos, order: .views, date: .year, duration: .short)))
+            guard !page.items.isEmpty, page.items.allSatisfy({ $0.kind == .video }) else { throw BrowseError.unavailable("Advanced search returned no matching videos") }
+            print("PASS: combined date, duration, type and sort filters returned \(page.items.count) videos")
+            return
+        }
+        if CommandLine.arguments.contains("--comments") {
+            let client = YouTubeDiscussionClient()
+            let details = try await client.details(videoID: "11-9ZaYiTPE")
+            guard let cursor = details.comments else { throw BrowseError.unavailable("Expected comments continuation") }
+            let page = try await client.comments(cursor)
+            guard !page.comments.isEmpty, page.comments.allSatisfy({ !$0.text.isEmpty }) else { throw BrowseError.unavailable("Expected readable comments") }
+            print("PASS: video details and \(page.comments.count) comments")
+            if let replyCursor = page.comments.compactMap(\.replies).first {
+                let replies = try await client.comments(replyCursor)
+                guard !replies.comments.isEmpty else { throw BrowseError.unavailable("Expected readable replies") }
+                print("PASS: \(replies.comments.count) replies")
+            }
+            return
+        }
         let client = YouTubeBrowsingClient()
         let query = CommandLine.arguments.dropFirst().first ?? "NDLS404 SENSOJI"
         let page = try await client.page(for: .search(query))

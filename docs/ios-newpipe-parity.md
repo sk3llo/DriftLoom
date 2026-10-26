@@ -8,12 +8,12 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 
 | Stage | Implemented in this checkpoint | Still required for full parity |
 | --- | --- | --- |
-| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type filters; available channel tabs, avatar/description/subscription controls; pagination | Verified kiosk/trending sources; custom channel/playlist home tabs; network suggestions; sort/date/duration filters; remaining metadata and visual comparison |
-| Video details and mini-player | Inline native player; owner/subscription row; save/share/playlist/speed actions; related and description tabs; minimizing and returning without discarding search state | Comments/replies; richer stream metadata; remaining detail actions; full visual parity |
-| Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; background configuration and system remote commands; native AVKit PiP capability | Exact available-format selection; external subtitle extraction; exhaustive interruption/headphone/lock-screen/PiP tests; persist and restore the whole queue |
-| Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved | Subscription groups; additional feed controls; import/export; NewPipe backup migration |
-| Downloads | Not started | Format selection, cancellable/retryable download jobs, storage management, offline playback, audio/subtitle support, background recovery |
-| Settings, migration, services | Theme, home configuration, history controls, resume switch; versioned playlist storage independent of existing library JSON | Content language/region controls; remaining player/download settings; backup/restore and NewPipe database migration; additional services |
+| Navigation and browsing | Main drawer; subscriptions/feed/bookmarks/history home tabs; tab visibility/order; compact result rows and action menus; search history; server-side type/date/duration/sort filters; content language/region; available channel tabs, avatar/description/subscription controls; pagination | Verified kiosk/trending sources; custom channel/playlist home tabs; network suggestions; remaining metadata and visual comparison |
+| Video details and mini-player | Inline native player; owner/subscription row; save/share/playlist/speed actions; related/description/comments tabs, replies, views/date; minimizing and returning without discarding search state | Remaining stream metadata; remaining detail actions; full visual parity |
+| Queue and playback controls | Stable queue entries including duplicate videos; reorder/remove/play-next/enqueue; previous/next; finite shuffle; repeat; playlist play-all; resume positions; speed; HLS resolution caps; in-asset captions; background configuration and system remote commands; explicit native AVKit PiP capability; persisted queue/order/repeat/shuffle/speed/resolution without autoplay; extracted native format selection | Separate adaptive video/audio selection and merging; external subtitle extraction; exhaustive interruption/headphone/lock-screen/PiP tests |
+| Subscriptions and playlists | Date-sorted RSS feed with bounded concurrent requests, deduplication, and partial-error reporting; local playlist CRUD/reorder; remote playlist bookmarks; existing library preserved | Subscription groups; additional feed controls; group migration and feed settings |
+| Downloads | Available HLS/muxed/audio format discovery; versioned job records; cancellation/retry with fresh URLs; iOS background transfer reconnection; delete controls; completed HLS cache validation and local playback verified on iPhone 7 | External subtitles; separate video/audio merging; storage usage and network settings; broader file/audio and interrupted/background transfer tests |
+| Settings, migration, services | Theme, home configuration, history controls, resume switch, content language/region; native library JSON backup; reviewed merge imports; atomic recovery journal and retained pre-import copies; NewPipe subscription JSON and ZIP/SQLite migration of supported YouTube library records | Full app preferences/queue/media backup; Android preferences, groups and positions migration; remaining player/download settings; additional services |
 
 ## Storage and compatibility
 
@@ -23,7 +23,16 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 - Search history, theme/home preferences, and bounded resume metadata use local preferences.
 - Disabling watch-history recording also disables recording/resuming positions for new playback.
 - Removing watch-history entries removes their resume positions.
-- Resolved media URLs are not persisted in these stores.
+- Resolved media URLs are not persisted in these stores or download job records.
+- Queue metadata restores paused; fresh extraction occurs only when playback is requested.
+- Downloads validate a completed local asset before exposing offline playback. HLS cache locations are
+  normalized against the app container before persistence; files outside managed locations are rejected.
+- Imports merge into current library data and keep current privacy preferences. A recovery journal rolls
+  back both library files if writing fails or the app exits partway through an import. A retained copy is
+  saved in PreImportBackups before changes.
+- ZIP import reads only newpipe.db or driftloom.db, validates CRC and bounded decompression, and uses
+  read-only SQLite with fixed SQL, row/text limits, and a VM instruction budget. Android Java-serialized
+  preferences are never deserialized. Supported database shapes were tested with version-9 schema fixtures.
 - iOS 15 uses NavigationView; newer systems use NavigationStack. UI components retain iOS 15 fallbacks.
 - Empty menus, disabled feature placeholders, and arbitrary searches presented as trending/feed content
   must not stand in for unimplemented functionality.
@@ -39,9 +48,23 @@ and user journeys as the specification. The iOS app is not yet a full NewPipe po
 6. Record limitations and failed checks honestly; do not label this checklist complete until the remaining
    parity work is delivered and tested.
 
-## Next implementation batch
+## Verification notes and next batch
 
-Finish the remaining playback/metadata gaps, then implement downloads as a separate persistent job
-model. Validate real offline playback before exposing the download action. Add backup and migration
-only after defining and testing a versioned format and inspecting NewPipe's actual exported schema.
-Preserve existing data throughout and retain a recoverable copy when migrating formats.
+The package suite currently contains 63 tests, including real-media pause/seek preservation on format
+changes, queue restoration, both comment response shapes, ZIP/SQLite migration fixtures, corrupt data,
+failed import rollback, and interrupted-import recovery. Live probes verify comments/replies and
+combined search filters. HLS download/local playback is tested on hardware; simulator tests cover the
+chooser and job UI without claiming a completed simulator HLS download.
+
+On iOS 15, native toolbar accessibility frames moved outside their visible bounds after dismissing
+sheets. Home/player controls now live in app headers with explicit hit areas. The physical download
+and settings/import journeys are regression checks for that failure.
+
+Continue with external subtitles, subscription groups/custom content tabs, and remaining download
+controls, then introduce additional services behind explicit service-aware models. Do not label whole
+milestones or full NewPipe parity complete while the gaps above remain. Validate format/codec and
+background behavior on hardware before claiming support.
+
+Apple background download sessions continue while the app is suspended. Force-quitting cancels active
+transfers; reopening must show a recoverable job and retry with a fresh URL. See
+[Apple's background asset download lifecycle](https://developer.apple.com/documentation/avfoundation/avassetdownloadurlsession).
