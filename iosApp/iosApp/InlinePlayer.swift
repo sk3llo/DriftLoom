@@ -184,10 +184,21 @@ struct InlinePlayerControls: View {
     @State private var visible = true
     @State private var hideTask: Task<Void, Never>?
     @State private var choosingSpeed = false
+    /// Seconds skipped by the latest double tap, shown briefly on that side.
+    @State private var skipFeedback: Int?
+    @State private var feedbackTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
-            Color.black.opacity(visible ? 0.35 : 0).accessibilityHidden(true)
+            Color.black.opacity(visible ? 0.35 : 0).accessibilityHidden(true).allowsHitTesting(false)
+            // Single tap shows or hides the controls; double tap on either half skips 10 seconds, as on YouTube.
+            HStack(spacing: 0) { tapZone(-10); tapZone(10) }.accessibilityHidden(true)
+            if let skipFeedback {
+                Text(skipFeedback < 0 ? "−10 s" : "+10 s").font(.headline.monospacedDigit()).foregroundColor(.white)
+                    .padding(.horizontal, 12).padding(.vertical, 6).background(Color.black.opacity(0.55)).clipShape(Capsule())
+                    .frame(maxWidth: .infinity, alignment: skipFeedback < 0 ? .leading : .trailing).padding(.horizontal, 28)
+                    .allowsHitTesting(false).accessibilityIdentifier("skipFeedback")
+            }
             if visible {
                 HStack(spacing: 44) {
                     controlButton("gobackward.10", label: "Back 10 seconds", id: "skipBack") { skip(-10) }
@@ -219,9 +230,6 @@ struct InlinePlayerControls: View {
                 }
             }
         }
-        // The whole area toggles the controls; the buttons inside handle their own taps first.
-        .contentShape(Rectangle())
-        .onTapGesture { visible.toggle(); scheduleHide() }
         .animation(.easeInOut(duration: 0.2), value: visible)
         // Attached to the always-present container so auto-hiding the controls can't dismiss it.
         .confirmationDialog("Playback speed", isPresented: $choosingSpeed, titleVisibility: .visible) {
@@ -287,6 +295,16 @@ struct InlinePlayerControls: View {
                 .frame(width: 44, height: 44).contentShape(Rectangle())
         }
         .accessibilityLabel(label).accessibilityIdentifier(id)
+    }
+    private func tapZone(_ seconds: Int) -> some View {
+        Color.clear.contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                skip(Double(seconds))
+                skipFeedback = seconds
+                feedbackTask?.cancel()
+                feedbackTask = Task { try? await Task.sleep(nanoseconds: 700_000_000); if !Task.isCancelled { skipFeedback = nil } }
+            }
+            .onTapGesture { visible.toggle(); scheduleHide() }
     }
     private func skip(_ seconds: Double) {
         let now = playback.player.currentTime().seconds

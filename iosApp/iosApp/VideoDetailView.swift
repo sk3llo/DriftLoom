@@ -112,6 +112,7 @@ struct VideoDetailView: View {
                     case .comments:
                         CommentsPanel(store: discussion)
                     case .description:
+                        if !playback.chapters.isEmpty { chapterList }
                         Text(discussion.details?.description.isEmpty == false ? discussion.details!.description : playback.video?.description.isEmpty == false ? playback.video!.description : String(localized: "No description is available."))
                             .font(.subheadline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
                     case .queue:
@@ -132,6 +133,9 @@ struct VideoDetailView: View {
         }
         .task(id: playback.videoID) { if let id = playback.videoID { await related.load(.related(id)) } }
         .task(id: playback.videoID) { if let id = playback.videoID { await discussion.load(videoID: id) } }
+        .onReceive(discussion.$details) { details in
+            if let details, let id = playback.videoID { playback.useChapters(fromDescription: details.description, videoID: id) }
+        }
     }
 
     private var overlay: SubtitleOverlay {
@@ -198,6 +202,22 @@ struct VideoDetailView: View {
         if playback.didRecover {
             Label("Stream refreshed", systemImage: "arrow.clockwise").font(.caption).foregroundStyle(.secondary)
         }
+    }
+    private var chapterList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Chapters").font(.headline).padding(.bottom, 6)
+            ForEach(Array(playback.chapters.enumerated()), id: \.offset) { index, chapter in
+                Button {
+                    Task { await playback.player.seek(to: CMTime(seconds: chapter.start, preferredTimescale: 600)) }
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text(chapter.timestamp).font(.subheadline.monospacedDigit()).foregroundColor(AppStyle.accent)
+                        Text(chapter.title).font(.subheadline).foregroundStyle(.primary).multilineTextAlignment(.leading)
+                        Spacer(minLength: 0)
+                    }.padding(.vertical, 8).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityIdentifier("chapter-\(index)")
+            }
+        }.padding([.horizontal, .top])
     }
     private func detailAction(_ title: LocalizedStringKey, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) { actionLabel(title, symbol: symbol) }.buttonStyle(.plain)

@@ -8,6 +8,14 @@ struct SettingsView: View {
     @EnvironmentObject private var library: LibraryStore
     @State private var clearTarget: String?
     @State private var notificationsDenied = false
+    private func resolutionPicker(_ title: LocalizedStringKey, mobile: Bool) -> some View {
+        Picker(title, selection: Binding(get: { mobile ? preferences.mobileMaximumHeight : preferences.wifiMaximumHeight },
+                                         set: { preferences.setMaximumHeight($0, mobile: mobile) })) {
+            ForEach(PlaybackSession.resolutionChoices, id: \.self) { height in
+                Text(height == 0 ? String(localized: "Auto") : String(localized: "Up to \(String(height))p")).tag(height)
+            }
+        }
+    }
     var body: some View {
         AppNavigation {
             List {
@@ -41,6 +49,12 @@ struct SettingsView: View {
                 }
                 Section("Playback") {
                     Toggle("Resume playback position", isOn: Binding(get: { preferences.resumesPlayback }, set: preferences.setResumesPlayback))
+                    Toggle("Autoplay related videos", isOn: Binding(get: { preferences.autoplaysRelated }, set: preferences.setAutoplaysRelated))
+                        .accessibilityIdentifier("autoplayRelated")
+                    resolutionPicker("Resolution on Wi-Fi", mobile: false).accessibilityIdentifier("wifiResolution")
+                    resolutionPicker("Resolution on mobile data", mobile: true).accessibilityIdentifier("mobileResolution")
+                    Text("When the last video in the queue ends, a related one plays next. The resolution applies to new videos; choosing one in the player changes only the current video.")
+                        .font(.footnote).foregroundStyle(.secondary)
                     Text("Playback continues in the mini-player while you browse. Close it to stop playback.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }

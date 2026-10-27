@@ -70,12 +70,35 @@ struct StoryboardScrubber: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            bar
+            if let chapter = currentChapter {
+                Text(chapter.title).font(.caption.weight(.medium)).foregroundColor(AppStyle.accent).lineLimit(1)
+                    .padding(.horizontal, 12).accessibilityIdentifier("currentChapter")
+            }
+        }
+    }
+    private var chapters: [VideoChapter] { playback.chapters }
+    private var currentChapter: VideoChapter? {
+        let time = dragFraction.map { $0 * clock.duration } ?? clock.time
+        return VideoChapters.index(at: time, in: chapters).map { chapters[$0] }
+    }
+
+    private var bar: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
             let fraction = dragFraction ?? (clock.duration > 0 ? clock.time / clock.duration : 0)
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.secondary.opacity(0.3)).frame(height: 4)
                 Capsule().fill(AppStyle.accent).frame(width: max(0, width * fraction), height: 4)
+                // Chapter boundaries cut small gaps into the bar, as on YouTube.
+                if clock.duration > 0 {
+                    ForEach(chapters.dropFirst(), id: \.start) { chapter in
+                        Rectangle().fill(Color(.systemBackground)).frame(width: 2, height: 6)
+                            .offset(x: width * min(1, chapter.start / clock.duration) - 1)
+                    }
+                    .accessibilityHidden(true)
+                }
                 Circle().fill(AppStyle.accent).frame(width: dragFraction == nil ? 12 : 18, height: dragFraction == nil ? 12 : 18)
                     .offset(x: max(0, min(width, width * fraction)) - (dragFraction == nil ? 6 : 9))
             }
@@ -83,7 +106,8 @@ struct StoryboardScrubber: View {
             // The bar alone is the accessible control; the preview bubble stays a separate element.
             .accessibilityElement()
             .accessibilityLabel("Seek")
-            .accessibilityValue("\(format(clock.time)) of \(format(clock.duration))")
+            .accessibilityValue(currentChapter.map { Text("\(format(clock.time)) of \(format(clock.duration)), \($0.title)") }
+                ?? Text("\(format(clock.time)) of \(format(clock.duration))"))
             .accessibilityAdjustableAction { direction in
                 let step = direction == .increment ? 10.0 : -10.0
                 Task { await playback.player.seek(to: CMTime(seconds: max(0, clock.time + step), preferredTimescale: 600)) }
@@ -119,10 +143,15 @@ struct StoryboardScrubber: View {
                 .frame(width: bubble, height: bubble * 9 / 16).clipped().cornerRadius(6)
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.8), lineWidth: 1))
             }
+            if let chapter = VideoChapters.index(at: fraction * clock.duration, in: chapters).map({ chapters[$0] }) {
+                Text(chapter.title).font(.caption.weight(.semibold)).lineLimit(1).frame(maxWidth: bubble)
+                    .padding(.horizontal, 6).padding(.vertical, 2).background(Color.black.opacity(0.75)).foregroundColor(.white).cornerRadius(4)
+                    .accessibilityIdentifier("seekPreviewChapter")
+            }
             Text(format(fraction * clock.duration)).font(.caption.monospacedDigit().weight(.semibold))
                 .padding(.horizontal, 6).padding(.vertical, 2).background(Color.black.opacity(0.75)).foregroundColor(.white).cornerRadius(4)
         }
-        .offset(x: x, y: storyboard == nil ? 0 : -34).allowsHitTesting(false)
+        .offset(x: x, y: (storyboard == nil ? 0 : -34)).allowsHitTesting(false)
     }
 
     private func update(_ fraction: Double) {

@@ -179,3 +179,13 @@ falls back to it). Each target has a `Localizable.xcstrings` (the app, the share
 value (home sections, filters, feed period, network, theme) keep that raw value and show `.title`; those keys are
 added to the catalogs by hand (`extractionState: manual`). `ScreenshotTour` (skipped unless `TEST_RUNNER_TOUR_DIR`
 is set; `TEST_RUNNER_TOUR_LANG` picks the language) saves screenshots of the main screens for reviewing text fit.
+
+Player batch: chapters are parsed from the stream's description (and the watch page's, when the stream had
+none) by `VideoChapters`, following YouTube's description rule; invalid lists give no chapters, as on YouTube.
+Autoplay is `PlaybackQueue.autoplaysRelated` (NewPipe's auto-enqueue next stream), fetching `.related(id)` when the
+last entry ends with repeat off. The resolution cap is `PlaybackSession.defaultMaximumHeight`, set by the app from
+`NWPathMonitor` (cellular or expensive paths count as mobile data); the player menu sets a per-video override, and
+the queue archive no longer restores a cap. Verified on the iPhone 7: a related video followed the queue's last
+video, a 360p Wi-Fi default set `preferredMaximumResolution` to 640×360, and sample chapters (`--chapters-smoke`,
+since YouTube refuses most videos with real chapters from the test network) drew in the seek bar and preview.
+Double-tap seeking is covered by the simulator UI test.

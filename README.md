@@ -21,6 +21,13 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Background-audio configuration, Now Playing/remote command integration, and Picture in Picture.
   Physical background playback and starting PiP from the inline player have been verified on an iPhone 7;
   not every system control or PiP scenario has been tested.
+- Chapters from the description's timestamps (YouTube's rule: at least three, starting at 0:00, 10 s apart):
+  gaps in the seek bar, the chapter name while scrubbing and under the bar, and a tappable list in Description.
+- Double-tap the left or right half of the video to skip 10 s back or forward.
+- Autoplay (Settings → Playback, on by default): when the last video in the queue ends, the first related video
+  not already queued plays next. Repeat modes keep the queue as it is.
+- Default resolution caps for Wi-Fi and for mobile data (Settings → Playback, automatic by default); a choice in
+  the player's menu changes only the current video.
 - Inline player with DriftLoom's own controls, like NewPipe's: play/pause, skip back/forward 10 s, playback speed,
   one seek bar under the video, fullscreen, Picture in Picture (where supported) and AirPlay. Tap the video to show them;
   they hide after 3 s while playing. Fullscreen opens Apple's full player with its native controls;

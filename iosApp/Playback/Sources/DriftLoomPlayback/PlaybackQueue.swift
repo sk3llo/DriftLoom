@@ -21,6 +21,14 @@ public final class PlaybackQueue: ObservableObject {
         didSet { rebuildShuffleOrder(); save() }
     }
     public let playback: PlaybackSession
+    /// When the last video ends, queue and play the first related video not already queued
+    /// (NewPipe's "auto-enqueue next stream"). Off with repeat, which keeps the queue as it is.
+    public var autoplaysRelated = false
+    /// Related videos for a video ID; replaceable in tests.
+    public var relatedVideos: (String) async throws -> [BrowseItem] = { id in
+        try await YouTubeBrowsingClient().page(for: .related(id)).items
+    }
+    private var autoplayTask: Task<Void, Never>?
     private var endObserver: NSObjectProtocol?
     private var observations = Set<AnyCancellable>()
     private var shuffleOrder: [UUID] = []
@@ -84,6 +92,7 @@ public final class PlaybackQueue: ObservableObject {
     }
     public func select(_ id: UUID) {
         guard let entry = entries.first(where: { $0.id == id }) else { return }
+        autoplayTask?.cancel()
         currentID = id
         playback.open(entry.item)
         save()
@@ -117,11 +126,27 @@ public final class PlaybackQueue: ObservableObject {
         save()
     }
     public func didFinishCurrent() {
-        guard currentID != nil else { return }
-        if repeatMode == .one { playback.retry() }
-        else { next() }
+        guard let currentID else { return }
+        if repeatMode == .one { playback.retry(); return }
+        if repeatMode == .off, autoplaysRelated, order.last == currentID,
+           let item = entries.first(where: { $0.id == currentID })?.item {
+            autoplayRelated(after: item, finished: currentID); return
+        }
+        next()
     }
-    public func stop() { playback.stop(); entries = []; currentID = nil; shuffleOrder = []; save() }
+    private func autoplayRelated(after item: BrowseItem, finished: UUID) {
+        autoplayTask?.cancel()
+        autoplayTask = Task { [weak self, relatedVideos] in
+            guard let related = try? await relatedVideos(item.contentID), !Task.isCancelled,
+                  let self, self.currentID == finished else { return }
+            let queued = Set(self.entries.map(\.item.contentID))
+            guard let next = related.first(where: { $0.kind == .video && !queued.contains($0.contentID)
+                && (try? VideoRequest(input: $0.contentID).videoID) == $0.contentID }) else { return }
+            self.enqueue(next)
+            self.next()
+        }
+    }
+    public func stop() { autoplayTask?.cancel(); playback.stop(); entries = []; currentID = nil; shuffleOrder = []; save() }
     public func dismissStorageError() { storageError = nil }
     private func restore() {
         guard let archiveURL, FileManager.default.fileExists(atPath: archiveURL.path) else { return }
@@ -136,7 +161,7 @@ public final class PlaybackQueue: ObservableObject {
                   value.entries.allSatisfy({ $0.item.kind == .video && (try? VideoRequest(input: $0.item.contentID).videoID) == $0.item.contentID }),
                   (value.entries.isEmpty && value.currentID == nil) || value.currentID.map(ids.contains) == true,
                   Set(value.order) == ids, value.order.count == ids.count else { throw CocoaError(.fileReadCorruptFile) }
-            playback.setPlaybackRate(value.rate ?? 1); playback.setMaximumHeight(value.maximumHeight ?? 0)
+            playback.setPlaybackRate(value.rate ?? 1)
             entries = value.entries; currentID = value.currentID; repeatMode = value.repeatMode
             shuffled = value.shuffled; shuffleOrder = value.order
             if let item = entries.first(where: { $0.id == currentID })?.item { playback.prepare(item) }

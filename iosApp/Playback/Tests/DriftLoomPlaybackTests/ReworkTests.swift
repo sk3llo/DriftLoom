@@ -6,7 +6,7 @@ import XCTest
 private let items = ["11-9ZaYiTPE", "QdBZY2fkU-0", "dQw4w9WgXcQ"].map {
     BrowseItem(contentID: $0, kind: .video, title: $0)
 }
-private struct UnavailableResolver: StreamResolving {
+struct UnavailableResolver: StreamResolving {
     func resolve(_ request: VideoRequest) async throws -> ResolvedVideo { throw URLError(.notConnectedToInternet) }
 }
 
@@ -265,7 +265,7 @@ final class QueuePersistenceTests: XCTestCase {
         XCTAssertTrue(restored.shuffled)
         XCTAssertEqual(restored.repeatMode, .all)
         XCTAssertEqual(restoredPlayback.playbackRate, 1.5)
-        XCTAssertEqual(restoredPlayback.maximumHeight, 720)
+        XCTAssertEqual(restoredPlayback.maximumHeight, 0, "The cap comes from the network default, not the last video")
         XCTAssertEqual(restoredPlayback.videoID, b.contentID)
         XCTAssertEqual(restoredPlayback.phase, .paused)
         XCTAssertNil(restoredPlayback.player.currentItem)

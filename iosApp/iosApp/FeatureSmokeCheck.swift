@@ -61,3 +61,34 @@ func runImportSmokeCheck(library: LibraryStore, playlists: PlaylistStore, groups
     } catch { NSLog("DriftLoomImportSmoke: FAIL %@", error.localizedDescription) }
 }
 #endif
+
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+import AVFoundation
+
+/// --autoplay-smoke: play a video from the queue near its end and require a related video to follow.
+/// Also reports the resolution cap in effect, so `-wifiMaximumHeight 360` can be checked.
+@MainActor
+func runAutoplaySmokeCheck(_ queue: PlaybackQueue) async {
+    guard ProcessInfo.processInfo.arguments.contains("--autoplay-smoke") else { return }
+    let playback = queue.playback
+    playback.player.isMuted = true
+    queue.start([BrowseItem(contentID: "dQw4w9WgXcQ", kind: .video, title: "Smoke")])
+    for _ in 0..<60 {
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        if playback.player.currentItem?.status == .readyToPlay, playback.player.currentItem?.duration.seconds.isFinite == true { break }
+    }
+    guard let item = playback.player.currentItem, item.duration.seconds.isFinite else { NSLog("DriftLoomAutoplaySmoke: FAIL no playable item"); return }
+    let limit = item.preferredMaximumResolution
+    NSLog("DriftLoomAutoplaySmoke: cap=%d preferredMaximumResolution=%.0fx%.0f autoplay=%d", playback.maximumHeight, limit.width, limit.height, queue.autoplaysRelated ? 1 : 0)
+    await playback.player.seek(to: CMTime(seconds: item.duration.seconds - 4, preferredTimescale: 600))
+    playback.resume()
+    for _ in 0..<45 {
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        if queue.entries.count > 1, let id = playback.videoID, id != "dQw4w9WgXcQ" {
+            NSLog("DriftLoomAutoplaySmoke: PASS related video %@ (%@) follows; queue=%d", id, queue.entries.last?.item.title ?? "", queue.entries.count)
+            return
+        }
+    }
+    NSLog("DriftLoomAutoplaySmoke: FAIL no related video followed (queue=%d)", queue.entries.count)
+}
+#endif

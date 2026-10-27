@@ -528,6 +528,56 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(seek.waitForExistence(timeout: 5), "Portrait returns to DriftLoom's player")
     }
 
+    func testChaptersAndDoubleTapSeek() {
+        // Sample chapters: YouTube refuses most videos that have real ones from test networks.
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "--chapters-smoke"])
+        let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
+        let seek = app.descendants(matching: .any)["seekBar"].firstMatch
+        XCTAssertTrue(seek.waitForExistence(timeout: 30))
+        let chapter = app.staticTexts["currentChapter"]
+        XCTAssertTrue(chapter.waitForExistence(timeout: 30), "The playing chapter is named under the seek bar")
+        sleep(6) // the playback check jumps to 60 s first
+        // "1:05 of 3:33, Chorus" -> 65
+        func position() -> Int {
+            let time = (seek.value as? String ?? "").components(separatedBy: " ").first ?? ""
+            return time.split(separator: ":").reduce(0) { $0 * 60 + (Int($1) ?? 0) }
+        }
+        let before = position()
+        player.coordinate(withNormalizedOffset: CGVector(dx: 0.88, dy: 0.5)).doubleTap()
+        sleep(1)
+        XCTAssertTrue((before + 8...before + 14).contains(position()), "Double tap on the right skips 10 s (\(before) -> \(position()))")
+        player.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: 0.5)).doubleTap()
+        sleep(1)
+        XCTAssertTrue((before - 2...before + 4).contains(position()), "Double tap on the left goes back 10 s (\(before) -> \(position()))")
+
+        app.buttons["DESCRIPTION"].tap()
+        let third = app.buttons["chapter-3"]
+        XCTAssertTrue(third.waitForExistence(timeout: 10), "Description lists the chapters")
+        let title = chapter.label
+        third.tap()
+        let changed = expectation(for: NSPredicate(format: "label != %@", title), evaluatedWith: chapter)
+        wait(for: [changed], timeout: 10)
+        XCTAssertTrue(third.label.contains(chapter.label), "Tapping a chapter jumps to it")
+    }
+
+    func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
+        if !settings.isHittable { app.swipeUp() }
+        XCTAssertTrue(settings.waitForExistence(timeout: 5)); settings.tap()
+        let autoplay = app.switches["autoplayRelated"]
+        for _ in 0..<4 where !autoplay.isHittable { app.swipeUp() }
+        XCTAssertTrue(autoplay.exists)
+        XCTAssertEqual(autoplay.value as? String, "1", "Autoplay is on by default")
+        let wifi = app.buttons["wifiResolution"].firstMatch
+        XCTAssertTrue(wifi.exists); wifi.tap()
+        let choice = app.buttons["Up to 720p"].firstMatch
+        XCTAssertTrue(choice.waitForExistence(timeout: 5)); choice.tap()
+        XCTAssertTrue(app.buttons["wifiResolution"].firstMatch.label.contains("720"))
+        XCTAssertTrue(app.buttons["mobileResolution"].firstMatch.exists)
+    }
+
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

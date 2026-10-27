@@ -65,6 +65,22 @@
         }
       }
     },
+    "%@ of %@, %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ de %@, %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ з %@, %@"
+          }
+        }
+      }
+    },
     "%@×": {
       "shouldTranslate": false
     },
@@ -381,6 +397,22 @@
     "%lld%%": {
       "shouldTranslate": false
     },
+    "+10 s": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+10 s"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+10 с"
+          }
+        }
+      }
+    },
     "1. Open Google Takeout below and sign in.\n2. Under YouTube, choose \"All YouTube data included\", select only \"subscriptions\", and create the export.\n3. Download the ZIP, then choose it with \"Choose import file\". You can also choose the subscriptions.csv inside it.": {
       "localizations": {
         "pt": {
@@ -685,6 +717,22 @@
         }
       }
     },
+    "Autoplay related videos": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproduzir relacionados"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Автовідтворення схожих відео"
+          }
+        }
+      }
+    },
     "Back 10 seconds": {
       "localizations": {
         "pt": {
@@ -922,6 +970,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Канали"
+          }
+        }
+      }
+    },
+    "Chapters": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capítulos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розділи"
           }
         }
       }
@@ -3557,6 +3621,38 @@
         }
       }
     },
+    "Resolution on Wi-Fi": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resolução no Wi-Fi"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Роздільність у Wi-Fi"
+          }
+        }
+      }
+    },
+    "Resolution on mobile data": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resolução nos dados móveis"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Роздільність у мобільній мережі"
+          }
+        }
+      }
+    },
     "Resume playback position": {
       "localizations": {
         "pt": {
@@ -4730,6 +4826,22 @@
         }
       }
     },
+    "When the last video in the queue ends, a related one plays next. The resolution applies to new videos; choosing one in the player changes only the current video.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando o último vídeo da fila termina, um relacionado é reproduzido em seguida. A resolução vale para novos vídeos; escolher uma no player muda só o vídeo atual."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли закінчується останнє відео в черзі, далі відтворюється схоже. Роздільність застосовується до нових відео; вибір у плеєрі змінює лише поточне відео."
+          }
+        }
+      }
+    },
     "YouTube": {
       "shouldTranslate": false
     },
@@ -4860,6 +4972,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Збережена бібліотека недоступна. Її файл залишено без змін."
+          }
+        }
+      }
+    },
+    "−10 s": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−10 s"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−10 с"
           }
         }
       }

@@ -21,6 +21,7 @@ struct ContentView: View {
     @StateObject private var preferences = makePreferences()
     @StateObject private var pinnedTabs = PinnedHomeTabs(fileURL: libraryFileURL().deletingLastPathComponent().appendingPathComponent("home-tabs.json"))
     @StateObject private var subscriptionGroups = makeSubscriptionGroups()
+    @StateObject private var network = NetworkStatus()
     @State private var historyRecorder: LibraryPlaybackRecorder?
     @State private var nowPlaying: NowPlayingController?
     @State private var selectedSection = HomeSection.subscriptions
@@ -108,6 +109,8 @@ struct ContentView: View {
         .onChange(of: preferences.resumesPlayback) { playback.resumesPositions = $0 }
         .onChange(of: preferences.subtitleLanguage) { playback.preferredSubtitleLanguage = $0 }
         .onChange(of: preferences.translatesSubtitles) { playback.translatesSubtitles = $0 }
+        .onChange(of: preferences.autoplaysRelated) { queue.autoplaysRelated = $0 }
+        .onChange(of: defaultMaximumHeight) { playback.defaultMaximumHeight = $0 }
         .onChange(of: library.historyEnabled) { playback.remembersPositions = $0 && library.isWritable }
         .onChange(of: library.isWritable) { playback.remembersPositions = $0 && library.historyEnabled }
         .onChange(of: library.history.map { $0.item.contentID }) { ids in
@@ -121,6 +124,8 @@ struct ContentView: View {
             playback.resumesPositions = preferences.resumesPlayback
             playback.preferredSubtitleLanguage = preferences.subtitleLanguage
             playback.translatesSubtitles = preferences.translatesSubtitles
+            queue.autoplaysRelated = preferences.autoplaysRelated
+            playback.defaultMaximumHeight = defaultMaximumHeight
             playback.onSubtitleChoice = { [weak preferences] in preferences?.setSubtitleLanguage($0) }
             if library.isWritable { positions.retainOnly(Set(library.history.map { $0.item.contentID })) }
             if preferences.movedLiveFirst { pinnedTabs.moveToFront(.section(.live)) }
@@ -136,8 +141,9 @@ struct ContentView: View {
                     selectedSection = arguments[flag + 1] == "History" ? .history : arguments[flag + 1] == "Subscriptions" ? .subscriptions : .bookmarks
                 } else if !searching { selectedSection = .bookmarks }
             }
-            if arguments.contains("--playback-smoke-url") { expanded = true }
+            if arguments.contains("--playback-smoke-url") || arguments.contains("--autoplay-smoke") { expanded = true }
             await runPlaybackSmokeCheck(playback)
+            await runAutoplaySmokeCheck(queue)
             await runBackgroundSmokeCheck(playback)
             await runDownloadSmokeCheck(playback)
             await runKioskSmokeCheck()
@@ -148,6 +154,8 @@ struct ContentView: View {
 #endif
         }
     }
+    /// The resolution cap for the current connection.
+    private var defaultMaximumHeight: Int { network.isMobileData ? preferences.mobileMaximumHeight : preferences.wifiMaximumHeight }
     private func play(_ item: BrowseItem) {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         queue.start([item]); expanded = true

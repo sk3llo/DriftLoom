@@ -56,6 +56,11 @@ public final class AppPreferences: ObservableObject {
     @Published public private(set) var translatesSubtitles: Bool
     /// Check subscriptions in the background and notify about new uploads.
     @Published public private(set) var notifiesNewVideos: Bool
+    /// Play a related video when the queue ends.
+    @Published public private(set) var autoplaysRelated: Bool
+    /// Default resolution caps (0 = automatic); a choice in the player overrides them for one video.
+    @Published public private(set) var wifiMaximumHeight: Int
+    @Published public private(set) var mobileMaximumHeight: Int
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -64,6 +69,9 @@ public final class AppPreferences: ObservableObject {
         subtitleSize = defaults.string(forKey: "subtitleSize").flatMap(SubtitleSize.init(rawValue:)) ?? .medium
         translatesSubtitles = defaults.bool(forKey: "translatesSubtitles")
         notifiesNewVideos = defaults.bool(forKey: "notifiesNewVideos")
+        autoplaysRelated = defaults.object(forKey: "autoplaysRelated") as? Bool ?? true
+        wifiMaximumHeight = PlaybackSession.resolutionChoices.contains(defaults.integer(forKey: "wifiMaximumHeight")) ? defaults.integer(forKey: "wifiMaximumHeight") : 0
+        mobileMaximumHeight = PlaybackSession.resolutionChoices.contains(defaults.integer(forKey: "mobileMaximumHeight")) ? defaults.integer(forKey: "mobileMaximumHeight") : 0
         feedPeriod = defaults.string(forKey: "feedPeriod").flatMap(FeedPeriod.init(rawValue:)) ?? .all
         hidesWatchedFeed = defaults.bool(forKey: "hidesWatchedFeed")
         contentLocale = .current(defaults: defaults)
@@ -99,6 +107,14 @@ public final class AppPreferences: ObservableObject {
     public func setSubtitleLanguage(_ language: String?) {
         subtitleLanguage = language.flatMap(Self.validLanguage)
         defaults.set(subtitleLanguage ?? "", forKey: "subtitleLanguage")
+    }
+    public func setAutoplaysRelated(_ enabled: Bool) {
+        autoplaysRelated = enabled; defaults.set(enabled, forKey: "autoplaysRelated")
+    }
+    public func setMaximumHeight(_ height: Int, mobile: Bool) {
+        guard PlaybackSession.resolutionChoices.contains(height) else { return }
+        if mobile { mobileMaximumHeight = height } else { wifiMaximumHeight = height }
+        defaults.set(height, forKey: mobile ? "mobileMaximumHeight" : "wifiMaximumHeight")
     }
     public func setNotifiesNewVideos(_ enabled: Bool) {
         notifiesNewVideos = enabled; defaults.set(enabled, forKey: "notifiesNewVideos")

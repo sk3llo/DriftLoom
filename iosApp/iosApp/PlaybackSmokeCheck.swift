@@ -27,8 +27,14 @@ func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
         session.selectFormat(merged)
     }
     var hasSeeked = false
+    // --chapters-smoke: give the video sample chapters (YouTube refuses most videos with real ones from test networks).
+    var needsChapters = arguments.contains("--chapters-smoke")
     for _ in 0..<90 {
         do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
+        if needsChapters, session.player.currentItem?.status == .readyToPlay, let id = session.videoID {
+            needsChapters = false
+            session.useChapters(fromDescription: "0:00 Intro\n0:43 First verse\n1:25 Chorus\n2:30 Bridge\n3:00 Final chorus", videoID: id)
+        }
         if case .failed = session.phase {
             NSLog("DriftLoomSmoke: FAIL playback error")
             return

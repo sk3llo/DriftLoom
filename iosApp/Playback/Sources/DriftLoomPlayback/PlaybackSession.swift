@@ -17,7 +17,15 @@ public final class PlaybackSession: ObservableObject {
     @Published public private(set) var videoID: String?
     @Published public private(set) var sourceItem: BrowseItem?
     @Published public private(set) var playbackRate: Float = 1
+    /// The resolution cap in effect: the user's choice for this video, else the default for the current network.
     @Published public private(set) var maximumHeight = 0
+    /// Set by the app from the Wi-Fi or mobile data preference; 0 means automatic.
+    public var defaultMaximumHeight = 0 {
+        didSet { if heightOverride == nil { applyMaximumHeight(defaultMaximumHeight) } }
+    }
+    private var heightOverride: Int?
+    /// Chapters from the description, empty when it has none.
+    @Published public private(set) var chapters: [VideoChapter] = []
     @Published public private(set) var selectedFormat: DownloadChoice?
     @Published public private(set) var subtitleTracks: [SubtitleTrack] = []
     /// Languages YouTube can machine-translate this video's subtitles into.
@@ -98,6 +106,8 @@ public final class PlaybackSession: ObservableObject {
         stop()
         do {
             let request = try VideoRequest(input: input)
+            heightOverride = nil
+            applyMaximumHeight(defaultMaximumHeight)
             currentRequest = request
             videoID = request.videoID
             recoveryPolicy = PlaybackRecoveryPolicy()
@@ -167,8 +177,20 @@ public final class PlaybackSession: ObservableObject {
         clearItemObservers(); player.pause(); player.replaceCurrentItem(with: nil)
         resolve(currentRequest, position: position, autoplay: autoplay)
     }
+    nonisolated public static let resolutionChoices = [0, 360, 480, 720, 1080]
+    /// Chapters from a description loaded separately (the watch page), when the stream's own had none.
+    public func useChapters(fromDescription description: String, videoID: String) {
+        guard self.videoID == videoID, chapters.isEmpty else { return }
+        chapters = VideoChapters.parse(description)
+    }
+    /// The user's choice in the player; it applies until another video opens.
     public func setMaximumHeight(_ height: Int) {
-        guard [0, 360, 480, 720, 1080].contains(height) else { return }
+        guard Self.resolutionChoices.contains(height) else { return }
+        heightOverride = height
+        applyMaximumHeight(height)
+    }
+    private func applyMaximumHeight(_ height: Int) {
+        guard Self.resolutionChoices.contains(height) else { return }
         maximumHeight = height
         player.currentItem?.preferredMaximumResolution = resolutionLimit
     }
@@ -193,6 +215,7 @@ public final class PlaybackSession: ObservableObject {
         title = "DriftLoom"
         didRecover = false
         video = nil
+        chapters = []
         selectedFormat = nil
         clearSubtitles()
         phase = .idle
@@ -318,6 +341,7 @@ public final class PlaybackSession: ObservableObject {
     private func install(_ video: ResolvedVideo, asset: AVAsset? = nil, position: CMTime, autoplay: Bool = true) {
         clearItemObservers()
         self.video = video
+        chapters = VideoChapters.parse(video.description)
         title = video.title
         if sourceItem == nil, let item = video.item, item.contentID == videoID { sourceItem = item }
         phase = .loading
