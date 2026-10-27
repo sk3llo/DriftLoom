@@ -86,3 +86,45 @@ final class AutoplayRelatedTests: XCTestCase {
         XCTAssertEqual(repeating.currentIndex, 0, "Repeat all goes back to the start instead")
     }
 }
+
+@MainActor
+final class AudioOnlyTests: XCTestCase {
+    private actor Recorder: StreamResolving {
+        var calls: [String] = []
+        func resolve(_ request: VideoRequest) async throws -> ResolvedVideo { try await resolve(request, choice: nil) }
+        func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+            calls.append("video " + request.videoID)
+            throw PlaybackError.noPlayableStream
+        }
+        func resolveAudio(_ request: VideoRequest) async throws -> ResolvedVideo? {
+            calls.append("audio " + request.videoID)
+            return request.isSoundCloud ? nil : ResolvedVideo(title: "Audio", streamURL: URL(string: "https://example.com/a.m4a")!, usesHLS: false)
+        }
+    }
+
+    func testAudioOnlyResolvesTheAudioStreamAndStaysOnForTheNextVideo() async throws {
+        let recorder = Recorder()
+        let playback = PlaybackSession(resolver: recorder)
+        playback.open("dQw4w9WgXcQ")
+        try await Task.sleep(nanoseconds: 100_000_000)
+        playback.setAudioOnly(true)
+        playback.open("11-9ZaYiTPE")
+        try await Task.sleep(nanoseconds: 300_000_000)
+        let seen = await recorder.calls
+        XCTAssertEqual(seen.first, "video dQw4w9WgXcQ", "Video first")
+        XCTAssertEqual(Array(seen.dropFirst()), ["audio dQw4w9WgXcQ", "audio 11-9ZaYiTPE"], "Audio-only switches the current video and stays on for the next")
+        XCTAssertTrue(playback.audioOnly)
+        playback.setAudioOnly(false)
+        XCTAssertFalse(playback.audioOnly)
+    }
+
+    func testSoundCloudIgnoresAudioOnly() async throws {
+        let recorder = Recorder()
+        let playback = PlaybackSession(resolver: recorder)
+        playback.setAudioOnly(true)
+        playback.open("sc:123456")
+        try await Task.sleep(nanoseconds: 200_000_000)
+        let seen = await recorder.calls
+        XCTAssertEqual(seen, ["video sc:123456"], "SoundCloud is already audio")
+    }
+}

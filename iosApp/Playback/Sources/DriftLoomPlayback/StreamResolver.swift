@@ -25,9 +25,12 @@ public struct ResolvedVideo: Sendable {
 public protocol StreamResolving: Sendable {
     func resolve(_ request: VideoRequest) async throws -> ResolvedVideo
     func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo
+    /// The best audio-only stream, or nil when there is none (audio-only playback then uses the normal stream).
+    func resolveAudio(_ request: VideoRequest) async throws -> ResolvedVideo?
 }
 
 public extension StreamResolving {
+    func resolveAudio(_ request: VideoRequest) async throws -> ResolvedVideo? { nil }
     func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
         guard choice == nil else { throw PlaybackError.noPlayableStream }
         return try await resolve(request)
@@ -52,6 +55,18 @@ public struct YouTubeStreamResolver: StreamResolving {
         let metadata = try? await YouTube(videoID: request.videoID, methods: [.local]).metadata
         return ResolvedVideo(title: metadata?.title ?? PlaybackSession.placeholderTitle, streamURL: source.url,
                              usesHLS: choice.kind == .hls, description: metadata?.description ?? "", audioURL: source.audioURL)
+    }
+
+    /// One extraction for both the title and the highest-bitrate audio track this device plays.
+    public func resolveAudio(_ request: VideoRequest) async throws -> ResolvedVideo? {
+        guard !request.isSoundCloud else { return nil }
+        let video = YouTube(videoID: request.videoID, methods: [.local])
+        let metadata = try? await video.metadata
+        try Task.checkCancellation()
+        guard let stream = try await video.streams.filter({ !$0.includesVideoTrack && $0.isNativelyPlayable })
+            .max(by: { ($0.bitrate ?? 0) < ($1.bitrate ?? 0) }) else { return nil }
+        return ResolvedVideo(title: metadata?.title ?? PlaybackSession.placeholderTitle, streamURL: stream.url, usesHLS: false,
+                             description: metadata?.description ?? "")
     }
 
     public func resolve(_ request: VideoRequest) async throws -> ResolvedVideo {

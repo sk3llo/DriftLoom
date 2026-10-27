@@ -637,6 +637,22 @@
         }
       }
     },
+    "Audio only": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Só áudio"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лише аудіо"
+          }
+        }
+      }
+    },
     "Auto": {
       "localizations": {
         "pt": {
@@ -841,6 +857,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Плейлисти в закладках"
+          }
+        }
+      }
+    },
+    "Brightness": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brilho"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Яскравість"
           }
         }
       }
@@ -1842,6 +1874,22 @@
         }
       }
     },
+    "Fill": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preencher"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заповнити"
+          }
+        }
+      }
+    },
     "Find videos, channels, tracks and playlists, or paste a YouTube or SoundCloud link.": {
       "localizations": {
         "pt": {
@@ -1886,6 +1934,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пошук форматів…"
+          }
+        }
+      }
+    },
+    "Fit": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustar"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вмістити"
           }
         }
       }
@@ -2885,6 +2949,22 @@
         }
       }
     },
+    "On": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Увімкнено"
+          }
+        }
+      }
+    },
     "Only subscriptions are imported. Google Takeout needs your Google account; DriftLoom never sees it.": {
       "localizations": {
         "pt": {
@@ -3649,6 +3729,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Скинути фільтри"
+          }
+        }
+      }
+    },
+    "Resize": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redimensionar"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Масштаб"
           }
         }
       }
@@ -4810,6 +4906,22 @@
         }
       }
     },
+    "Video and audio": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeo e áudio"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відео й аудіо"
+          }
+        }
+      }
+    },
     "Videos appear here once playback starts.": {
       "localizations": {
         "pt": {
@@ -4838,6 +4950,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переглянути відповіді"
+          }
+        }
+      }
+    },
+    "Volume": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Гучність"
           }
         }
       }
@@ -5036,6 +5164,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Збережена бібліотека недоступна. Її файл залишено без змін."
+          }
+        }
+      }
+    },
+    "Zoom": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Збільшити"
           }
         }
       }

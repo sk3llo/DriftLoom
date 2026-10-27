@@ -2,6 +2,12 @@
 import Combine
 import Foundation
 
+/// How the video fills the player, as in NewPipe: fit (letterboxed), fill (stretched) or zoom (cropped).
+public enum VideoResize: String, CaseIterable, Sendable {
+    case fit, fill, zoom
+    public var next: VideoResize { self == .fit ? .zoom : self == .zoom ? .fill : .fit }
+}
+
 public enum HomeSection: String, CaseIterable, Identifiable, Codable, Sendable {
     case subscriptions = "Subscriptions", feed = "What's new", bookmarks = "Bookmarked", history = "History", trending = "Trending music"
     case live = "Live", gaming = "Gaming", podcasts = "Podcasts", trailers = "Movie trailers"
@@ -61,6 +67,7 @@ public final class AppPreferences: ObservableObject {
     /// Default resolution caps (0 = automatic); a choice in the player overrides them for one video.
     @Published public private(set) var wifiMaximumHeight: Int
     @Published public private(set) var mobileMaximumHeight: Int
+    @Published public private(set) var videoResize: VideoResize
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -70,6 +77,7 @@ public final class AppPreferences: ObservableObject {
         translatesSubtitles = defaults.bool(forKey: "translatesSubtitles")
         notifiesNewVideos = defaults.bool(forKey: "notifiesNewVideos")
         autoplaysRelated = defaults.object(forKey: "autoplaysRelated") as? Bool ?? true
+        videoResize = defaults.string(forKey: "videoResize").flatMap(VideoResize.init(rawValue:)) ?? .fit
         wifiMaximumHeight = PlaybackSession.resolutionChoices.contains(defaults.integer(forKey: "wifiMaximumHeight")) ? defaults.integer(forKey: "wifiMaximumHeight") : 0
         mobileMaximumHeight = PlaybackSession.resolutionChoices.contains(defaults.integer(forKey: "mobileMaximumHeight")) ? defaults.integer(forKey: "mobileMaximumHeight") : 0
         feedPeriod = defaults.string(forKey: "feedPeriod").flatMap(FeedPeriod.init(rawValue:)) ?? .all
@@ -107,6 +115,9 @@ public final class AppPreferences: ObservableObject {
     public func setSubtitleLanguage(_ language: String?) {
         subtitleLanguage = language.flatMap(Self.validLanguage)
         defaults.set(subtitleLanguage ?? "", forKey: "subtitleLanguage")
+    }
+    public func setVideoResize(_ value: VideoResize) {
+        videoResize = value; defaults.set(value.rawValue, forKey: "videoResize")
     }
     public func setAutoplaysRelated(_ enabled: Bool) {
         autoplaysRelated = enabled; defaults.set(enabled, forKey: "autoplaysRelated")

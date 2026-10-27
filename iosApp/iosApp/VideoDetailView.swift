@@ -20,6 +20,8 @@ struct VideoDetailView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     /// How far the page follows a downward drag on the header or video before minimizing, as in NewPipe.
     @State private var dragOffset: CGFloat = 0
+    /// The video's frame on screen; its side thirds belong to the brightness and volume swipes.
+    @State private var playerFrame: CGRect = .zero
     private enum DetailTab: CaseIterable {
         case related, comments, description, queue
         var title: String {
@@ -96,7 +98,7 @@ struct VideoDetailView: View {
 
     private var overlay: SubtitleOverlay {
         SubtitleOverlay(playback: playback, size: preferences.subtitleSize,
-                        artwork: playback.currentItemMetadata.flatMap { $0.isSoundCloud ? $0.thumbnail : nil })
+                        artwork: playback.currentItemMetadata.flatMap { $0.isSoundCloud || playback.audioOnly ? $0.thumbnail : nil })
     }
 
     private var playbackOptions: some View {
@@ -160,9 +162,14 @@ struct VideoDetailView: View {
         }
     }
     /// Drag the video or the header down to shrink the player into the mini-player bar.
-    private var minimizeDrag: some Gesture {
+    private var minimizeDrag: some Gesture { minimizeDrag(fromVideo: false) }
+    private func minimizeDrag(fromVideo: Bool) -> some Gesture {
         DragGesture(minimumDistance: 12, coordinateSpace: .global)
             .onChanged { value in
+                if fromVideo, dragOffset == 0, playerFrame.width > 0 {
+                    let third = playerFrame.width / 3
+                    guard value.startLocation.x > playerFrame.minX + third, value.startLocation.x < playerFrame.maxX - third else { return }
+                }
                 // Only a mostly downward drag moves the page; sideways drags stay with the controls.
                 guard value.translation.height > 0, value.translation.height > abs(value.translation.width) || dragOffset > 0 else { return }
                 dragOffset = value.translation.height
@@ -192,11 +199,14 @@ struct VideoDetailView: View {
         Group {
             if playback.player.currentItem != nil {
                 ZStack {
-                    InlinePlayerSurface(player: playback.player, overlay: overlay, controller: inline)
+                    InlinePlayerSurface(player: playback.player, overlay: overlay, controller: inline, gravity: preferences.videoResize.gravity)
                     InlinePlayerControls(playback: playback, controller: inline, overlay: overlay)
                 }
                 .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
-                .simultaneousGesture(minimizeDrag)
+                .simultaneousGesture(minimizeDrag(fromVideo: true))
+                .background(GeometryReader { proxy in
+                    Color.clear.onAppear { playerFrame = proxy.frame(in: .global) }.onChange(of: proxy.frame(in: .global)) { playerFrame = $0 }
+                })
                 .accessibilityElement(children: .contain).accessibilityIdentifier("videoPlayer")
             } else {
                 ZStack {

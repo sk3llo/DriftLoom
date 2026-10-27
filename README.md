@@ -27,6 +27,11 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Chapters from the description's timestamps (YouTube's rule: at least three, starting at 0:00, 10 s apart):
   gaps in the seek bar, the chapter name while scrubbing and under the bar, and a tappable list in Description.
 - Double-tap the left or right half of the video to skip 10 s back or forward.
+- Audio only (headphones button): plays YouTube's best audio-only stream from the same position, with the
+  thumbnail in place of the picture, and stays on for the next videos until turned off. SoundCloud is unaffected.
+- Resize (button beside it): fit, zoom (crop to fill) or fill (stretch), remembered, and used in full screen too.
+- Swipe up or down on the left third of the video for brightness and on the right third for volume, as in NewPipe;
+  the middle third still drags the player down to minimize it.
 - Drag the video or the player's header down to shrink it into the mini-player bar, as in NewPipe; a short drag
   springs back.
 - Comments can be sorted by top or newest (YouTube's own orders, from the first comments page). SoundCloud

@@ -27,6 +27,9 @@ public final class PlaybackSession: ObservableObject {
     /// Chapters from the description, empty when it has none.
     @Published public private(set) var chapters: [VideoChapter] = []
     @Published public private(set) var selectedFormat: DownloadChoice?
+    /// Play only the audio stream to save data, as NewPipe's background player does. It stays on for the
+    /// following videos until turned off; a format chosen in the player still wins.
+    @Published public private(set) var audioOnly = false
     @Published public private(set) var subtitleTracks: [SubtitleTrack] = []
     /// Languages YouTube can machine-translate this video's subtitles into.
     @Published public private(set) var subtitleTranslations: [SubtitleLanguage] = []
@@ -168,6 +171,16 @@ public final class PlaybackSession: ObservableObject {
         guard [Float(0.25), 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].contains(value) else { return }
         playbackRate = value
         if phase == .playing { player.rate = value }
+    }
+    public func setAudioOnly(_ enabled: Bool) {
+        guard enabled != audioOnly else { return }
+        audioOnly = enabled
+        // Downloads and SoundCloud already play a single file; streams switch at the current position.
+        guard let currentRequest, !currentRequest.isSoundCloud, video?.streamURL.isFileURL != true, selectedFormat == nil else { return }
+        let position = player.currentTime()
+        let autoplay = phase == .playing || phase == .loading
+        clearItemObservers(); player.pause(); player.replaceCurrentItem(with: nil)
+        resolve(currentRequest, position: position, autoplay: autoplay)
     }
     public func selectFormat(_ choice: DownloadChoice?) {
         guard let currentRequest else { return }
@@ -315,10 +328,16 @@ public final class PlaybackSession: ObservableObject {
         let token = generation
         resolveTask?.cancel()
         phase = .resolving
-        let choice = selectedFormat
+        let chosen = selectedFormat
+        let wantsAudio = audioOnly && !request.isSoundCloud
         resolveTask = Task { [weak self, resolver] in
             do {
-                let video = try await resolver.resolve(request, choice: choice)
+                // Audio-only falls back to the normal stream when YouTube offers no playable audio track.
+                var audio: ResolvedVideo?
+                if chosen == nil, wantsAudio { audio = try? await resolver.resolveAudio(request) }
+                try Task.checkCancellation()
+                let video: ResolvedVideo
+                if let audio { video = audio } else { video = try await resolver.resolve(request, choice: chosen) }
                 try Task.checkCancellation()
                 // A separate audio stream is combined with the video-only stream for playback.
                 let merged: AVAsset? = try await video.audioURL.asyncMap { try await MergedMedia.composition(video: video.streamURL, audio: $0) }

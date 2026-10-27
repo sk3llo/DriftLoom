@@ -662,7 +662,8 @@ final class NavigationTests: XCTestCase {
         let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
         XCTAssertTrue(player.waitForExistence(timeout: 30))
         // A short drag springs back.
-        let start = player.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.3))
+        // The middle third drags the player; the sides are brightness and volume swipes.
+        let start = player.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
         start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 60)))
         sleep(1)
         XCTAssertTrue(player.isHittable, "A short drag keeps the player open")
@@ -678,6 +679,48 @@ final class NavigationTests: XCTestCase {
         let header = app.buttons["minimizePlayer"].coordinate(withNormalizedOffset: CGVector(dx: 3, dy: 0.5))
         header.press(forDuration: 0.05, thenDragTo: header.withOffset(CGVector(dx: 0, dy: 420)))
         XCTAssertTrue(mini.waitForExistence(timeout: 5), "Dragging the header down minimizes too")
+    }
+
+    func testAudioOnlyResizeAndBrightnessVolumeSwipes() {
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+        let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
+        XCTAssertTrue(player.waitForExistence(timeout: 30))
+        func showControls() { if !app.buttons["playPause"].exists { player.tap() }; XCTAssertTrue(app.buttons["playPause"].waitForExistence(timeout: 3)) }
+        showControls()
+        // Resize cycles fit -> zoom -> fill and says which.
+        let resize = app.buttons["resizeMode"]
+        XCTAssertEqual(resize.value as? String, "Fit")
+        resize.tap()
+        XCTAssertTrue(app.staticTexts["playerToast"].waitForExistence(timeout: 2))
+        XCTAssertEqual(app.buttons["resizeMode"].value as? String, "Zoom")
+        // Audio only switches the stream and shows the thumbnail.
+        showControls()
+        app.buttons["audioOnly"].tap()
+        // The stream reloads at the same position, then the thumbnail stands in for the picture.
+        XCTAssertTrue(app.descendants(matching: .any)["audioArtwork"].firstMatch.waitForExistence(timeout: 30), "Audio only shows the video's thumbnail")
+        showControls()
+        XCTAssertEqual(app.buttons["audioOnly"].value as? String, "On")
+        // A swipe on the left third is brightness, on the right third volume; neither minimizes the player.
+        let left = player.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: 0.75))
+        left.press(forDuration: 0.05, thenDragTo: left.withOffset(CGVector(dx: 0, dy: -80)))
+        let level = app.descendants(matching: .any)["gestureLevel"].firstMatch
+        XCTAssertTrue(level.waitForExistence(timeout: 1), "The swipe shows the brightness level")
+        XCTAssertEqual(level.label, "Brightness")
+        XCTAssertTrue(player.exists && !app.buttons["expandMiniPlayer"].exists, "Side swipes don't minimize")
+        let right = player.coordinate(withNormalizedOffset: CGVector(dx: 0.88, dy: 0.25))
+        right.press(forDuration: 0.05, thenDragTo: right.withOffset(CGVector(dx: 0, dy: 90)))
+        XCTAssertTrue(level.waitForExistence(timeout: 1)); XCTAssertEqual(level.label, "Volume")
+        XCTAssertTrue(player.exists && !app.buttons["expandMiniPlayer"].exists, "Side swipes don't minimize")
+        // Audio only back off; resize back to fit for other tests.
+        showControls()
+        app.buttons["audioOnly"].tap()
+        let video = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.descendants(matching: .any)["audioArtwork"].firstMatch)
+        wait(for: [video], timeout: 30)
+        XCTAssertTrue(player.waitForExistence(timeout: 30))
+        showControls()
+        XCTAssertEqual(app.buttons["audioOnly"].value as? String, "Off")
+        showControls(); app.buttons["resizeMode"].tap(); showControls(); app.buttons["resizeMode"].tap()
+        XCTAssertEqual(app.buttons["resizeMode"].value as? String, "Fit")
     }
 
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {

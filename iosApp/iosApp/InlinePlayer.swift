@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import AVFoundation
 import AVKit
+import MediaPlayer
 import DriftLoomPlayback
 import SwiftUI
 import UIKit
@@ -20,6 +21,8 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
     private var pictureInPicture: AVPictureInPictureController?
     private var possibleObservation: NSKeyValueObservation?
     private weak var fullscreen: AVPlayerViewController?
+    /// The resize mode, applied to the full-screen player too.
+    var videoGravity: AVLayerVideoGravity = .resizeAspect
     /// Fullscreen opened by turning the phone sideways closes again when it's turned upright.
     private var openedByRotation = false
 
@@ -57,6 +60,7 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
         let controller = AVPlayerViewController()
         controller.player = player
         controller.allowsPictureInPicturePlayback = true
+        controller.videoGravity = videoGravity
         // Over full screen keeps DriftLoom's views in the window: with .fullScreen they are removed and
         // rebuilt on return, which recreated the video surface and reloaded the page.
         controller.modalPresentationStyle = .overFullScreen
@@ -140,12 +144,13 @@ struct InlinePlayerSurface: UIViewRepresentable {
     let player: AVPlayer
     let overlay: SubtitleOverlay
     let controller: InlinePlayerController
+    var gravity: AVLayerVideoGravity = .resizeAspect
     final class Coordinator { var host: UIHostingController<SubtitleOverlay>? }
     func makeCoordinator() -> Coordinator { Coordinator() }
     func makeUIView(context: Context) -> PlayerLayerView {
         let view = PlayerLayerView()
         view.backgroundColor = .black; view.clipsToBounds = true
-        view.playerLayer.videoGravity = .resizeAspect
+        view.playerLayer.videoGravity = gravity
         view.playerLayer.player = player
         let host = UIHostingController(rootView: overlay)
         host.view.backgroundColor = .clear; host.view.isUserInteractionEnabled = false
@@ -157,6 +162,8 @@ struct InlinePlayerSurface: UIViewRepresentable {
     }
     func updateUIView(_ view: PlayerLayerView, context: Context) {
         if view.playerLayer.player !== player { view.playerLayer.player = player }
+        if view.playerLayer.videoGravity != gravity { view.playerLayer.videoGravity = gravity }
+        controller.videoGravity = gravity
         context.coordinator.host?.rootView = overlay
     }
     static func dismantleUIView(_ view: PlayerLayerView, coordinator: Coordinator) {
@@ -189,12 +196,46 @@ struct InlinePlayerControls: View {
     /// Seconds skipped by the latest double tap, shown briefly on that side.
     @State private var skipFeedback: Int?
     @State private var feedbackTask: Task<Void, Never>?
+    @EnvironmentObject private var preferences: AppPreferences
+    /// A short message after toggling a mode (resize, audio only), as NewPipe shows.
+    @State private var toast: String?
+    @State private var toastTask: Task<Void, Never>?
+    @State private var size: CGSize = .zero
+    private enum Adjustment { case brightness, volume }
+    /// The swipe in progress, and the level indicator, which stays up a moment after the swipe ends.
+    @State private var adjusting: Adjustment?
+    @State private var shownLevel: Adjustment?
+    @State private var startLevel = 0.0
+    @State private var level = 0.0
+    @State private var levelTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
             Color.black.opacity(visible ? 0.35 : 0).accessibilityHidden(true).allowsHitTesting(false)
             // Single tap shows or hides the controls; double tap on either half skips 10 seconds, as on YouTube.
             HStack(spacing: 0) { tapZone(-10); tapZone(10) }.accessibilityHidden(true)
+                // Vertical swipes on the left third change brightness, on the right third volume, as in NewPipe.
+                .simultaneousGesture(adjustDrag)
+            HiddenVolumeView().frame(width: 1, height: 1).opacity(0.01).allowsHitTesting(false).accessibilityHidden(true)
+            if let shownLevel {
+                HStack(spacing: 10) {
+                    Image(systemName: shownLevel == .brightness ? "sun.max.fill" : level == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .frame(width: 24)
+                    ProgressView(value: level).tint(.white).frame(width: 96)
+                }
+                .foregroundColor(.white).padding(.horizontal, 14).padding(.vertical, 8)
+                .background(Color.black.opacity(0.6)).clipShape(Capsule())
+                .frame(maxHeight: .infinity, alignment: .top).padding(.top, 14)
+                .allowsHitTesting(false)
+                .accessibilityElement().accessibilityIdentifier("gestureLevel")
+                .accessibilityLabel(shownLevel == .brightness ? "Brightness" : "Volume").accessibilityValue("\(Int((level * 100).rounded()))%")
+            }
+            if let toast {
+                Text(toast).font(.subheadline.weight(.semibold)).foregroundColor(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 7).background(Color.black.opacity(0.6)).clipShape(Capsule())
+                    .frame(maxHeight: .infinity, alignment: .top).padding(.top, 14)
+                    .allowsHitTesting(false).accessibilityIdentifier("playerToast")
+            }
             if let skipFeedback {
                 Text(skipFeedback < 0 ? "−10 s" : "+10 s").font(.headline.monospacedDigit()).foregroundColor(.white)
                     .padding(.horizontal, 12).padding(.vertical, 6).background(Color.black.opacity(0.55)).clipShape(Capsule())
@@ -219,6 +260,18 @@ struct InlinePlayerControls: View {
                         .accessibilityLabel("Playback speed").accessibilityValue("\(String(format: "%g", playback.playbackRate))×")
                         .accessibilityIdentifier("playbackSpeed")
                         Spacer()
+                        controlButton(resizeSymbol, label: "Resize", id: "resizeMode", size: 18) {
+                            let next = preferences.videoResize.next
+                            preferences.setVideoResize(next); show(resizeTitle(next)); scheduleHide()
+                        }
+                        .accessibilityValue(Text(resizeTitle(preferences.videoResize)))
+                        if playback.currentItemMetadata?.isSoundCloud != true {
+                            controlButton(playback.audioOnly ? "headphones.circle.fill" : "headphones", label: "Audio only", id: "audioOnly", size: 18) {
+                                playback.setAudioOnly(!playback.audioOnly)
+                                show(playback.audioOnly ? String(localized: "Audio only") : String(localized: "Video and audio")); scheduleHide()
+                            }
+                            .accessibilityValue(playback.audioOnly ? "On" : "Off")
+                        }
                         AirPlayButton().frame(width: 40, height: 40)
                         if controller.isPictureInPicturePossible || controller.isPictureInPictureActive {
                             controlButton(controller.isPictureInPictureActive ? "pip.exit" : "pip.enter",
@@ -232,6 +285,9 @@ struct InlinePlayerControls: View {
                 }
             }
         }
+        .background(GeometryReader { proxy in
+            Color.clear.onAppear { size = proxy.size }.onChange(of: proxy.size) { size = $0 }
+        })
         .animation(.easeInOut(duration: 0.2), value: visible)
         // Attached to the always-present container so auto-hiding the controls can't dismiss it.
         .confirmationDialog("Playback speed", isPresented: $choosingSpeed, titleVisibility: .visible) {
@@ -250,6 +306,27 @@ struct InlinePlayerControls: View {
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
                 visible = true; choosingSpeed = true
                 NSLog("DriftLoomPlayerSmoke: PASS speed choices shown at %g×", playback.playbackRate)
+                return
+            }
+            if controller.smokeAction == "audio" {
+                // Switch to audio only once playing and report what the new stream carries.
+                controller.smokeDone = true
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                let before = playback.player.currentTime().seconds
+                let started = Date()
+                playback.setAudioOnly(true)
+                Task { @MainActor in
+                    for _ in 0..<120 {
+                        try? await Task.sleep(nanoseconds: 500_000_000)
+                        guard let item = playback.player.currentItem, item.status == .readyToPlay else { continue }
+                        let tracks = (try? await item.asset.loadTracks(withMediaType: .video)) ?? []
+                        NSLog("DriftLoomPlayerSmoke: %@ audio only after %.1f s: video tracks=%d size=%.0fx%.0f at %.1f s (was %.1f s)",
+                              tracks.isEmpty && item.presentationSize == .zero ? "PASS" : "FAIL", Date().timeIntervalSince(started), tracks.count,
+                              item.presentationSize.width, item.presentationSize.height, playback.player.currentTime().seconds, before)
+                        return
+                    }
+                    NSLog("DriftLoomPlayerSmoke: FAIL audio only never became ready")
+                }
                 return
             }
             if controller.smokeAction == "hud" {
@@ -298,6 +375,49 @@ struct InlinePlayerControls: View {
         }
         .accessibilityLabel(label).accessibilityIdentifier(id)
     }
+    private var resizeSymbol: String {
+        switch preferences.videoResize {
+        case .fit: return "rectangle.arrowtriangle.2.inward"
+        case .zoom: return "plus.magnifyingglass"
+        case .fill: return "rectangle.arrowtriangle.2.outward"
+        }
+    }
+    private func resizeTitle(_ mode: VideoResize) -> String {
+        switch mode {
+        case .fit: return String(localized: "Fit")
+        case .zoom: return String(localized: "Zoom")
+        case .fill: return String(localized: "Fill")
+        }
+    }
+    private func show(_ message: String) {
+        toast = message
+        toastTask?.cancel()
+        toastTask = Task { try? await Task.sleep(nanoseconds: 2_000_000_000); if !Task.isCancelled { toast = nil } }
+    }
+    /// Brightness on the left third, volume on the right third; the middle is left to dragging the player down.
+    private var adjustDrag: some Gesture {
+        DragGesture(minimumDistance: 10)
+            .onChanged { value in
+                if adjusting == nil {
+                    guard abs(value.translation.height) > abs(value.translation.width), size.width > 0 else { return }
+                    if value.startLocation.x < size.width / 3 {
+                        adjusting = .brightness; startLevel = Double(UIScreen.main.brightness)
+                    } else if value.startLocation.x > size.width * 2 / 3 {
+                        adjusting = .volume; startLevel = Double(AVAudioSession.sharedInstance().outputVolume)
+                    } else { return }
+                    levelTask?.cancel()
+                    shownLevel = adjusting
+                }
+                // Dragging the full height of the player covers the whole range.
+                level = min(1, max(0, startLevel - Double(value.translation.height / max(160, size.height))))
+                if adjusting == .brightness { UIScreen.main.brightness = CGFloat(level) } else { HiddenVolumeView.setVolume(Float(level)) }
+            }
+            .onEnded { _ in
+                guard adjusting != nil else { return }
+                adjusting = nil
+                levelTask = Task { try? await Task.sleep(nanoseconds: 2_000_000_000); if !Task.isCancelled { shownLevel = nil } }
+            }
+    }
     private func tapZone(_ seconds: Int) -> some View {
         Color.clear.contentShape(Rectangle())
             .onTapGesture(count: 2) {
@@ -321,5 +441,31 @@ struct InlinePlayerControls: View {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             if !Task.isCancelled { visible = false }
         }
+    }
+}
+
+extension VideoResize {
+    var gravity: AVLayerVideoGravity { self == .fit ? .resizeAspect : self == .zoom ? .resizeAspectFill : .resize }
+}
+
+/// An off-screen system volume view: setting its slider changes the volume without the system HUD,
+/// the documented way for apps to offer their own volume control.
+struct HiddenVolumeView: UIViewRepresentable {
+    private static weak var slider: UISlider?
+    static func setVolume(_ value: Float) {
+        guard let slider else { return }
+        slider.setValue(value, animated: false)
+        slider.sendActions(for: .valueChanged)
+    }
+    func makeUIView(context: Context) -> MPVolumeView {
+        let view = MPVolumeView(frame: CGRect(x: -100, y: -100, width: 1, height: 1))
+        // Only its slider is used; the route button and labels stay out of sight and out of VoiceOver.
+        view.setRouteButtonImage(UIImage(), for: .normal)
+        view.accessibilityElementsHidden = true
+        Self.slider = view.subviews.compactMap { $0 as? UISlider }.first
+        return view
+    }
+    func updateUIView(_ view: MPVolumeView, context: Context) {
+        if Self.slider == nil { Self.slider = view.subviews.compactMap { $0 as? UISlider }.first }
     }
 }
