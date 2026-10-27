@@ -758,6 +758,27 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(elapsed.label.range(of: "^[0-9]+:[0-9]{2}$", options: .regularExpression) != nil, "Elapsed time reads like 1:05")
     }
 
+    func testReopeningSearchShowsThePreviousResults() {
+        let app = application()
+        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 10)); app.buttons["openSearch"].tap()
+        let query = app.textFields["searchQuery"]
+        XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("lofi")
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchSuggestion-")).firstMatch.waitForExistence(timeout: 15))
+        query.typeText("\n")
+        let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 45))
+        let suggestion = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchSuggestion-")).firstMatch
+        // Start editing again so suggestions show, then leave without searching.
+        query.tap(); query.typeText(" beats")
+        XCTAssertTrue(suggestion.waitForExistence(timeout: 15))
+        app.buttons["closeSearch"].tap()
+        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 5)); app.buttons["openSearch"].tap()
+        sleep(2)
+        XCTAssertFalse(suggestion.exists, "No stale suggestions")
+        XCTAssertTrue(result.exists, "The previous results are back")
+        XCTAssertEqual(query.value as? String, "lofi", "The field shows the search the results are for")
+    }
+
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

@@ -58,7 +58,7 @@ struct ContentView: View {
                     HomeView(selection: $selectedSection, onSearch: { searching = true }, onPlay: play)
                         .opacity(searching ? 0 : 1).allowsHitTesting(!searching).accessibilityHidden(searching)
                     // Keep the search hierarchy mounted so player dismissal restores its results and scroll.
-                    SearchView(onPlay: play, onClose: closeSearch)
+                    SearchView(onPlay: play, onClose: closeSearch, isActive: searching)
                         .opacity(searching ? 1 : 0).allowsHitTesting(searching).accessibilityHidden(!searching)
                 }
                 DownloadProgressStrip()

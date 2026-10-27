@@ -6,6 +6,8 @@ struct SearchView: View {
     @EnvironmentObject private var preferences: AppPreferences
     let onPlay: (BrowseItem) -> Void
     var onClose: () -> Void = {}
+    /// Whether search is on screen; it stays mounted underneath home to keep its results.
+    var isActive = true
     @StateObject private var results = BrowseStore()
     @StateObject private var suggestions = SuggestionStore()
     @State private var query = ""
@@ -79,7 +81,8 @@ struct SearchView: View {
                     .accessibilityLabel("Search filters").accessibilityIdentifier("searchFilters")
                 }
                 }
-                if focused, !suggestions.suggestions.isEmpty {
+                // Suggestions are for text being edited; the last search's own text shows its results.
+                if focused, query != submittedQuery, !suggestions.suggestions.isEmpty {
                     List {
                         Section("Suggestions") {
                             ForEach(suggestions.suggestions, id: \.self) { text in
@@ -112,6 +115,14 @@ struct SearchView: View {
                 }
             }
             .navigationBarHidden(true)
+            .onChange(of: isActive) { active in
+                // Leaving search (back, a link, a notification) ends any edit: iOS 15 can keep the field's focus
+                // state after the keyboard is dismissed, which brought the old suggestions back on return.
+                guard !active else { return }
+                focused = false
+                suggestions.clear()
+                if !submittedQuery.isEmpty { query = submittedQuery }
+            }
             .task(id: suggestionInput) {
                 await suggestions.load(query: query, locale: preferences.contentLocale, enabled: focused && preferences.usesSearchSuggestions && query != submittedQuery)
             }
