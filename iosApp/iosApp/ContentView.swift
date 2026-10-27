@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var linkedPage: LinkedPage?
     @State private var linkError: String?
     @State private var linkTask: Task<Void, Never>?
+    @State private var configured = false
     @Environment(\.scenePhase) private var scenePhase
     private struct LinkedPage: Identifiable { let id = UUID(); let route: BrowseRoute }
 
@@ -113,6 +114,9 @@ struct ContentView: View {
             if library.isWritable { positions.retainOnly(Set(ids)) }
         }
         .task {
+            // Runs again whenever the window's content reappears (e.g. after a full-screen presentation).
+            guard !configured else { return }
+            configured = true
             playback.remembersPositions = library.historyEnabled && library.isWritable
             playback.resumesPositions = preferences.resumesPlayback
             playback.preferredSubtitleLanguage = preferences.subtitleLanguage

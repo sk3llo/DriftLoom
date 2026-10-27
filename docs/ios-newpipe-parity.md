@@ -128,7 +128,9 @@ iOS InnerTube player response as captions, cached per video, so previews add no 
 cached in memory (40); the 160 px level is used. AVKit's own scrubber can't show custom frames, so the inline
 player no longer uses AVPlayerViewController: it is an AVPlayerLayer with DriftLoom's controls (play/pause,
 ±10 s, fullscreen, PiP via AVPictureInPictureController, AirPlay route picker) and a single seek bar with
-previews. Fullscreen presents AVPlayerViewController modally with native controls and no previews; app-drawn
+previews. Fullscreen presents AVPlayerViewController over full screen (not `.fullScreen`, which removes
+DriftLoom's views and rebuilt the page on return) with native controls and no previews. Rotating to landscape
+opens it; rotating back to portrait closes it only when rotation opened it; app-drawn
 subtitles are hosted in its content overlay. Restoring from PiP reopens the player. Verified on the iPhone 7:
 PiP starts from the inline player, fullscreen shows Apple's controls; the simulator doesn't support PiP.
 

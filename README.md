@@ -23,7 +23,8 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
   not every system control or PiP scenario has been tested.
 - Inline player with DriftLoom's own controls, like NewPipe's: play/pause, skip back/forward 10 s, playback speed,
   one seek bar under the video, fullscreen, Picture in Picture (where supported) and AirPlay. Tap the video to show them;
-  they hide after 3 s while playing. Fullscreen opens Apple's full player with its native controls.
+  they hide after 3 s while playing. Fullscreen opens Apple's full player with its native controls;
+  turning the phone sideways while watching opens it too, and turning it upright again closes it.
   Download sits in the action row under the title (Save, Share, Queue, Playlist, Download).
 - Saved videos, subscriptions, history, local playlists, and remote playlist bookmarks persist locally.
   Resume positions are bounded, tied to history recording, and removed with deleted history.

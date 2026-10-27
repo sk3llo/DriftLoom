@@ -20,9 +20,12 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
     private var pictureInPicture: AVPictureInPictureController?
     private var possibleObservation: NSKeyValueObservation?
     private weak var fullscreen: AVPlayerViewController?
+    /// Fullscreen opened by turning the phone sideways closes again when it's turned upright.
+    private var openedByRotation = false
 
     func attach(_ layer: AVPlayerLayer) {
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
+        attachCount += 1
         NSLog("DriftLoomPlayerSmoke: pip supported=%d", AVPictureInPictureController.isPictureInPictureSupported() ? 1 : 0)
 #endif
         guard pictureInPicture?.playerLayer !== layer, AVPictureInPictureController.isPictureInPictureSupported(),
@@ -49,12 +52,15 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
     }
 
     /// Apple's player with its native controls, presented over everything; its close button returns here.
-    func presentFullscreen(player: AVPlayer, overlay: SubtitleOverlay) {
-        guard fullscreen == nil, let presenter = Self.topViewController() else { return }
+    func presentFullscreen(player: AVPlayer, overlay: SubtitleOverlay, byRotation: Bool = false) {
+        guard !isFullscreen, let presenter = Self.topViewController() else { return }
         let controller = AVPlayerViewController()
         controller.player = player
         controller.allowsPictureInPicturePlayback = true
-        controller.modalPresentationStyle = .fullScreen
+        // Over full screen keeps DriftLoom's views in the window: with .fullScreen they are removed and
+        // rebuilt on return, which recreated the video surface and reloaded the page.
+        controller.modalPresentationStyle = .overFullScreen
+        openedByRotation = byRotation
         let host = UIHostingController(rootView: overlay)
         host.view.backgroundColor = .clear; host.view.isUserInteractionEnabled = false
         host.view.translatesAutoresizingMaskIntoConstraints = false
@@ -67,11 +73,27 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
         fullscreen = controller
         presenter.present(controller, animated: true)
     }
-    var isFullscreen: Bool { fullscreen != nil }
+    /// AVKit can keep a closed player controller alive, so check that it is still on screen.
+    var isFullscreen: Bool { fullscreen.map { $0.presentingViewController != nil || $0.isBeingPresented } ?? false }
 
+    /// Turning the phone sideways opens fullscreen; turning it back closes fullscreen that rotation opened.
+    func deviceRotated(to orientation: UIDeviceOrientation, player: AVPlayer, overlay: SubtitleOverlay) {
+        if orientation.isLandscape {
+            // Not over another sheet or menu, and not while Picture in Picture has the video.
+            guard !isFullscreen, !isPictureInPictureActive, player.currentItem != nil,
+                  let root = Self.keyWindow()?.rootViewController, root.presentedViewController == nil else { return }
+            presentFullscreen(player: player, overlay: overlay, byRotation: true)
+        } else if orientation == .portrait, openedByRotation, isFullscreen, let fullscreen, fullscreen.presentedViewController == nil {
+            openedByRotation = false
+            fullscreen.dismiss(animated: true)
+        }
+    }
+
+    private static func keyWindow() -> UIWindow? {
+        UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows).first { $0.isKeyWindow }
+    }
     private static func topViewController() -> UIViewController? {
-        let window = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows).first { $0.isKeyWindow }
-        var top = window?.rootViewController
+        var top = keyWindow()?.rootViewController
         while let presented = top?.presentedViewController { top = presented }
         return top
     }
@@ -82,6 +104,8 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
         return arguments.firstIndex(of: "--player-smoke").flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
     }
     var smokeDone = false
+    private(set) var attachCount = 0
+    func dismissFullscreenForSmoke() { fullscreen?.dismiss(animated: true) }
 #endif
     nonisolated func pictureInPictureControllerDidStartPictureInPicture(_ controller: AVPictureInPictureController) {
         Task { @MainActor in
@@ -209,7 +233,7 @@ struct InlinePlayerControls: View {
         .onAppear(perform: scheduleHide)
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
         .task(id: playback.phase == .playing) {
-            // --player-smoke fullscreen|speed|hud: open the full-screen player, the speed choices or the paused controls once playback runs.
+            // --player-smoke fullscreen|fullscreen-close|speed|hud: open the full-screen player, the speed choices or the paused controls once playback runs.
             guard playback.phase == .playing, !controller.smokeDone else { return }
             if controller.smokeAction == "speed" {
                 controller.smokeDone = true
@@ -226,14 +250,35 @@ struct InlinePlayerControls: View {
                 NSLog("DriftLoomPlayerSmoke: PASS controls shown")
                 return
             }
-            guard controller.smokeAction == "fullscreen" else { return }
+            guard controller.smokeAction == "fullscreen" || controller.smokeAction == "fullscreen-close" else { return }
             controller.smokeDone = true
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             controller.presentFullscreen(player: playback.player, overlay: overlay)
             NSLog("DriftLoomPlayerSmoke: %@ fullscreen presented", controller.isFullscreen ? "PASS" : "FAIL")
+            guard controller.smokeAction == "fullscreen-close" else { return }
+            // Not tied to this task: buffering changes the phase, which cancels it and skips the waits.
+            Task { @MainActor in
+                // Closing must keep the same player item and video surface.
+                try? await Task.sleep(nanoseconds: 6_000_000_000)
+                // A reload replaces the player item or recreates the video surface; time can stall on a slow network either way.
+                let item = playback.player.currentItem, surfaces = controller.attachCount
+                controller.dismissFullscreenForSmoke()
+                try? await Task.sleep(nanoseconds: 6_000_000_000)
+                let ok = item != nil && playback.player.currentItem === item && controller.attachCount == surfaces && !controller.isFullscreen
+                NSLog("DriftLoomPlayerSmoke: %@ fullscreen closed without reload (same item %d, surfaces %d)", ok ? "PASS" : "FAIL",
+                      playback.player.currentItem === item ? 1 : 0, controller.attachCount)
+                controller.presentFullscreen(player: playback.player, overlay: overlay)
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                NSLog("DriftLoomPlayerSmoke: %@ fullscreen reopened", controller.isFullscreen ? "PASS" : "FAIL")
+            }
         }
 #endif
         .onChange(of: playback.phase) { _ in scheduleHide() }
+        .onAppear { UIDevice.current.beginGeneratingDeviceOrientationNotifications() }
+        .onDisappear { UIDevice.current.endGeneratingDeviceOrientationNotifications() }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            controller.deviceRotated(to: UIDevice.current.orientation, player: playback.player, overlay: overlay)
+        }
     }
 
     private func controlButton(_ symbol: String, label: String, id: String, size: CGFloat = 24, action: @escaping () -> Void) -> some View {

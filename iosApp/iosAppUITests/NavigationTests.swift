@@ -517,6 +517,15 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(close.waitForExistence(timeout: 10), "Apple's full-screen player with its own controls")
         close.tap()
         XCTAssertTrue(seek.waitForExistence(timeout: 10), "Closing full screen returns to DriftLoom's player")
+        XCTAssertFalse(close.exists)
+
+        // Turning the phone sideways opens fullscreen; turning it upright closes it again.
+        XCUIDevice.shared.orientation = .landscapeLeft
+        XCTAssertTrue(close.waitForExistence(timeout: 10), "Landscape opens the full-screen player")
+        XCUIDevice.shared.orientation = .portrait
+        let closed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: close)
+        wait(for: [closed], timeout: 10)
+        XCTAssertTrue(seek.waitForExistence(timeout: 5), "Portrait returns to DriftLoom's player")
     }
 
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
