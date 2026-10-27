@@ -18,6 +18,8 @@ struct VideoDetailView: View {
     @State private var choosingFormat = false
     @StateObject private var inline = InlinePlayerController()
     @Environment(\.horizontalSizeClass) private var sizeClass
+    /// How far the page follows a downward drag on the header or video before minimizing, as in NewPipe.
+    @State private var dragOffset: CGFloat = 0
     private enum DetailTab: CaseIterable {
         case related, comments, description, queue
         var title: String {
@@ -67,6 +69,7 @@ struct VideoDetailView: View {
             .navigationBarHidden(true)
 
         }
+        .offset(y: dragOffset)
         .id(playback.videoID)
         .sheet(isPresented: $sharing) {
             if let url = playback.currentItemMetadata?.shareURL { ShareSheet(items: [url]) }
@@ -156,6 +159,24 @@ struct VideoDetailView: View {
             Label("Stream refreshed", systemImage: "arrow.clockwise").font(.caption).foregroundStyle(.secondary)
         }
     }
+    /// Drag the video or the header down to shrink the player into the mini-player bar.
+    private var minimizeDrag: some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .global)
+            .onChanged { value in
+                // Only a mostly downward drag moves the page; sideways drags stay with the controls.
+                guard value.translation.height > 0, value.translation.height > abs(value.translation.width) || dragOffset > 0 else { return }
+                dragOffset = value.translation.height
+            }
+            .onEnded { value in
+                let height = UIScreen.main.bounds.height
+                if dragOffset > 0, value.translation.height > height * 0.2 || value.predictedEndTranslation.height > height * 0.45 {
+                    withAnimation(.easeOut(duration: 0.2)) { dragOffset = height }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { onCollapse() }
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { dragOffset = 0 }
+                }
+            }
+    }
     private var header: some View {
         HStack {
             Button(action: onCollapse) { Image(systemName: "chevron.down").frame(width: 44, height: 44) }
@@ -165,6 +186,7 @@ struct VideoDetailView: View {
             Spacer()
             playbackOptions
         }.padding(.horizontal, 6).background(Color(.systemBackground))
+        .contentShape(Rectangle()).gesture(minimizeDrag)
     }
     @ViewBuilder private var playerArea: some View {
         Group {
@@ -174,6 +196,7 @@ struct VideoDetailView: View {
                     InlinePlayerControls(playback: playback, controller: inline, overlay: overlay)
                 }
                 .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
+                .simultaneousGesture(minimizeDrag)
                 .accessibilityElement(children: .contain).accessibilityIdentifier("videoPlayer")
             } else {
                 ZStack {
@@ -181,6 +204,7 @@ struct VideoDetailView: View {
                     if case .failed = playback.phase { Image(systemName: "exclamationmark.triangle").foregroundColor(.white) }
                     else { ProgressView().tint(.white) }
                 }.aspectRatio(16 / 9, contentMode: .fit)
+                .contentShape(Rectangle()).gesture(minimizeDrag)
             }
         }
         if playback.player.currentItem != nil {

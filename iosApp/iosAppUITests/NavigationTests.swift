@@ -612,6 +612,29 @@ final class NavigationTests: XCTestCase {
         wait(for: [changed], timeout: 30)
     }
 
+    func testDraggingThePlayerDownMinimizesIt() {
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+        let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
+        XCTAssertTrue(player.waitForExistence(timeout: 30))
+        // A short drag springs back.
+        let start = player.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.3))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 60)))
+        sleep(1)
+        XCTAssertTrue(player.isHittable, "A short drag keeps the player open")
+        XCTAssertFalse(app.buttons["expandMiniPlayer"].exists)
+        // A long drag shrinks it into the mini-player, which keeps playing and expands again.
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 420)))
+        let mini = app.buttons["expandMiniPlayer"]
+        XCTAssertTrue(mini.waitForExistence(timeout: 5), "Dragging down minimizes the player")
+        XCTAssertFalse(app.descendants(matching: .any)["videoPlayer"].firstMatch.exists)
+        mini.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["videoPlayer"].firstMatch.waitForExistence(timeout: 5), "Tapping the bar opens the player again")
+        // The header is a handle too.
+        let header = app.buttons["minimizePlayer"].coordinate(withNormalizedOffset: CGVector(dx: 3, dy: 0.5))
+        header.press(forDuration: 0.05, thenDragTo: header.withOffset(CGVector(dx: 0, dy: 420)))
+        XCTAssertTrue(mini.waitForExistence(timeout: 5), "Dragging the header down minimizes too")
+    }
+
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

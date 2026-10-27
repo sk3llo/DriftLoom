@@ -24,6 +24,8 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Chapters from the description's timestamps (YouTube's rule: at least three, starting at 0:00, 10 s apart):
   gaps in the seek bar, the chapter name while scrubbing and under the bar, and a tappable list in Description.
 - Double-tap the left or right half of the video to skip 10 s back or forward.
+- Drag the video or the player's header down to shrink it into the mini-player bar, as in NewPipe; a short drag
+  springs back.
 - Comments can be sorted by top or newest (YouTube's own orders, from the first comments page). SoundCloud
   comments have no sort menu.
 - iPad: in landscape the player and its details sit beside the Related/Comments/Description/Queue tabs; portrait
