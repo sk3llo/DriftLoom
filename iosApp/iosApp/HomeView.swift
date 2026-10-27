@@ -4,6 +4,69 @@ import SwiftUI
 
 enum AppStyle {
     static let accent = Color(red: 205 / 255, green: 32 / 255, blue: 31 / 255)
+    /// The home toolbar, as in NewPipe: the accent red, deeper in dark mode.
+    static let bar = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark ? UIColor(red: 0.55, green: 0.13, blue: 0.12, alpha: 1)
+            : UIColor(red: 205 / 255, green: 32 / 255, blue: 31 / 255, alpha: 1)
+    })
+}
+
+/// NewPipe's home tab bar: one icon per tab at equal widths, with an underline under the selected one.
+/// It scrolls only when the tabs no longer fit at a comfortable width. Long-press to customize.
+struct HomeTabBar: View {
+    let tabs: [HomeTabKey]
+    @Binding var selection: HomeTabKey
+    let title: (HomeTabKey) -> String
+    let symbol: (HomeTabKey) -> String
+    let thumbnail: (HomeTabKey) -> URL?
+    let onCustomize: () -> Void
+    private let minimumWidth: CGFloat = 60
+
+    var body: some View {
+        GeometryReader { proxy in
+            let fits = CGFloat(tabs.count) * minimumWidth <= proxy.size.width
+            let width = fits ? proxy.size.width / CGFloat(max(1, tabs.count)) : minimumWidth + 8
+            if fits {
+                row(width: width)
+            } else {
+                ScrollViewReader { reader in
+                    ScrollView(.horizontal, showsIndicators: false) { row(width: width) }
+                        .onChange(of: selection) { value in withAnimation { reader.scrollTo(value, anchor: .center) } }
+                }
+            }
+        }
+        .frame(height: 50)
+        .background(AppStyle.bar)
+        .contextMenu { Button { onCustomize() } label: { Label("Customize tabs", systemImage: "slider.horizontal.3") } }
+    }
+
+    private func row(width: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            ForEach(tabs, id: \.self) { tab in
+                Button { selection = tab } label: {
+                    VStack(spacing: 0) {
+                        icon(tab).frame(height: 47)
+                        Rectangle().fill(selection == tab ? Color.white : .clear).frame(height: 3)
+                    }
+                    .frame(width: width).contentShape(Rectangle())
+                    .foregroundColor(.white.opacity(selection == tab ? 1 : 0.7))
+                }
+                .buttonStyle(.plain).id(tab)
+                .accessibilityLabel(title(tab)).accessibilityAddTraits(selection == tab ? .isSelected : [])
+                .accessibilityIdentifier("tabBar-" + tab.rawValue)
+            }
+        }
+    }
+
+    @ViewBuilder private func icon(_ tab: HomeTabKey) -> some View {
+        if let url = thumbnail(tab) {
+            AsyncImage(url: url) { $0.resizable().scaledToFill() } placeholder: { Image(systemName: symbol(tab)).font(.title3) }
+                .frame(width: 26, height: 26).clipShape(Circle())
+                .overlay(Circle().stroke(Color.white.opacity(selection == tab ? 1 : 0), lineWidth: 1.5))
+        } else {
+            Image(systemName: symbol(tab)).font(.title3).symbolVariant(selection == tab ? .fill : .none)
+        }
+    }
 }
 
 struct SectionStrip<Value: Hashable>: View {
@@ -35,7 +98,7 @@ struct SectionStrip<Value: Hashable>: View {
 }
 
 private enum HomeSheet: String, Identifiable {
-    case settings, about, link, downloads, groups
+    case settings, about, link, downloads, groups, tabs
     var id: String { rawValue }
 }
 
@@ -72,26 +135,43 @@ struct HomeView: View {
         case let .local(id): return playlists.playlists.first { $0.id == id }?.name ?? String(localized: "Playlist")
         }
     }
+    private func tabSymbol(_ tab: HomeTabKey) -> String {
+        switch tab {
+        case let .section(section): return section.symbol
+        case let .pinned(id): return pinnedTabs.tabs.first { $0.id == id }?.item.kind == .channel ? "person.crop.circle" : "rectangle.stack"
+        case .local: return "music.note.list"
+        }
+    }
+    /// Pinned channels show their avatar, as NewPipe's channel tabs do.
+    private func tabThumbnail(_ tab: HomeTabKey) -> URL? {
+        guard case let .pinned(id) = tab, let item = pinnedTabs.tabs.first(where: { $0.id == id })?.item, item.kind == .channel else { return nil }
+        return item.thumbnail
+    }
     var body: some View {
         ZStack(alignment: .leading) {
             AppNavigation {
                 VStack(spacing: 0) {
+                    // NewPipe's toolbar: the current tab's name on the accent colour, with a fixed icon tab bar below.
                     HStack(spacing: 0) {
-                        Button { menuVisible = true } label: { Image(systemName: "line.3.horizontal").frame(width: 44, height: 44) }
+                        Button { menuVisible = true } label: { Image(systemName: "line.3.horizontal").font(.title3).frame(width: 48, height: 52) }
                             .accessibilityLabel("Main menu").accessibilityIdentifier("mainMenu")
-                        Spacer()
-                        Text("DriftLoom").font(.headline).lineLimit(1)
-                        Spacer()
-                        Button(action: onSearch) { Image(systemName: "magnifyingglass").frame(width: 44, height: 44) }
+                        Text(tabTitle(currentTab.wrappedValue)).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                            .padding(.leading, 6).frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityAddTraits(.isHeader).accessibilityIdentifier("homeTitle")
+                        Button(action: onSearch) { Image(systemName: "magnifyingglass").font(.title3).frame(width: 44, height: 52) }
                             .accessibilityLabel("Search").accessibilityIdentifier("openSearch")
                         Menu {
                             IconButton("Open a link", systemImage: "link") { sheet = .link }
+                            IconButton("Customize tabs", systemImage: "slider.horizontal.3") { sheet = .tabs }
                             IconButton("Settings", systemImage: "gearshape") { sheet = .settings }
                             IconButton("About", systemImage: "info.circle") { sheet = .about }
-                        } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }
+                        } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).font(.title3).frame(width: 44, height: 52) }
                         .accessibilityLabel("More options").accessibilityIdentifier("moreOptions")
-                    }.padding(.horizontal, 6).background(Color(.systemBackground))
-                    SectionStrip(values: homeTabs, selection: currentTab, title: tabTitle)
+                    }
+                    .padding(.horizontal, 4).foregroundColor(.white)
+                    .background(AppStyle.bar.ignoresSafeArea(edges: .top))
+                    HomeTabBar(tabs: homeTabs, selection: currentTab, title: tabTitle, symbol: tabSymbol, thumbnail: tabThumbnail,
+                               onCustomize: { sheet = .tabs })
                     if let id = selectedLocal, playlists.playlists.contains(where: { $0.id == id }) {
                         LocalPlaylistView(id: id, onPlay: onPlay, embedded: true).id(id)
                     } else if let id = selectedPinned, let tab = pinnedTabs.tabs.first(where: { $0.id == id }) {
@@ -184,6 +264,11 @@ struct HomeView: View {
             case .groups: SubscriptionGroupsView()
             case .settings: SettingsView()
             case .about: AboutView()
+            case .tabs:
+                AppNavigation {
+                    HomeTabsSettings()
+                        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { sheet = nil }.accessibilityIdentifier("closeSheet") } }
+                }
             case .link: OpenVideoLinkView { video in pendingVideo = video; sheet = nil }
             }
         }

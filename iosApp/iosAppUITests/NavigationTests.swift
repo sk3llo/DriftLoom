@@ -285,9 +285,9 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["localPlaylistOptions"].waitForExistence(timeout: 5)); app.buttons["localPlaylistOptions"].tap()
         app.buttons["Add to home"].tap()
         app.terminate(); app.launch()
-        let tab = app.buttons["ROAD TRIP"]
+        let tab = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tabBar-local:")).firstMatch
         XCTAssertTrue(tab.waitForExistence(timeout: 10), "Pinned local playlist must survive relaunch as a home tab")
-        let subscriptions = app.buttons["SUBSCRIPTIONS"]
+        let subscriptions = app.buttons["tabBar-section:Subscriptions"]
         XCTAssertGreaterThan(tab.frame.minX, subscriptions.frame.minX, "New pins follow the sections by default")
         app.buttons["mainMenu"].tap()
         let drawerEntry = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'drawer-local-'")).firstMatch
@@ -309,8 +309,27 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(tab.waitForExistence(timeout: 5))
         XCTAssertLessThan(tab.frame.minX, subscriptions.frame.minX, "The playlist tab moved ahead of Subscriptions")
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["ROAD TRIP"].waitForExistence(timeout: 10))
-        XCTAssertLessThan(app.buttons["ROAD TRIP"].frame.minX, app.buttons["SUBSCRIPTIONS"].frame.minX, "The interleaved order survives relaunch")
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tabBar-local:")).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertLessThan(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tabBar-local:")).firstMatch.frame.minX, app.buttons["tabBar-section:Subscriptions"].frame.minX, "The interleaved order survives relaunch")
+    }
+
+    func testHomeToolbarShowsTheTabNameAndTabsCanBeCustomized() {
+        let app = application()
+        let live = app.buttons["tabBar-section:Live"]
+        XCTAssertTrue(live.waitForExistence(timeout: 10))
+        XCTAssertEqual(live.label, "Live", "Icon tabs are named for VoiceOver")
+        app.buttons["tabBar-section:History"].tap()
+        XCTAssertEqual(app.staticTexts["homeTitle"].label, "History", "The toolbar names the open tab")
+        XCTAssertTrue(app.buttons["tabBar-section:History"].isSelected)
+        app.buttons["moreOptions"].tap()
+        app.buttons["Customize tabs"].tap()
+        XCTAssertTrue(app.navigationBars["Home tabs"].waitForExistence(timeout: 5), "Customize opens the home tab settings")
+        let gaming = app.switches["Gaming"]
+        for _ in 0..<3 where !gaming.isHittable { app.swipeUp() }
+        gaming.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        XCTAssertEqual(gaming.value as? String, "1")
+        app.buttons["closeSheet"].tap()
+        XCTAssertTrue(app.buttons["tabBar-section:Gaming"].waitForExistence(timeout: 5), "A tab turned on in Customize appears in the bar")
     }
 
     func testKioskFromDrawerLoadsYouTubeLiveAndStaysOnHome() {
@@ -323,8 +342,8 @@ final class NavigationTests: XCTestCase {
         let video = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browseVideo-'")).firstMatch
         XCTAssertTrue(video.waitForExistence(timeout: 45), "The Live kiosk should list videos")
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["LIVE"].waitForExistence(timeout: 10), "Live is on home")
-        XCTAssertLessThan(app.buttons["LIVE"].frame.minX, app.buttons["SUBSCRIPTIONS"].frame.minX, "Live is the first home tab")
+        XCTAssertTrue(app.buttons["tabBar-section:Live"].waitForExistence(timeout: 10), "Live is on home")
+        XCTAssertLessThan(app.buttons["tabBar-section:Live"].frame.minX, app.buttons["tabBar-section:Subscriptions"].frame.minX, "Live is the first home tab")
     }
 
     func testSoundCloudSearchPlaysTracksAndOpensProfiles() {

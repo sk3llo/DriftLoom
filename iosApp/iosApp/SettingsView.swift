@@ -112,7 +112,7 @@ struct SettingsView: View {
     }
 }
 
-private struct HomeTabsSettings: View {
+struct HomeTabsSettings: View {
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
     @EnvironmentObject private var playlists: PlaylistStore
