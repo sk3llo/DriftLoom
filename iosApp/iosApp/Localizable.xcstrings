@@ -2612,6 +2612,22 @@
         }
       }
     },
+    "Newest first": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mais recentes primeiro"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Спочатку нові"
+          }
+        }
+      }
+    },
     "Next": {
       "localizations": {
         "pt": {
@@ -4133,6 +4149,22 @@
         }
       }
     },
+    "Sort comments": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordenar comentários"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сортування коментарів"
+          }
+        }
+      }
+    },
     "SoundCloud": {
       "shouldTranslate": false
     },
@@ -4565,6 +4597,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "У цьому розділі немає доступних елементів. Спробуйте інший фільтр або вкладку."
+          }
+        }
+      }
+    },
+    "Top comments": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Principais comentários"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Найпопулярніші"
           }
         }
       }

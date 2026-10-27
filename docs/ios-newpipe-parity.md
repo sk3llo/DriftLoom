@@ -189,3 +189,8 @@ the queue archive no longer restores a cap. Verified on the iPhone 7: a related 
 video, a 360p Wi-Fi default set `preferredMaximumResolution` to 640×360, and sample chapters (`--chapters-smoke`,
 since YouTube refuses most videos with real chapters from the test network) drew in the seek bar and preview.
 Double-tap seeking is covered by the simulator UI test.
+
+Comment sorting reads the `sortFilterSubMenuRenderer` of the first comments page (top, then newest, as NewPipe
+does) and reloads from the chosen entry's continuation token; later pages and SoundCloud carry no menu. The iPad
+layout switches on a regular horizontal size class with a landscape window at least 900 pt wide; verified on the
+iPad (10th generation) simulator in both orientations.

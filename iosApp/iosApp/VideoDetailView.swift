@@ -17,6 +17,7 @@ struct VideoDetailView: View {
     @State private var downloading = false
     @State private var choosingFormat = false
     @StateObject private var inline = InlinePlayerController()
+    @Environment(\.horizontalSizeClass) private var sizeClass
     private enum DetailTab: CaseIterable {
         case related, comments, description, queue
         var title: String {
@@ -31,92 +32,35 @@ struct VideoDetailView: View {
 
     var body: some View {
         AppNavigation {
-            VStack(spacing: 0) {
-                HStack {
-                    Button(action: onCollapse) { Image(systemName: "chevron.down").frame(width: 44, height: 44) }
-                        .accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
-                    Spacer()
-                    Text(playback.currentItemMetadata?.isSoundCloud == true ? "SoundCloud" : "YouTube").font(.headline)
-                    Spacer()
-                    playbackOptions
-                }.padding(.horizontal, 6).background(Color(.systemBackground))
-                Group {
-                    if playback.player.currentItem != nil {
-                        ZStack {
-                            InlinePlayerSurface(player: playback.player, overlay: overlay, controller: inline)
-                            InlinePlayerControls(playback: playback, controller: inline, overlay: overlay)
+            GeometryReader { proxy in
+                // iPad in landscape: the player and its details beside the related list, as on YouTube.
+                if sizeClass == .regular && proxy.size.width > proxy.size.height && proxy.size.width >= 900 {
+                    VStack(spacing: 0) {
+                        header
+                        HStack(alignment: .top, spacing: 0) {
+                            VStack(spacing: 0) {
+                                // The player takes its full 16:9 height before the details scroll below it.
+                                playerArea.layoutPriority(1)
+                                ScrollView { info }
+                            }
+                            .frame(width: proxy.size.width * 0.62)
+                            Divider()
+                            VStack(spacing: 0) {
+                                SectionStrip(values: DetailTab.allCases, selection: $tab, title: { $0.title })
+                                ScrollView { tabContent }
+                            }
                         }
-                        .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
-                        .accessibilityElement(children: .contain).accessibilityIdentifier("videoPlayer")
-                    } else {
-                        ZStack {
-                            Color.black
-                            if case .failed = playback.phase { Image(systemName: "exclamationmark.triangle").foregroundColor(.white) }
-                            else { ProgressView().tint(.white) }
-                        }.aspectRatio(16 / 9, contentMode: .fit)
                     }
-                }
-                if playback.player.currentItem != nil {
-                    StoryboardScrubber(playback: playback, storyboard: playback.storyboard).id(playback.videoID).padding(.top, 8)
-                }
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(playback.title).font(.headline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
-                        if let details = discussion.details {
-                            Text([details.views, details.date].filter { !$0.isEmpty }.joined(separator: " · "))
-                                .font(.caption).foregroundStyle(.secondary)
+                    .accessibilityElement(children: .contain).accessibilityIdentifier("sideBySideDetail")
+                } else {
+                    VStack(spacing: 0) {
+                        header
+                        playerArea
+                        ScrollView {
+                            info
+                            SectionStrip(values: DetailTab.allCases, selection: $tab, title: { $0.title })
+                            tabContent
                         }
-                        playbackStatus
-                        if let item = playback.currentItemMetadata {
-                            HStack {
-                                if let id = item.channelID {
-                                    BrowseLink(route: .channel(id), onPlay: onPlay) {
-                                        Label(item.subtitle.isEmpty ? String(localized: "Channel") : item.subtitle, systemImage: "person.crop.circle")
-                                            .font(.subheadline).foregroundStyle(.primary).lineLimit(1)
-                                    }
-                                    Spacer()
-                                    Button(library.isSubscribed(id) ? "SUBSCRIBED" : "SUBSCRIBE") {
-                                        library.toggleSubscription(BrowseItem(contentID: id, kind: .channel,
-                                                                              title: item.subtitle.isEmpty ? String(localized: "Channel") : item.subtitle))
-                                    }.font(.caption.weight(.semibold)).disabled(!library.isWritable)
-                                } else { Text(item.isSoundCloud ? "SoundCloud" : "YouTube").font(.caption).foregroundStyle(.secondary) }
-                            }
-                            HStack(spacing: 0) {
-                                detailAction(library.isSaved(item.contentID) ? "Saved" : "Save",
-                                             symbol: library.isSaved(item.contentID) ? "bookmark.fill" : "bookmark") { library.toggleSaved(item) }
-                                    .disabled(!library.isWritable)
-                                detailAction("Share", symbol: "square.and.arrow.up") { sharing = true }
-                                detailAction("Queue", symbol: "list.bullet") { tab = .queue }
-                                detailAction("Playlist", symbol: "plus.rectangle.on.rectangle") {
-                                    NotificationCenter.default.post(name: .driftLoomAddToPlaylist, object: item)
-                                }
-                                detailAction("Download", symbol: "arrow.down.circle") { downloading = true }.accessibilityIdentifier("detailDownload")
-                            }
-                        }
-                    }.padding(12)
-                    SectionStrip(values: DetailTab.allCases, selection: $tab, title: { $0.title })
-                    switch tab {
-                    case .related:
-                        LazyVStack(spacing: 14) {
-                            if related.isLoading { ProgressView("Loading related videos…").padding() }
-                            if let error = related.error {
-                                Text(error).font(.footnote).foregroundStyle(.secondary)
-                                Button("Try again") { Task { if let id = playback.videoID { await related.load(.related(id)) } } }
-                            }
-                            ForEach(related.items) { item in BrowseResultRow(item: item, onPlay: onPlay) }
-                            if let error = related.paginationError { Text(error).font(.footnote).foregroundStyle(.secondary) }
-                            if related.canLoadMore {
-                                Button(related.isLoadingMore ? "Loading…" : "Load more") { Task { await related.loadMore() } }.disabled(related.isLoadingMore)
-                            }
-                        }.padding(12)
-                    case .comments:
-                        CommentsPanel(store: discussion)
-                    case .description:
-                        if !playback.chapters.isEmpty { chapterList }
-                        Text(discussion.details?.description.isEmpty == false ? discussion.details!.description : playback.video?.description.isEmpty == false ? playback.video!.description : String(localized: "No description is available."))
-                            .font(.subheadline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
-                    case .queue:
-                        QueuePanel()
                     }
                 }
             }
@@ -133,6 +77,15 @@ struct VideoDetailView: View {
         }
         .task(id: playback.videoID) { if let id = playback.videoID { await related.load(.related(id)) } }
         .task(id: playback.videoID) { if let id = playback.videoID { await discussion.load(videoID: id) } }
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+        .onAppear {
+            // --detail-tab comments: open a tab directly for device screenshots.
+            let arguments = ProcessInfo.processInfo.arguments
+            if let flag = arguments.firstIndex(of: "--detail-tab"), arguments.indices.contains(flag + 1) {
+                tab = DetailTab.allCases.first { "\($0)" == arguments[flag + 1] } ?? tab
+            }
+        }
+#endif
         .onReceive(discussion.$details) { details in
             if let details, let id = playback.videoID { playback.useChapters(fromDescription: details.description, videoID: id) }
         }
@@ -201,6 +154,98 @@ struct VideoDetailView: View {
         }
         if playback.didRecover {
             Label("Stream refreshed", systemImage: "arrow.clockwise").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    private var header: some View {
+        HStack {
+            Button(action: onCollapse) { Image(systemName: "chevron.down").frame(width: 44, height: 44) }
+                .accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
+            Spacer()
+            Text(playback.currentItemMetadata?.isSoundCloud == true ? "SoundCloud" : "YouTube").font(.headline)
+            Spacer()
+            playbackOptions
+        }.padding(.horizontal, 6).background(Color(.systemBackground))
+    }
+    @ViewBuilder private var playerArea: some View {
+        Group {
+            if playback.player.currentItem != nil {
+                ZStack {
+                    InlinePlayerSurface(player: playback.player, overlay: overlay, controller: inline)
+                    InlinePlayerControls(playback: playback, controller: inline, overlay: overlay)
+                }
+                .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
+                .accessibilityElement(children: .contain).accessibilityIdentifier("videoPlayer")
+            } else {
+                ZStack {
+                    Color.black
+                    if case .failed = playback.phase { Image(systemName: "exclamationmark.triangle").foregroundColor(.white) }
+                    else { ProgressView().tint(.white) }
+                }.aspectRatio(16 / 9, contentMode: .fit)
+            }
+        }
+        if playback.player.currentItem != nil {
+            StoryboardScrubber(playback: playback, storyboard: playback.storyboard).id(playback.videoID).padding(.top, 8)
+        }
+    }
+    private var info: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(playback.title).font(.headline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+            if let details = discussion.details {
+                Text([details.views, details.date].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            playbackStatus
+            if let item = playback.currentItemMetadata {
+                HStack {
+                    if let id = item.channelID {
+                        BrowseLink(route: .channel(id), onPlay: onPlay) {
+                            Label(item.subtitle.isEmpty ? String(localized: "Channel") : item.subtitle, systemImage: "person.crop.circle")
+                                .font(.subheadline).foregroundStyle(.primary).lineLimit(1)
+                        }
+                        Spacer()
+                        Button(library.isSubscribed(id) ? "SUBSCRIBED" : "SUBSCRIBE") {
+                            library.toggleSubscription(BrowseItem(contentID: id, kind: .channel,
+                                                                  title: item.subtitle.isEmpty ? String(localized: "Channel") : item.subtitle))
+                        }.font(.caption.weight(.semibold)).disabled(!library.isWritable)
+                    } else { Text(item.isSoundCloud ? "SoundCloud" : "YouTube").font(.caption).foregroundStyle(.secondary) }
+                }
+                HStack(spacing: 0) {
+                    detailAction(library.isSaved(item.contentID) ? "Saved" : "Save",
+                                 symbol: library.isSaved(item.contentID) ? "bookmark.fill" : "bookmark") { library.toggleSaved(item) }
+                        .disabled(!library.isWritable)
+                    detailAction("Share", symbol: "square.and.arrow.up") { sharing = true }
+                    detailAction("Queue", symbol: "list.bullet") { tab = .queue }
+                    detailAction("Playlist", symbol: "plus.rectangle.on.rectangle") {
+                        NotificationCenter.default.post(name: .driftLoomAddToPlaylist, object: item)
+                    }
+                    detailAction("Download", symbol: "arrow.down.circle") { downloading = true }.accessibilityIdentifier("detailDownload")
+                }
+            }
+        }.padding(12)
+    }
+    @ViewBuilder private var tabContent: some View {
+        switch tab {
+        case .related:
+            LazyVStack(spacing: 14) {
+                if related.isLoading { ProgressView("Loading related videos…").padding() }
+                if let error = related.error {
+                    Text(error).font(.footnote).foregroundStyle(.secondary)
+                    Button("Try again") { Task { if let id = playback.videoID { await related.load(.related(id)) } } }
+                }
+                ForEach(related.items) { item in BrowseResultRow(item: item, onPlay: onPlay) }
+                if let error = related.paginationError { Text(error).font(.footnote).foregroundStyle(.secondary) }
+                if related.canLoadMore {
+                    Button(related.isLoadingMore ? "Loading…" : "Load more") { Task { await related.loadMore() } }.disabled(related.isLoadingMore)
+                }
+            }.padding(12)
+        case .comments:
+            CommentsPanel(store: discussion)
+        case .description:
+            if !playback.chapters.isEmpty { chapterList }
+            Text(discussion.details?.description.isEmpty == false ? discussion.details!.description : playback.video?.description.isEmpty == false ? playback.video!.description : String(localized: "No description is available."))
+                .font(.subheadline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
+        case .queue:
+            QueuePanel()
         }
     }
     private var chapterList: some View {
@@ -305,6 +350,19 @@ private struct CommentsPanel: View {
     @ObservedObject var store: DiscussionStore
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 18) {
+            if !store.sortOptions.isEmpty {
+                Menu {
+                    ForEach(store.sortOptions, id: \.self) { option in
+                        Button { Task { await store.setSort(option) } } label: {
+                            if option == store.sort { Label(title(option), systemImage: "checkmark") } else { Text(title(option)) }
+                        }
+                    }
+                } label: {
+                    Label(title(store.sort), systemImage: "arrow.up.arrow.down").font(.subheadline.weight(.medium))
+                        .frame(minHeight: 44).contentShape(Rectangle())
+                }
+                .accessibilityLabel("Sort comments").accessibilityValue(title(store.sort)).accessibilityIdentifier("commentSort")
+            }
             if let error = store.error {
                 Text(error).font(.footnote).foregroundStyle(.secondary)
                 Button("Try comments again") { Task { await store.loadMore() } }
@@ -334,6 +392,9 @@ private struct CommentsPanel: View {
         .task(id: store.details?.comments?.token) {
             if !store.hasLoadedComments { await store.loadMore() }
         }
+    }
+    private func title(_ sort: CommentSort) -> LocalizedStringKey {
+        sort == .top ? "Top comments" : "Newest first"
     }
     private func commentBody(_ comment: VideoComment) -> some View {
         VStack(alignment: .leading, spacing: 5) {

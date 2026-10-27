@@ -78,6 +78,8 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
 
     /// Turning the phone sideways opens fullscreen; turning it back closes fullscreen that rotation opened.
     func deviceRotated(to orientation: UIDeviceOrientation, player: AVPlayer, overlay: SubtitleOverlay) {
+        // An iPad has room for the player beside the details; only phones go full screen when turned.
+        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
         if orientation.isLandscape {
             // Not over another sheet or menu, and not while Picture in Picture has the video.
             guard !isFullscreen, !isPictureInPictureActive, player.currentItem != nil,

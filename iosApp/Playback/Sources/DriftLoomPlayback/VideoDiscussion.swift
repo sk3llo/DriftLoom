@@ -19,9 +19,13 @@ public struct VideoComment: Identifiable, Sendable {
     public let likes: String
     public let replies: CommentCursor?
 }
+/// YouTube's comment orders, from the sort menu of the first comments page.
+public enum CommentSort: CaseIterable, Sendable { case top, newest }
 public struct CommentPage: Sendable {
     public let comments: [VideoComment]
     public let next: CommentCursor?
+    /// Where each order starts; empty when the service has no sort menu (SoundCloud, later pages).
+    public var sorts: [CommentSort: CommentCursor] = [:]
 }
 public struct VideoDetails: Sendable {
     public let views: String
@@ -147,8 +151,14 @@ enum DiscussionParser {
                 }
             }
         }
+        // The menu lists "Top comments" then "Newest first", in the content language.
+        var sorts: [CommentSort: CommentCursor] = [:]
+        let menu = nodes(root, key: "sortFilterSubMenuRenderer").first?["subMenuItems"] as? [Object] ?? []
+        for (sort, item) in zip(CommentSort.allCases, menu) {
+            if let start = cursor(item["serviceEndpoint"] ?? item, version: version) { sorts[sort] = start }
+        }
         var seen = Set<String>()
-        return CommentPage(comments: result.filter { seen.insert($0.id).inserted }, next: next)
+        return CommentPage(comments: result.filter { seen.insert($0.id).inserted }, next: next, sorts: sorts.count == CommentSort.allCases.count ? sorts : [:])
     }
 }
 
@@ -162,6 +172,10 @@ public final class DiscussionStore: ObservableObject {
     @Published public private(set) var error: String?
     @Published public private(set) var hasLoadedComments = false
     @Published public private(set) var canLoadMore = false
+    @Published public private(set) var sort = CommentSort.top
+    /// The orders YouTube offers for this video; empty until the first page loads, or when there is no choice.
+    @Published public private(set) var sortOptions: [CommentSort] = []
+    private var sortCursors: [CommentSort: CommentCursor] = [:]
     private let client: any DiscussionLoading
     private var next: CommentCursor?
     private var replyCursors: [String: CommentCursor] = [:]
@@ -170,6 +184,7 @@ public final class DiscussionStore: ObservableObject {
     public func load(videoID: String) async {
         generation = UUID(); let token = generation
         details = nil; comments = []; replies = [:]; next = nil; replyCursors = [:]
+        sort = .top; sortOptions = []; sortCursors = [:]
         canLoadMore = false; hasLoadedComments = false; error = nil; loading = true; loadingReplies = []
         do {
             let value = try await client.details(videoID: videoID)
@@ -186,8 +201,17 @@ public final class DiscussionStore: ObservableObject {
             try Task.checkCancellation(); guard generation == token else { return }
             var ids = Set(comments.map(\.id)); comments += page.comments.filter { ids.insert($0.id).inserted }
             next = page.next == cursor ? nil : page.next; canLoadMore = next != nil; hasLoadedComments = true
+            if sortCursors.isEmpty, !page.sorts.isEmpty { sortCursors = page.sorts; sortOptions = CommentSort.allCases }
         } catch { if generation == token, !Task.isCancelled { self.error = error.localizedDescription } }
         if generation == token { loading = false }
+    }
+    /// Reload the comments in another order.
+    public func setSort(_ value: CommentSort) async {
+        guard value != sort, let start = sortCursors[value] else { return }
+        generation = UUID()
+        sort = value; comments = []; replies = [:]; replyCursors = [:]; loadingReplies = []
+        next = start; canLoadMore = true; hasLoadedComments = false; loading = false; error = nil
+        await loadMore()
     }
     public func loadReplies(_ comment: VideoComment) async {
         guard !loadingReplies.contains(comment.id), let cursor = replyCursors[comment.id] ?? (replies[comment.id] == nil ? comment.replies : nil) else { return }

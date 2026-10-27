@@ -560,6 +560,58 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(third.label.contains(chapter.label), "Tapping a chapter jumps to it")
     }
 
+    func testIPadShowsThePlayerBesideTheTabsInLandscape() throws {
+        guard UIDevice.current.userInterfaceIdiom == .pad else { throw XCTSkip("iPad layout") }
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "--player-smoke", "hud"])
+        let side = app.descendants(matching: .any)["sideBySideDetail"].firstMatch
+        XCTAssertTrue(side.waitForExistence(timeout: 30), "Landscape iPad puts the tabs beside the player")
+        let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
+        XCTAssertTrue(player.waitForExistence(timeout: 30))
+        let related = app.buttons.matching(identifier: "sectionTab-0").allElementsBoundByIndex.first { $0.isHittable }
+        XCTAssertNotNil(related)
+        if let related { XCTAssertGreaterThan(related.frame.minX, player.frame.maxX - 1, "Tabs sit to the right of the player") }
+        sleep(4)
+        let close = app.buttons.matching(NSPredicate(format: "label IN {'Close', 'Done', 'Dismiss'}")).firstMatch
+        XCTAssertFalse(close.exists, "Turning an iPad doesn't force full screen")
+        saveScreenshot("ipad-landscape")
+        app.buttons.matching(identifier: "sectionTab-1").allElementsBoundByIndex.first { $0.isHittable }?.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["commentSort"].firstMatch.waitForExistence(timeout: 30), "Comments offer a sort order")
+        saveScreenshot("ipad-comments")
+        XCUIDevice.shared.orientation = .portrait
+        let stacked = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: side)
+        wait(for: [stacked], timeout: 10)
+        saveScreenshot("ipad-portrait")
+    }
+    /// Screenshots for review when TEST_RUNNER_TOUR_DIR is set.
+    private func saveScreenshot(_ name: String) {
+        guard let path = ProcessInfo.processInfo.environment["TOUR_DIR"] else { return }
+        sleep(1)
+        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: path).appendingPathComponent(name + ".png"))
+    }
+
+    func testCommentsCanBeSortedByNewest() {
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+        let comments = app.buttons["COMMENTS"]
+        XCTAssertTrue(comments.waitForExistence(timeout: 20)); comments.tap()
+        let sort = app.descendants(matching: .any)["commentSort"].firstMatch
+        XCTAssertTrue(sort.waitForExistence(timeout: 45), "The sort menu appears with the first page")
+        XCTAssertEqual(sort.value as? String, "Top comments")
+        let first = app.staticTexts["commentText"].firstMatch
+        XCTAssertTrue(first.waitForExistence(timeout: 30))
+        let topText = first.label
+        sort.tap()
+        // Menu entries are buttons on iPhone and menu items on iPad.
+        let newest = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@ AND (elementType == %d OR elementType == %d)",
+            "Newest first", XCUIElement.ElementType.button.rawValue, XCUIElement.ElementType.menuItem.rawValue)).firstMatch
+        XCTAssertTrue(newest.waitForExistence(timeout: 5)); newest.tap()
+        let reordered = expectation(for: NSPredicate(format: "value == %@", "Newest first"), evaluatedWith: sort)
+        wait(for: [reordered], timeout: 10)
+        XCTAssertTrue(first.waitForExistence(timeout: 45), "Newest comments load")
+        let changed = expectation(for: NSPredicate(format: "label != %@", topText), evaluatedWith: first)
+        wait(for: [changed], timeout: 30)
+    }
+
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

@@ -24,6 +24,10 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Chapters from the description's timestamps (YouTube's rule: at least three, starting at 0:00, 10 s apart):
   gaps in the seek bar, the chapter name while scrubbing and under the bar, and a tappable list in Description.
 - Double-tap the left or right half of the video to skip 10 s back or forward.
+- Comments can be sorted by top or newest (YouTube's own orders, from the first comments page). SoundCloud
+  comments have no sort menu.
+- iPad: in landscape the player and its details sit beside the Related/Comments/Description/Queue tabs; portrait
+  stacks them like the phone. Turning an iPad doesn't force full screen.
 - Autoplay (Settings → Playback, on by default): when the last video in the queue ends, the first related video
   not already queued plays next. Repeat modes keep the queue as it is.
 - Default resolution caps for Wi-Fi and for mobile data (Settings → Playback, automatic by default); a choice in

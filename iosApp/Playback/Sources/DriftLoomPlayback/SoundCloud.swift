@@ -117,7 +117,7 @@ public actor SoundCloudClient {
     public func details(_ id: String) async throws -> VideoDetails {
         guard let number = SoundCloudID.trackNumber(id) else { throw BrowseError.invalidInput }
         let track = try await json(URL(string: "https://\(Self.api)/tracks/\(number)")!)
-        let plays = (track["playback_count"] as? Int).map { "\($0.formatted()) plays" } ?? ""
+        let plays = (track["playback_count"] as? Int).map { L("\($0) plays") } ?? ""
         let date = ((track["display_date"] ?? track["created_at"]) as? String).flatMap(ISO8601DateFormatter().date)
             .map { $0.formatted(date: .abbreviated, time: .omitted) } ?? ""
         var comments: CommentCursor?
