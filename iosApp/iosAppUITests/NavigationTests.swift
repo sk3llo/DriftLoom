@@ -332,6 +332,32 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["tabBar-section:Gaming"].waitForExistence(timeout: 5), "A tab turned on in Customize appears in the bar")
     }
 
+    func testDrawerOpensFromTheLeftEdgeAndClosesByDragging() {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        let drawer = app.descendants(matching: .any)["navigationDrawer"].firstMatch
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        // A short pull springs back; a long one opens the drawer.
+        edge.press(forDuration: 0.05, thenDragTo: edge.withOffset(CGVector(dx: 40, dy: 0)))
+        sleep(1)
+        XCTAssertFalse(drawer.exists, "A short pull from the edge springs back")
+        edge.press(forDuration: 0.05, thenDragTo: edge.withOffset(CGVector(dx: 260, dy: 0)))
+        XCTAssertTrue(drawer.waitForExistence(timeout: 3), "Dragging from the left edge opens the main menu")
+        sleep(1)
+        XCTAssertTrue(app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.isHittable)
+        // Drag it back to close.
+        let inside = drawer.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.6))
+        inside.press(forDuration: 0.05, thenDragTo: inside.withOffset(CGVector(dx: -250, dy: 0)))
+        let closed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: drawer)
+        wait(for: [closed], timeout: 3)
+        // The dimmed area beside the drawer drags it closed too, and the menu button still works.
+        app.buttons["mainMenu"].tap()
+        XCTAssertTrue(drawer.waitForExistence(timeout: 3))
+        let scrim = app.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
+        scrim.press(forDuration: 0.05, thenDragTo: scrim.withOffset(CGVector(dx: -250, dy: 0)))
+        wait(for: [expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: drawer)], timeout: 3)
+    }
+
     func testKioskFromDrawerLoadsYouTubeLiveAndStaysOnHome() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

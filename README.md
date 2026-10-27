@@ -12,7 +12,7 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - iOS 15+ native app with NewPipe-style main menu, configurable home tabs, compact rows, and search history.
   The home toolbar follows NewPipe: the open tab's name on the accent colour, and a fixed row of tab icons
   (pinned channels show their avatar) that scrolls only when there are too many to fit. Customize tabs is in
-  the ⋮ menu or a long press on the tab row.
+  the ⋮ menu or a long press on the tab row. The main menu slides in from the left edge (or ☰) and closes by dragging it back.
 - YouTube browsing: server-side type/date/duration/sort filters, selectable content language/region, and channel tabs,
   playlist/Mix contents, related videos, and pagination. Subscription feeds use dated channel RSS entries.
 - Video details, description, views/date, comments and replies, and a persistent mini-player.

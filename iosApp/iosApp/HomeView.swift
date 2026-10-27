@@ -110,6 +110,10 @@ struct HomeView: View {
     let onSearch: () -> Void
     let onPlay: (BrowseItem) -> Void
     @State private var menuVisible = false
+    /// The drawer's horizontal offset while a finger moves it: 0 is fully open, -drawerWidth fully closed.
+    @State private var drawerDrag: CGFloat?
+    @State private var containerWidth: CGFloat = UIScreen.main.bounds.width
+    private var drawerWidth: CGFloat { min(320, containerWidth * 0.85) }
     @State private var sheet: HomeSheet?
     @State private var pendingVideo: BrowseItem?
     @StateObject private var feed = SubscriptionFeedStore()
@@ -153,7 +157,7 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     // NewPipe's toolbar: the current tab's name on the accent colour, with a fixed icon tab bar below.
                     HStack(spacing: 0) {
-                        Button { menuVisible = true } label: { Image(systemName: "line.3.horizontal").font(.title3).frame(width: 48, height: 52) }
+                        Button { withAnimation(.easeOut(duration: 0.22)) { menuVisible = true } } label: { Image(systemName: "line.3.horizontal").font(.title3).frame(width: 48, height: 52) }
                             .accessibilityLabel("Main menu").accessibilityIdentifier("mainMenu")
                         Text(tabTitle(currentTab.wrappedValue)).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
                             .padding(.leading, 6).frame(maxWidth: .infinity, alignment: .leading)
@@ -186,10 +190,22 @@ struct HomeView: View {
                 .navigationBarHidden(true)
             }
             .accessibilityHidden(menuVisible || sheet != nil).allowsHitTesting(!menuVisible && sheet == nil)
-            if menuVisible {
+            // Dragging from the left edge pulls the drawer out, as in NewPipe. Taps and scrolling are unaffected.
+            .simultaneousGesture(DragGesture(minimumDistance: 8, coordinateSpace: .global)
+                .onChanged { value in
+                    guard !menuVisible, value.startLocation.x < 24, value.translation.width > 0 || drawerDrag != nil else { return }
+                    drawerDrag = min(0, -drawerWidth + max(0, value.translation.width))
+                }
+                .onEnded { value in
+                    guard !menuVisible, drawerDrag != nil else { return }
+                    settleDrawer(open: value.translation.width > drawerWidth / 3 || value.predictedEndTranslation.width > drawerWidth / 2)
+                })
+            if menuVisible || drawerDrag != nil {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
-                        Button { menuVisible = false } label: { Color.black.opacity(0.4).ignoresSafeArea() }
+                        Button { closeDrawer() } label: {
+                            Color.black.opacity(0.4 * (1 + (drawerDrag ?? 0) / drawerWidth)).ignoresSafeArea()
+                        }
                             .accessibilityLabel("Close main menu")
                         VStack(alignment: .leading, spacing: 0) {
                             VStack(alignment: .leading, spacing: 10) {
@@ -227,13 +243,28 @@ struct HomeView: View {
                                 }
                             }
                         }
-                        .frame(width: min(320, geometry.size.width * 0.85), height: geometry.size.height)
+                        .frame(width: drawerWidth, height: geometry.size.height)
                         .background(Color(.systemBackground)).shadow(radius: 10)
+                        .offset(x: drawerDrag ?? 0)
                         .accessibilityElement(children: .contain).accessibilityIdentifier("navigationDrawer")
                     }
-                }.zIndex(1)
+                    // Dragging the drawer or the dimmed area to the left pushes it back; vertical drags still scroll it.
+                    .simultaneousGesture(DragGesture(minimumDistance: 12, coordinateSpace: .global)
+                        .onChanged { value in
+                            guard drawerDrag != nil || (value.translation.width < 0 && abs(value.translation.width) > abs(value.translation.height)) else { return }
+                            drawerDrag = max(-drawerWidth, min(0, value.translation.width))
+                        }
+                        .onEnded { value in
+                            guard drawerDrag != nil else { return }
+                            settleDrawer(open: !(value.translation.width < -drawerWidth / 3 || value.predictedEndTranslation.width < -drawerWidth / 2))
+                        })
+                }
+                .transition(.move(edge: .leading)).zIndex(2)
             }
         }
+        .background(GeometryReader { proxy in
+            Color.clear.onAppear { containerWidth = proxy.size.width }.onChange(of: proxy.size.width) { containerWidth = $0 }
+        })
         .onChange(of: selection) { _ in selectedPinned = nil; selectedLocal = nil }
         .onChange(of: playlists.playlists.map(\.id)) { ids in
             if playlists.isWritable { pinnedTabs.retainLocal(Set(ids)) }
@@ -273,6 +304,15 @@ struct HomeView: View {
             }
         }
     }
+    /// Finish a drag: slide the drawer fully open or closed from where the finger left it.
+    private func settleDrawer(open: Bool) {
+        withAnimation(.easeOut(duration: 0.2)) { drawerDrag = open ? 0 : -drawerWidth }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            menuVisible = open
+            drawerDrag = nil
+        }
+    }
+    private func closeDrawer() { settleDrawer(open: false) }
     private func drawerButton(_ title: String, id: String? = nil, symbol: String, action: @escaping () -> Void) -> some View {
         Button { menuVisible = false; action() } label: {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading).padding(16).foregroundStyle(.primary)
