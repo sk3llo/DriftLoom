@@ -35,12 +35,15 @@ struct SettingsView: View {
                         if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                     } label: {
                         HStack {
-                            Text("Language").foregroundStyle(.primary)
+                            Text("Language").foregroundColor(.primary)
                             Spacer()
-                            Text(interfaceLanguage).foregroundStyle(.secondary)
-                            Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary).accessibilityHidden(true)
+                            Text(interfaceLanguage).foregroundColor(.secondary)
+                            Image(systemName: "arrow.up.forward.app").foregroundColor(.secondary).accessibilityHidden(true)
                         }
+                        .contentShape(Rectangle())
                     }
+                    // Plain, so iOS 15 doesn't paint the row in the accent colour like a link.
+                    .buttonStyle(.plain)
                     .accessibilityValue(interfaceLanguage).accessibilityHint("Opens DriftLoom in the Settings app")
                     .accessibilityIdentifier("interfaceLanguage")
                     NavigationLink("Home tabs") { HomeTabsSettings() }.accessibilityIdentifier("openHomeTabs")
@@ -121,6 +124,16 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+            // --settings-smoke language: then use the Language row, as a tap would.
+            .task {
+                let arguments = ProcessInfo.processInfo.arguments
+                guard let flag = arguments.firstIndex(of: "--settings-smoke"), arguments.indices.contains(flag + 1), arguments[flag + 1] == "language" else { return }
+                NSLog("DriftLoomSettingsSmoke: language row shows %@", interfaceLanguage)
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+            }
+#endif
             .toolbar { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") }
             .confirmationDialog(clearTarget == "watch" ? "Clear watch history?" : "Clear search history?",
                                 isPresented: Binding(get: { clearTarget != nil }, set: { if !$0 { clearTarget = nil } }), titleVisibility: .visible) {

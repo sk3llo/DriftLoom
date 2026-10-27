@@ -276,6 +276,10 @@ struct HomeView: View {
         .task(id: selectedPinned) {
             if let id = selectedPinned, let route = pinnedTabs.tabs.first(where: { $0.id == id })?.item.destination { await pinnedPage.load(route) }
         }
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+        // --settings-smoke: open Settings at launch, for device screenshots.
+        .task { if ProcessInfo.processInfo.arguments.contains("--settings-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .settings } }
+#endif
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomManageGroups)) { _ in sheet = .groups }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in menuVisible = false; sheet = .downloads }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenFeed)) { _ in
