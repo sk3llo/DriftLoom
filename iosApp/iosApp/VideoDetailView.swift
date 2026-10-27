@@ -141,7 +141,7 @@ struct VideoDetailView: View {
                             }
                         }
                         IconButton("Stop playback", systemImage: "stop") { queue.stop(); onCollapse() }
-                    } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).font(.title3).foregroundColor(.white).frame(width: 44, height: 52) }.accessibilityLabel("Playback options").accessibilityIdentifier("playbackOptions")
+                    } label: { Image(systemName: "ellipsis.circle").font(.title3).foregroundColor(.white).frame(width: 44, height: 52) }.accessibilityLabel("Playback options").accessibilityIdentifier("playbackOptions")
     }
 
     @ViewBuilder private var playbackStatus: some View {

@@ -51,7 +51,7 @@ final class NavigationTests: XCTestCase {
         let query = app.textFields["searchQuery"]
         XCTAssertTrue(query.waitForExistence(timeout: 5))
         query.tap(); query.typeText("NDLS404 SENSOJI")
-        app.buttons["submitSearch"].tap()
+        app.textFields["searchQuery"].typeText("\n")
         let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch
         let hasResults = result.waitForExistence(timeout: 45)
         if !hasResults { captureDeviceState("search-no-results", app: app) }
@@ -379,7 +379,7 @@ final class NavigationTests: XCTestCase {
         app.segmentedControls["searchService"].buttons["SoundCloud"].tap()
         let query = app.textFields["searchQuery"]
         XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("lofi hip hop")
-        app.buttons["submitSearch"].tap()
+        app.textFields["searchQuery"].typeText("\n")
         let track = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'searchVideo-sc:'")).firstMatch
         XCTAssertTrue(track.waitForExistence(timeout: 45), "SoundCloud search should list tracks")
         track.tap()

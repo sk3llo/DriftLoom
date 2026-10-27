@@ -77,7 +77,7 @@ final class ScreenshotTour: XCTestCase {
 
         tap("openSearch"); shot("search-empty")
         let query = app.textFields["searchQuery"]
-        if query.waitForExistence(timeout: 5) { query.tap(); query.typeText("lofi"); sleep(2); shot("search-suggestions"); app.buttons["submitSearch"].tap() }
+        if query.waitForExistence(timeout: 5) { query.tap(); query.typeText("lofi"); sleep(2); shot("search-suggestions"); query.typeText("\n") }
         sleep(6); shot("search-results")
         tap("searchFilters"); shot("search-filters"); dismissOverlay()
         tap("searchService"); app.segmentedControls.buttons.element(boundBy: 1).tap(); sleep(1); shot("search-soundcloud")

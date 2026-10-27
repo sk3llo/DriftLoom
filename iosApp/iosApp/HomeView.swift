@@ -169,7 +169,7 @@ struct HomeView: View {
                             IconButton("Customize tabs", systemImage: "slider.horizontal.3") { sheet = .tabs }
                             IconButton("Settings", systemImage: "gearshape") { sheet = .settings }
                             IconButton("About", systemImage: "info.circle") { sheet = .about }
-                        } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).font(.title3).frame(width: 44, height: 52) }
+                        } label: { Image(systemName: "ellipsis.circle").font(.title3).frame(width: 44, height: 52) }
                         .accessibilityLabel("More options").accessibilityIdentifier("moreOptions")
                     }
                     .padding(.horizontal, 4).foregroundColor(.white)

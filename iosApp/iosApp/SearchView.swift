@@ -31,25 +31,31 @@ struct SearchView: View {
     var body: some View {
         AppNavigation {
             VStack(spacing: 0) {
-                // The same red toolbar as home, with the query typed straight into it, as in NewPipe.
-                HStack(spacing: 8) {
-                    Button(action: onClose) { Image(systemName: "arrow.left").font(.title3).frame(width: 40, height: 52) }
+                // The red toolbar as on home, with an iOS search field: a back chevron, then a rounded field with
+                // the magnifying glass, the query and a clear button. The keyboard's Search key submits.
+                HStack(spacing: 4) {
+                    Button(action: onClose) { Image(systemName: "chevron.left").font(.title3.weight(.semibold)).frame(width: 36, height: 52) }
                         .accessibilityLabel("Back to home").accessibilityIdentifier("closeSearch")
-                    TextField(service == .youTube ? "Search YouTube" : "Search SoundCloud", text: $query,
-                              prompt: Text(service == .youTube ? "Search YouTube" : "Search SoundCloud").foregroundColor(.white.opacity(0.7)))
-                        .font(.title3).foregroundColor(.white).tint(.white)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .submitLabel(.search).focused($focused).onSubmit(submit)
-                        .accessibilityIdentifier("searchQuery")
-                    if !query.isEmpty {
-                        Button { query = ""; focused = true } label: { Image(systemName: "xmark").font(.title3).frame(width: 40, height: 52) }
-                            .accessibilityLabel("Clear search")
+                    HStack(spacing: 6) {
+                        Image(systemName: "magnifyingglass").foregroundColor(.white.opacity(0.85)).accessibilityHidden(true)
+                        TextField(service == .youTube ? "Search YouTube" : "Search SoundCloud", text: $query,
+                                  prompt: Text(service == .youTube ? "Search YouTube" : "Search SoundCloud").foregroundColor(.white.opacity(0.75)))
+                            .foregroundColor(.white).tint(.white)
+                            .textInputAutocapitalization(.never).autocorrectionDisabled()
+                            .submitLabel(.search).focused($focused).onSubmit(submit)
+                            .accessibilityIdentifier("searchQuery")
+                        if !query.isEmpty {
+                            Button { query = ""; focused = true } label: {
+                                Image(systemName: "xmark.circle.fill").foregroundColor(.white.opacity(0.85)).frame(minWidth: 28, minHeight: 36)
+                            }
+                            .buttonStyle(.plain).accessibilityLabel("Clear search")
+                        }
                     }
-                    Button(action: submit) { Image(systemName: "magnifyingglass").font(.title3).frame(width: 40, height: 52) }
-                        .accessibilityLabel("Search").accessibilityIdentifier("submitSearch")
-                        .disabled(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .padding(.leading, 8).padding(.trailing, 4).frame(height: 36)
+                    .background(Color.white.opacity(0.2)).clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .padding(.trailing, 8)
                 }
-                .padding(.horizontal, 4).foregroundColor(.white)
+                .padding(.leading, 4).foregroundColor(.white)
                 .background(AppStyle.bar.ignoresSafeArea(edges: .top))
                 .padding(.bottom, 8)
                 Picker("Service", selection: $service) {
@@ -265,7 +271,7 @@ struct BrowseResultRow: View {
                 }
             }.contextMenu { BrowseItemMenu(item: item, onPlay: onPlay) }
             Menu { BrowseItemMenu(item: item, onPlay: onPlay) } label: {
-                Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 36, height: 44)
+                Image(systemName: "ellipsis").frame(width: 36, height: 44)
             }.foregroundStyle(.secondary).accessibilityLabel(Text("Actions for \(item.title)"))
                 .accessibilityIdentifier("itemActions-\(item.id)")
         }
