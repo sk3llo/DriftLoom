@@ -63,38 +63,40 @@ struct StoryboardScrubber: View {
     @ObservedObject var playback: PlaybackSession
     /// Preview frames when YouTube provides them; without, the bubble shows only the time.
     let storyboard: Storyboard?
+    /// Tells the player controls to stay up while the finger is on the bar.
+    var onScrubbing: (Bool) -> Void = { _ in }
     @StateObject private var clock: PlaybackClock
     @State private var dragFraction: Double?
     @State private var preview: UIImage?
     @State private var previewTask: Task<Void, Never>?
 
-    init(playback: PlaybackSession, storyboard: Storyboard?) {
-        self.playback = playback; self.storyboard = storyboard
+    init(playback: PlaybackSession, storyboard: Storyboard?, onScrubbing: @escaping (Bool) -> Void = { _ in }) {
+        self.playback = playback; self.storyboard = storyboard; self.onScrubbing = onScrubbing
         _clock = StateObject(wrappedValue: PlaybackClock(player: playback.player))
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            bar
-            // Elapsed time on the left, the total on the right and the chapter between them, as in NewPipe.
-            HStack(spacing: 8) {
+        // Drawn over the bottom of the video, as in NewPipe: elapsed time, the bar, then the length,
+        // with the chapter's name just above.
+        VStack(alignment: .leading, spacing: 0) {
+            if let chapter = currentChapter {
+                Text(chapter.title).font(.caption.weight(.semibold)).foregroundColor(.white).lineLimit(1)
+                    .shadow(color: .black.opacity(0.6), radius: 2).accessibilityIdentifier("currentChapter")
+            }
+            HStack(spacing: 10) {
                 Text(format(dragFraction.map { $0 * clock.duration } ?? clock.time))
                     .accessibilityIdentifier("elapsedTime")
-                if let chapter = currentChapter {
-                    Text(chapter.title).font(.caption.weight(.medium)).foregroundColor(AppStyle.accent).lineLimit(1)
-                        .frame(maxWidth: .infinity).accessibilityIdentifier("currentChapter")
-                } else {
-                    Spacer(minLength: 0)
-                }
+                bar
                 if clock.isLive {
-                    Text("Live").font(.caption.weight(.semibold)).foregroundColor(AppStyle.accent).accessibilityIdentifier("totalTime")
+                    Text("Live").foregroundColor(AppStyle.accent).accessibilityIdentifier("totalTime")
                 } else if clock.duration > 0 {
                     Text(format(clock.duration)).accessibilityIdentifier("totalTime")
                 }
             }
-            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
+            .font(.caption.monospacedDigit().weight(.semibold)).foregroundColor(.white)
+            .shadow(color: .black.opacity(0.6), radius: 2)
         }
+        .onChange(of: dragFraction != nil) { onScrubbing($0) }
     }
     private var chapters: [VideoChapter] { playback.chapters }
     private var currentChapter: VideoChapter? {
@@ -107,12 +109,12 @@ struct StoryboardScrubber: View {
             let width = proxy.size.width
             let fraction = dragFraction ?? (clock.duration > 0 ? clock.time / clock.duration : 0)
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.secondary.opacity(0.3)).frame(height: 4)
+                Capsule().fill(Color.white.opacity(0.35)).frame(height: 4)
                 Capsule().fill(AppStyle.accent).frame(width: max(0, width * fraction), height: 4)
                 // Chapter boundaries cut small gaps into the bar, as on YouTube.
                 if clock.duration > 0 {
                     ForEach(chapters.dropFirst(), id: \.start) { chapter in
-                        Rectangle().fill(Color(.systemBackground)).frame(width: 2, height: 6)
+                        Rectangle().fill(Color.black.opacity(0.7)).frame(width: 2, height: 6)
                             .offset(x: width * min(1, chapter.start / clock.duration) - 1)
                     }
                     .accessibilityHidden(true)
@@ -138,7 +140,7 @@ struct StoryboardScrubber: View {
                 if let dragFraction { previewBubble(fraction: dragFraction, width: width) }
             }
         }
-        .frame(height: 28).padding(.horizontal, 12)
+        .frame(height: 28)
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
         .task(id: clock.duration > 0) {
             // --seek-preview-smoke 0.3: hold a drag at that position so the preview can be inspected.

@@ -220,9 +220,6 @@ struct VideoDetailView: View {
                 .contentShape(Rectangle()).gesture(minimizeDrag)
             }
         }
-        if playback.player.currentItem != nil {
-            StoryboardScrubber(playback: playback, storyboard: playback.storyboard).id(playback.videoID).padding(.top, 8)
-        }
     }
     private var info: some View {
         VStack(alignment: .leading, spacing: 12) {

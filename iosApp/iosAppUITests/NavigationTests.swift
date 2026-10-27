@@ -720,7 +720,13 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(player.waitForExistence(timeout: 30))
         showControls()
         XCTAssertEqual(app.buttons["audioOnly"].value as? String, "Off")
-        showControls(); app.buttons["resizeMode"].tap(); showControls(); app.buttons["resizeMode"].tap()
+        // The controls auto-hide after 3 s, so bring them back before each tap.
+        func tapControl(_ id: String) {
+            showControls()
+            if !app.buttons[id].isHittable { player.tap(); _ = app.buttons[id].waitForExistence(timeout: 2) }
+            app.buttons[id].tap()
+        }
+        tapControl("resizeMode"); tapControl("resizeMode")
         XCTAssertEqual(app.buttons["resizeMode"].value as? String, "Fit")
     }
 

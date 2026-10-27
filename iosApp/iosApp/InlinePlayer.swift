@@ -193,6 +193,8 @@ struct InlinePlayerControls: View {
     @State private var visible = true
     @State private var hideTask: Task<Void, Never>?
     @State private var choosingSpeed = false
+    /// A finger is on the seek bar; the controls stay up until it lifts.
+    @State private var scrubbing = false
     /// Seconds skipped by the latest double tap, shown briefly on that side.
     @State private var skipFeedback: Int?
     @State private var feedbackTask: Task<Void, Never>?
@@ -244,13 +246,15 @@ struct InlinePlayerControls: View {
             }
             if visible {
                 HStack(spacing: 44) {
+                    // Hidden while scrubbing so the preview frame has room, as in NewPipe.
                     controlButton("gobackward.10", label: "Back 10 seconds", id: "skipBack") { skip(-10) }
                     controlButton(playback.phase == .playing ? "pause.fill" : "play.fill", label: playback.phase == .playing ? "Pause" : "Play",
                                   id: "playPause", size: 34) { playback.togglePlayPause(); scheduleHide() }
                     controlButton("goforward.10", label: "Forward 10 seconds", id: "skipForward") { skip(10) }
                 }
+                .opacity(scrubbing ? 0 : 1)
+                // Speed, resize, audio only, AirPlay and PiP across the top, as NewPipe's quality and speed row.
                 VStack {
-                    Spacer()
                     HStack(spacing: 4) {
                         Button { hideTask?.cancel(); choosingSpeed = true } label: {
                             Text("\(String(format: "%g", playback.playbackRate))×")
@@ -278,12 +282,27 @@ struct InlinePlayerControls: View {
                                           label: controller.isPictureInPictureActive ? "Exit Picture in Picture" : "Picture in Picture",
                                           id: "pictureInPicture", size: 18) { controller.togglePictureInPicture() }
                         }
-                        controlButton("arrow.up.left.and.arrow.down.right", label: "Full screen", id: "fullscreen", size: 18) {
-                            controller.presentFullscreen(player: playback.player, overlay: overlay)
-                        }
-                    }.padding(.horizontal, 6).padding(.bottom, 2)
+                    }.padding(.horizontal, 6).padding(.top, 2)
+                    Spacer()
                 }
             }
+            // The seek bar sits in the video and shows with the controls; it stays laid out while hidden
+            // so a drag in progress keeps its state.
+            VStack {
+                Spacer()
+                HStack(spacing: 4) {
+                    StoryboardScrubber(playback: playback, storyboard: playback.storyboard) { scrubbing in
+                        self.scrubbing = scrubbing
+                        if scrubbing { hideTask?.cancel(); visible = true } else { scheduleHide() }
+                    }
+                    .id(playback.videoID)
+                    controlButton("arrow.up.left.and.arrow.down.right", label: "Full screen", id: "fullscreen", size: 18) {
+                        controller.presentFullscreen(player: playback.player, overlay: overlay)
+                    }
+                }
+                .padding(.leading, 12).padding(.trailing, 4).padding(.bottom, 2)
+            }
+            .opacity(visible ? 1 : 0).allowsHitTesting(visible)
         }
         .background(GeometryReader { proxy in
             Color.clear.onAppear { size = proxy.size }.onChange(of: proxy.size) { size = $0 }
@@ -436,7 +455,7 @@ struct InlinePlayerControls: View {
     }
     private func scheduleHide() {
         hideTask?.cancel()
-        guard visible, !choosingSpeed, playback.phase == .playing, !UIAccessibility.isVoiceOverRunning else { return }
+        guard visible, !choosingSpeed, !scrubbing, playback.phase == .playing, !UIAccessibility.isVoiceOverRunning else { return }
         hideTask = Task {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             if !Task.isCancelled { visible = false }
