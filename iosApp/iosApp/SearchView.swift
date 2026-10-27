@@ -92,7 +92,8 @@ struct SearchView: View {
                             }
                         }
                     }.listStyle(.plain)
-                } else if submittedQuery.isEmpty {
+                } else if submittedQuery.isEmpty || query.isEmpty {
+                    // An empty box (nothing searched yet, or cleared) lists previous searches, as in NewPipe.
                     if preferences.searchHistory.isEmpty {
                         EmptyStateView("Search", systemImage: "magnifyingglass", message: "Find videos, channels, tracks and playlists, or paste a YouTube or SoundCloud link.")
                     } else {
@@ -107,6 +108,7 @@ struct SearchView: View {
                                     }.padding(.vertical, 6)
                                 }
                                 .swipeActions { Button("Remove", role: .destructive) { preferences.removeSearch(text) } }
+                                .accessibilityIdentifier("searchHistory-" + text)
                             }
                         }.listStyle(.plain)
                     }
@@ -139,6 +141,10 @@ struct SearchView: View {
                 if arguments.contains("--browse-smoke-soundcloud") { service = .soundCloud }
                 if submittedQuery.isEmpty, let flag = arguments.firstIndex(of: "--browse-smoke-query"), arguments.indices.contains(flag + 1) {
                     query = arguments[flag + 1]; submit()
+                    // --search-smoke-clear: then empty the box, as the clear button does.
+                    if arguments.contains("--search-smoke-clear") {
+                        Task { try? await Task.sleep(nanoseconds: 5_000_000_000); query = "" }
+                    }
                 }
                 // --suggestion-smoke TEXT: type TEXT without searching, so the suggestions can be inspected.
                 if let flag = arguments.firstIndex(of: "--suggestion-smoke"), arguments.indices.contains(flag + 1) {

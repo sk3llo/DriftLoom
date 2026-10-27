@@ -777,6 +777,13 @@ final class NavigationTests: XCTestCase {
         XCTAssertFalse(suggestion.exists, "No stale suggestions")
         XCTAssertTrue(result.exists, "The previous results are back")
         XCTAssertEqual(query.value as? String, "lofi", "The field shows the search the results are for")
+        // Clearing the box lists previous searches instead of the results; one tap searches again.
+        app.buttons["Clear search"].tap()
+        let previous = app.buttons["searchHistory-lofi"]
+        XCTAssertTrue(previous.waitForExistence(timeout: 5), "An empty box shows previous searches")
+        XCTAssertFalse(result.exists)
+        previous.tap()
+        XCTAssertTrue(result.waitForExistence(timeout: 45), "A previous search runs again")
     }
 
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
