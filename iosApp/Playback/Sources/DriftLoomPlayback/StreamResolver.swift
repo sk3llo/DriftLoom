@@ -50,7 +50,7 @@ public struct YouTubeStreamResolver: StreamResolving {
         guard let choice else { return try await resolveDefault(request) }
         let source = try await YouTubeDownloadResolver().source(videoID: request.videoID, choice: choice)
         let metadata = try? await YouTube(videoID: request.videoID, methods: [.local]).metadata
-        return ResolvedVideo(title: metadata?.title ?? "YouTube video", streamURL: source.url,
+        return ResolvedVideo(title: metadata?.title ?? PlaybackSession.placeholderTitle, streamURL: source.url,
                              usesHLS: choice.kind == .hls, description: metadata?.description ?? "", audioURL: source.audioURL)
     }
 
@@ -63,7 +63,7 @@ public struct YouTubeStreamResolver: StreamResolving {
         // Explicitly disable the library's optional third-party remote extraction.
         let video = YouTube(videoID: request.videoID, methods: [.local])
         let metadata = try? await video.metadata
-        let title = metadata?.title ?? "YouTube video"
+        let title = metadata?.title ?? PlaybackSession.placeholderTitle
         try Task.checkCancellation()
         if let stream = try? await video.livestreams.first(where: { $0.streamType == .hls }) {
             return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: true, description: metadata?.description ?? "")

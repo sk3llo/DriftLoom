@@ -36,15 +36,15 @@ public struct DownloadSummary: Codable, Hashable, Sendable {
         let progress = transferring.isEmpty ? nil : downloads.map(\.progress).reduce(0, +) / Double(downloads.count)
         let status: String
         switch first.phase {
-        case .waiting: status = "Waiting for network"
-        case .preparing: status = "Preparing"
+        case .waiting: status = L("Waiting for network")
+        case .preparing: status = L("Preparing")
         case .downloading: status = "\(Int((first.progress * 100).rounded(.down)))%"
         }
-        let more = downloads.count > 1 ? " · \(downloads.count - 1) more" : ""
+        let more = downloads.count > 1 ? " · " + L("\(downloads.count - 1) more") : ""
         return DownloadSummary(title: first.title, detail: status + more, progress: progress, count: downloads.count, state: .active)
     }
     public static func finished(_ title: String, failed: Bool) -> DownloadSummary {
-        DownloadSummary(title: title, detail: failed ? "Download failed" : "Downloaded", progress: failed ? nil : 1, count: 0,
+        DownloadSummary(title: title, detail: failed ? L("Download failed") : L("Downloaded"), progress: failed ? nil : 1, count: 0,
                         state: failed ? .failed : .finished)
     }
 }

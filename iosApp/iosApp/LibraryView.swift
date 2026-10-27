@@ -81,10 +81,10 @@ struct LibrarySectionView: View {
     private func remove(_ id: String) {
         switch section { case .subscriptions: library.unsubscribe(id); case .history: library.removeHistory(id); default: library.removeSaved(id) }
     }
-    private var emptyTitle: String {
+    private var emptyTitle: LocalizedStringKey {
         switch section { case .subscriptions: return selectedGroup == nil ? "No subscriptions" : "No channels in this group"; case .history: return "No history"; default: return "No bookmarks" }
     }
-    private var emptyMessage: String {
+    private var emptyMessage: LocalizedStringKey {
         switch section {
         case .subscriptions: return selectedGroup == nil ? "Search for a channel and subscribe to see it here." : "Use Manage subscription groups to add channels to this group."
         case .history: return library.historyEnabled ? "Videos appear here once playback starts." : "Recording watch history is disabled in Settings."

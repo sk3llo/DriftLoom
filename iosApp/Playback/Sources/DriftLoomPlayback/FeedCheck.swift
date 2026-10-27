@@ -35,11 +35,12 @@ public enum FeedCheck {
     public static func messages(for videos: [FeedVideo]) -> [(title: String, body: String, videoID: String?)] {
         guard !videos.isEmpty else { return [] }
         if videos.count <= 3 {
-            return videos.map { (title: $0.item.subtitle.isEmpty ? "New video" : $0.item.subtitle, body: $0.item.title, videoID: $0.item.contentID) }
+            return videos.map { (title: $0.item.subtitle.isEmpty ? L("New video") : $0.item.subtitle, body: $0.item.title, videoID: $0.item.contentID) }
         }
         let channels = Set(videos.map(\.item.subtitle)).filter { !$0.isEmpty }.sorted()
-        let names = channels.prefix(3).joined(separator: ", ") + (channels.count > 3 ? " and \(channels.count - 3) more" : "")
-        return [(title: "\(videos.count) new videos", body: names.isEmpty ? "From your subscriptions" : "From " + names, videoID: nil)]
+        let shown = Array(channels.prefix(3)) + (channels.count > 3 ? [L("\(channels.count - 3) more channels")] : [])
+        let names = ListFormatter.localizedString(byJoining: shown)
+        return [(title: L("\(videos.count) new videos"), body: names.isEmpty ? L("From your subscriptions") : L("From \(names)"), videoID: nil)]
     }
 
     /// Fetch the latest uploads of up to `limit` subscriptions, a few channels at a time.

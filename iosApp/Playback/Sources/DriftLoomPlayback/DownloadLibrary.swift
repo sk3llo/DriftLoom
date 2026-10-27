@@ -23,7 +23,7 @@ public struct YouTubeDownloadResolver: Sendable {
         if SoundCloudID.isSoundCloud(videoID) {
             guard SoundCloudID.trackNumber(videoID) != nil else { throw PlaybackError.invalidURL }
             // Saved as one audio file assembled from SoundCloud's HLS segments.
-            return [DownloadChoice(id: "soundcloud", name: "Audio · SoundCloud stream", kind: .audio)]
+            return [DownloadChoice(id: "soundcloud", name: L("Audio · SoundCloud stream"), kind: .audio)]
         }
         do { return try await findChoices(videoID: videoID) } catch { throw PlaybackError.readable(error) }
     }
@@ -32,13 +32,13 @@ public struct YouTubeDownloadResolver: Sendable {
         let video = YouTube(videoID: request.videoID, methods: [.local])
         var choices: [DownloadChoice] = []
         if (try? await video.livestreams.contains(where: { $0.streamType == .hls })) == true {
-            choices.append(DownloadChoice(id: "hls", name: "Video · automatic quality (HLS)", kind: .hls))
+            choices.append(DownloadChoice(id: "hls", name: L("Video · automatic quality (HLS)"), kind: .hls))
         }
         if let streams = try? await video.streams {
             choices += streams.filter { $0.isNativelyPlayable && ($0.includesVideoAndAudioTrack || !$0.includesVideoTrack) }
                 .compactMap { stream in
                     guard let id = Self.formatID(stream) else { return nil }
-                    return DownloadChoice(id: id, name: stream.includesVideoTrack ? "Video · \(stream.videoResolution ?? 0)p" : "Audio · \((stream.bitrate ?? 0) / 1000) kbps", kind: stream.includesVideoTrack ? .video : .audio)
+                    return DownloadChoice(id: id, name: stream.includesVideoTrack ? L("Video · \(String(stream.videoResolution ?? 0))p") : L("Audio · \((stream.bitrate ?? 0) / 1000) kbps"), kind: stream.includesVideoTrack ? .video : .audio)
                 }
         }
         if let streams = try? await video.streams { choices += Self.mergedChoices(streams) }
@@ -60,7 +60,7 @@ public struct YouTubeDownloadResolver: Sendable {
         }
         return byHeight.keys.sorted().compactMap { height in
             guard let stream = byHeight[height], let id = formatID(stream) else { return nil }
-            return DownloadChoice(id: "merged-\(id)-\(audioID)", name: "Video · \(height)p (separate audio)", kind: .merged)
+            return DownloadChoice(id: "merged-\(id)-\(audioID)", name: L("Video · \(String(height))p (separate audio)"), kind: .merged)
         }
     }
     private static func isH264(_ stream: YouTubeKit.Stream) -> Bool {
@@ -142,7 +142,7 @@ public final class DownloadLibrary: ObservableObject {
                   document.records.allSatisfy(Self.valid) else { throw CocoaError(.fileReadCorruptFile) }
             records = document.records
         } catch let error as CocoaError where error.code == .fileReadNoSuchFile { }
-        catch { isWritable = false; self.error = "Your download list couldn't be read and has been left untouched." }
+        catch { isWritable = false; self.error = L("Your download list couldn't be read and has been left untouched.") }
     }
     private static func valid(_ record: DownloadRecord) -> Bool {
         guard record.item.kind == .video, (try? VideoRequest(input: record.item.contentID).videoID) == record.item.contentID,
@@ -175,7 +175,7 @@ public final class DownloadLibrary: ObservableObject {
 #endif
             try data.write(to: fileURL, options: options)
             self.records = records; error = nil; return true
-        } catch { self.error = "Your download list couldn't be saved. Previous data is unchanged."; return false }
+        } catch { self.error = L("Your download list couldn't be saved. Previous data is unchanged."); return false }
     }
 }
 

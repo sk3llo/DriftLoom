@@ -125,9 +125,9 @@ public enum BrowseError: LocalizedError {
     case invalidInput, unavailable(String), unsupportedResponse
     public var errorDescription: String? {
         switch self {
-        case .invalidInput: return "Enter a search term or choose a valid channel or playlist."
+        case .invalidInput: return L("Enter a search term or choose a valid channel or playlist.")
         case let .unavailable(message): return message
-        case .unsupportedResponse: return "YouTube returned a page DriftLoom cannot read. Please try again later."
+        case .unsupportedResponse: return L("YouTube returned a page DriftLoom cannot read. Please try again later.")
         }
     }
 }
@@ -166,7 +166,7 @@ public actor YouTubeBrowsingClient: Browsing {
         case let .kiosk(kiosk):
             guard let path = kiosk.path else { throw BrowseError.invalidInput }
             components.path = path
-            title = kiosk.rawValue; isSearch = false
+            title = kiosk.title; isSearch = false
         case let .search(value), let .filteredSearch(value, _), let .advancedSearch(value, _):
             let value = value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !value.isEmpty, value.count <= 500 else { throw BrowseError.invalidInput }
@@ -195,7 +195,7 @@ public actor YouTubeBrowsingClient: Browsing {
             guard (try? VideoRequest(input: id)) != nil else { throw BrowseError.invalidInput }
             components.path = "/watch"
             query.append(URLQueryItem(name: "v", value: id))
-            title = "Related videos"; isSearch = false; isRelated = true
+            title = L("Related videos"); isSearch = false; isRelated = true
         case let .playlist(id):
             guard Self.validID(id) else { throw BrowseError.invalidInput }
             components.path = "/playlist"
@@ -241,7 +241,7 @@ public actor YouTubeBrowsingClient: Browsing {
         try Task.checkCancellation()
         guard let response = response as? HTTPURLResponse else { throw BrowseError.unsupportedResponse }
         guard (200..<300).contains(response.statusCode) else {
-            throw BrowseError.unavailable("YouTube couldn't load this page (\(response.statusCode)). Try again later.")
+            throw BrowseError.unavailable(L("YouTube couldn't load this page (\(response.statusCode)). Try again later."))
         }
         guard response.url?.host == "www.youtube.com", data.count <= 8_000_000 else {
             throw BrowseError.unsupportedResponse

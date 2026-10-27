@@ -11,7 +11,7 @@ public enum LinkResolver {
     /// Resolve without network access where the link itself says what it is.
     public static func immediate(_ link: URL) -> LinkTarget? {
         if let request = try? VideoRequest(input: link.absoluteString) {
-            return .play(BrowseItem(contentID: request.videoID, kind: .video, title: "YouTube video"))
+            return .play(BrowseItem(contentID: request.videoID, kind: .video, title: PlaybackSession.placeholderTitle))
         }
         guard let host = link.host?.lowercased(), host == "youtube.com" || host.hasSuffix(".youtube.com"),
               let components = URLComponents(url: link, resolvingAgainstBaseURL: false) else { return nil }
@@ -35,7 +35,7 @@ public enum LinkResolver {
     }()
 
     public static func resolve(_ link: URL, session: URLSession = pageSession) async throws -> LinkTarget {
-        guard SharedLink.isSupported(link) else { throw BrowseError.unavailable("DriftLoom opens YouTube and SoundCloud links.") }
+        guard SharedLink.isSupported(link) else { throw BrowseError.unavailable(L("DriftLoom opens YouTube and SoundCloud links.")) }
         if let target = immediate(link) { return target }
         let host = link.host?.lowercased() ?? ""
         if host == "soundcloud.com" || host.hasSuffix(".soundcloud.com") {
@@ -52,11 +52,11 @@ public enum LinkResolver {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200, http.url?.host == "www.youtube.com",
                   data.count < 8_000_000, let html = String(data: data, encoding: .utf8), let id = channelID(in: html) else {
-                throw BrowseError.unavailable("YouTube couldn't find this channel.")
+                throw BrowseError.unavailable(L("YouTube couldn't find this channel."))
             }
             return .browse(.channel(id))
         }
-        throw BrowseError.unavailable("This YouTube link isn't a video, playlist or channel DriftLoom can open.")
+        throw BrowseError.unavailable(L("This YouTube link isn't a video, playlist or channel DriftLoom can open."))
     }
 
     /// The channel a YouTube channel page is about, from its canonical link.

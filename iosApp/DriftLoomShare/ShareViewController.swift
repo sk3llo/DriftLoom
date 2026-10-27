@@ -12,7 +12,7 @@ final class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        label.text = "Opening in DriftLoom…"
+        label.text = String(localized: "Opening in DriftLoom…")
         label.font = .preferredFont(forTextStyle: .headline)
         label.textAlignment = .center; label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -27,10 +27,10 @@ final class ShareViewController: UIViewController {
         handled = true
         Task { @MainActor in
             guard let link = await sharedLink(), let appURL = SharedLink.appURL(for: link) else {
-                fail("Share a YouTube or SoundCloud link to open it in DriftLoom."); return
+                fail(String(localized: "Share a YouTube or SoundCloud link to open it in DriftLoom.")); return
             }
             if openContainingApp(appURL) { extensionContext?.completeRequest(returningItems: nil) }
-            else { fail("DriftLoom couldn't be opened from here. Copy the link and paste it in DriftLoom.") }
+            else { fail(String(localized: "DriftLoom couldn't be opened from here. Copy the link and paste it in DriftLoom.")) }
         }
     }
 

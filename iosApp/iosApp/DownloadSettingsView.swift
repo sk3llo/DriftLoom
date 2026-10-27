@@ -14,7 +14,7 @@ struct DownloadSettingsView: View {
                 ForEach(DownloadNetwork.allCases) { network in
                     Button { preferences.setDownloadNetwork(network) } label: {
                         HStack {
-                            Text(network.rawValue).foregroundStyle(.primary)
+                            Text(network.title).foregroundStyle(.primary)
                             Spacer()
                             if preferences.downloadNetwork == network { Image(systemName: "checkmark") }
                         }.frame(minHeight: 44).contentShape(Rectangle())
@@ -26,7 +26,7 @@ struct DownloadSettingsView: View {
             }
             Section("Downloaded media storage") {
                 if let usage {
-                    Text((usage.incomplete ? "At least " : "") + ByteCountFormatter.string(fromByteCount: usage.bytes, countStyle: .file))
+                    Text(usage.incomplete ? String(localized: "At least \(ByteCountFormatter.string(fromByteCount: usage.bytes, countStyle: .file))") : ByteCountFormatter.string(fromByteCount: usage.bytes, countStyle: .file))
                         .accessibilityIdentifier("downloadStorageUsage")
                     Text("\(manager.records.filter { $0.state == .completed }.count) completed downloads").font(.caption).foregroundStyle(.secondary)
                 } else { ProgressView("Measuring storage…") }

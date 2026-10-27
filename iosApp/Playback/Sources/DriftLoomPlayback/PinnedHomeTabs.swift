@@ -61,7 +61,7 @@ public final class PinnedHomeTabs: ObservableObject {
             guard order.count == keys.count, Set(order).count == order.count else { throw CocoaError(.fileReadCorruptFile) }
             tabs = document.tabs; localPlaylists = local; self.order = order
         } catch let error as CocoaError where error.code == .fileReadNoSuchFile { }
-        catch { isWritable = false; self.error = "Your pinned home tabs couldn't be read. The saved file has been left untouched." }
+        catch { isWritable = false; self.error = L("Your pinned home tabs couldn't be read. The saved file has been left untouched.") }
     }
     /// Visible tabs in display order. Saved positions win; anything new follows the default
     /// grouping (sections, then pinned channels/playlists, then local playlists).
@@ -87,7 +87,7 @@ public final class PinnedHomeTabs: ObservableObject {
     public func containsLocal(_ id: UUID) -> Bool { localPlaylists.contains(id) }
     public func toggleLocal(_ id: UUID) {
         if containsLocal(id) { removeLocal(id); return }
-        guard localPlaylists.count < 50 else { error = "You can pin up to 50 local playlists."; return }
+        guard localPlaylists.count < 50 else { error = L("You can pin up to 50 local playlists."); return }
         _ = save(tabs, local: localPlaylists + [id], order: order)
     }
     public func removeLocal(_ id: UUID) {
@@ -101,9 +101,9 @@ public final class PinnedHomeTabs: ObservableObject {
     }
     public func contains(_ item: BrowseItem) -> Bool { tabs.contains { $0.id == item.id } }
     public func toggle(_ item: BrowseItem) {
-        guard Self.valid(item) else { error = "Choose a supported channel or playlist to add to home."; return }
+        guard Self.valid(item) else { error = L("Choose a supported channel or playlist to add to home."); return }
         if contains(item) { remove(item.id); return }
-        guard tabs.count < 50 else { error = "You can pin up to 50 channel and playlist tabs."; return }
+        guard tabs.count < 50 else { error = L("You can pin up to 50 channel and playlist tabs."); return }
         _ = save(tabs + [PinnedHomeTab(item: item)])
     }
     public func remove(_ id: String) { _ = save(tabs.filter { $0.id != id }, local: localPlaylists, order: order.filter { $0 != .pinned(id) }) }
@@ -137,6 +137,6 @@ public final class PinnedHomeTabs: ObservableObject {
 #endif
             try data.write(to: fileURL, options: options)
             self.tabs = tabs; localPlaylists = local; self.order = order; error = nil; return true
-        } catch { self.error = "Your pinned home tabs couldn't be saved. Previous saved data is unchanged."; return false }
+        } catch { self.error = L("Your pinned home tabs couldn't be saved. Previous saved data is unchanged."); return false }
     }
 }

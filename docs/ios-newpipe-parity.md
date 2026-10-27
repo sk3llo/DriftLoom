@@ -172,3 +172,10 @@ background behavior on hardware before claiming support.
 Apple background download sessions continue while the app is suspended. Force-quitting cancels active
 transfers; reopening must show a recoverable job and retry with a fresh URL. See
 [Apple's background asset download lifecycle](https://developer.apple.com/documentation/avfoundation/avassetdownloadurlsession).
+
+Localization: English (source), Ukrainian and Portuguese (`pt`, Brazilian wording, so every Portuguese region
+falls back to it). Each target has a `Localizable.xcstrings` (the app, the share extension, `DriftLoomPlayback`,
+`DriftLoomActivity`); package text goes through `L(...)` with `Bundle.module`. Values stored by their English raw
+value (home sections, filters, feed period, network, theme) keep that raw value and show `.title`; those keys are
+added to the catalogs by hand (`extractionState: manual`). `ScreenshotTour` (skipped unless `TEST_RUNNER_TOUR_DIR`
+is set; `TEST_RUNNER_TOUR_LANG` picks the language) saves screenshots of the main screens for reviewing text fit.

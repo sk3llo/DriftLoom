@@ -13,9 +13,9 @@ struct SettingsView: View {
             List {
                 Section("Appearance") {
                     Picker("Theme", selection: Binding(get: { preferences.appearance }, set: preferences.setAppearance)) {
-                        ForEach(["System", "Light", "Dark"], id: \.self) { Text($0).tag($0) }
+                        ForEach(["System", "Light", "Dark"], id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
                     }
-                    NavigationLink("Home tabs") { HomeTabsSettings() }
+                    NavigationLink("Home tabs") { HomeTabsSettings() }.accessibilityIdentifier("openHomeTabs")
                 }
                 Section("YouTube content") {
                     Toggle("Show search suggestions", isOn: Binding(get: { preferences.usesSearchSuggestions }, set: preferences.setUsesSearchSuggestions))
@@ -68,16 +68,16 @@ struct SettingsView: View {
                     Toggle("Auto-translate when unavailable", isOn: Binding(get: { preferences.translatesSubtitles }, set: preferences.setTranslatesSubtitles))
                         .accessibilityIdentifier("translateSubtitles")
                     Picker("Text size", selection: Binding(get: { preferences.subtitleSize }, set: preferences.setSubtitleSize)) {
-                        ForEach(SubtitleSize.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(SubtitleSize.allCases) { Text($0.title).tag($0) }
                     }
                     Text("YouTube subtitles in this language turn on automatically, preferring ones written by the uploader over auto-generated ones. Choosing subtitles in the player updates this setting. Auto-translation uses YouTube's machine translation, which YouTube may limit at times.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Downloads") {
-                    NavigationLink("Downloads and storage") { DownloadSettingsView() }
+                    NavigationLink("Downloads and storage") { DownloadSettingsView() }.accessibilityIdentifier("openDownloadSettings")
                 }
                 Section("Your data") {
-                    NavigationLink("Backup and import") { LibraryTransferView() }
+                    NavigationLink("Backup and import") { LibraryTransferView() }.accessibilityIdentifier("openBackup")
                 }
                 Section("About") {
                     Text("DriftLoom · iOS 15 and later")
@@ -85,8 +85,8 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Done") { dismiss() } }
-            .confirmationDialog("Clear \(clearTarget == "watch" ? "watch" : "search") history?",
+            .toolbar { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") }
+            .confirmationDialog(clearTarget == "watch" ? "Clear watch history?" : "Clear search history?",
                                 isPresented: Binding(get: { clearTarget != nil }, set: { if !$0 { clearTarget = nil } }), titleVisibility: .visible) {
                 Button("Clear history", role: .destructive) {
                     if clearTarget == "watch" { library.clearHistory() } else { preferences.clearSearchHistory() }
@@ -131,7 +131,7 @@ private struct HomeTabsSettings: View {
             }
             Section("Show on home") {
                 ForEach(HomeSection.allCases) { section in
-                    Toggle(section.rawValue, isOn: Binding(get: { preferences.homeSections.contains(section) }, set: { enabled in
+                    Toggle(section.title, isOn: Binding(get: { preferences.homeSections.contains(section) }, set: { enabled in
                         let current = preferences.homeSections
                         preferences.setHomeSections(enabled ? current + [section] : current.filter { $0 != section })
                     }))
@@ -145,13 +145,13 @@ private struct HomeTabsSettings: View {
     private func isSection(_ key: HomeTabKey) -> Bool { if case .section = key { return true }; return false }
     @ViewBuilder private func row(_ key: HomeTabKey) -> some View {
         switch key {
-        case let .section(section): Label(section.rawValue, systemImage: section.symbol).accessibilityIdentifier("homeTab-" + key.rawValue)
+        case let .section(section): Label(section.title, systemImage: section.symbol).accessibilityIdentifier("homeTab-" + key.rawValue)
         case let .pinned(id):
             if let tab = pinnedTabs.tabs.first(where: { $0.id == id }) {
                 Label(tab.item.title, systemImage: tab.item.kind == .channel ? "person.crop.circle" : "rectangle.stack").accessibilityIdentifier("homeTab-" + key.rawValue)
             }
         case let .local(id):
-            Label(playlists.playlists.first { $0.id == id }?.name ?? "Playlist", systemImage: "music.note.list").accessibilityIdentifier("homeTab-local")
+            Label(playlists.playlists.first { $0.id == id }?.name ?? String(localized: "Playlist"), systemImage: "music.note.list").accessibilityIdentifier("homeTab-local")
         }
     }
 }

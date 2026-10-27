@@ -86,7 +86,7 @@ public actor SoundCloudClient {
         guard let number = SoundCloudID.playlistNumber(id) else { throw BrowseError.invalidInput }
         let playlist = try await json(URL(string: "https://\(Self.api)/playlists/\(number)")!)
         let entries = playlist["tracks"] as? [[String: Any]] ?? []
-        guard entries.count <= 5000 else { throw BrowseError.unavailable("This playlist is too large to open.") }
+        guard entries.count <= 5000 else { throw BrowseError.unavailable(L("This playlist is too large to open.")) }
         // Only the first tracks come with metadata; the rest are IDs to fetch in batches of 50.
         var full = Dictionary(uniqueKeysWithValues: entries.compactMap { entry -> (Int, [String: Any])? in
             guard let id = entry["id"] as? Int, entry["title"] != nil else { return nil }; return (id, entry)
@@ -104,14 +104,14 @@ public actor SoundCloudClient {
         guard let number = SoundCloudID.trackNumber(id) else { throw BrowseError.invalidInput }
         var components = URLComponents(string: "https://\(Self.api)/tracks/\(number)/related")!
         components.queryItems = [URLQueryItem(name: "limit", value: "20")]
-        return try SoundCloudParser.page(try await json(components.url!), title: "Related tracks")
+        return try SoundCloudParser.page(try await json(components.url!), title: L("Related tracks"))
     }
     /// SoundCloud's trending chart, the source of NewPipe's SoundCloud kiosk.
     public func trending() async throws -> BrowsePage {
         var components = URLComponents(string: "https://\(Self.api)/charts")!
         components.queryItems = [URLQueryItem(name: "kind", value: "trending"), URLQueryItem(name: "genre", value: "soundcloud:genres:all-music"),
                                  URLQueryItem(name: "limit", value: "50")]
-        return try SoundCloudParser.page(try await json(components.url!), title: "SoundCloud trending")
+        return try SoundCloudParser.page(try await json(components.url!), title: L("SoundCloud trending"))
     }
     /// Plays, date and description, with a cursor for the track's comments.
     public func details(_ id: String) async throws -> VideoDetails {
@@ -139,7 +139,7 @@ public actor SoundCloudClient {
             let user = comment["user"] as? Object
             let published = (comment["created_at"] as? String).flatMap(ISO8601DateFormatter().date)
                 .map { $0.formatted(date: .abbreviated, time: .omitted) } ?? ""
-            return VideoComment(id: "sc-\(id)", author: user?["username"] as? String ?? "SoundCloud user",
+            return VideoComment(id: "sc-\(id)", author: user?["username"] as? String ?? L("SoundCloud user"),
                                 channelID: (user?["id"] as? Int).map(SoundCloudID.user), text: body, published: published, likes: "", replies: nil)
         }
         let next = (root["next_href"] as? String).flatMap(URL.init(string:)).flatMap { url -> CommentCursor? in
@@ -174,7 +174,7 @@ public actor SoundCloudClient {
         if link.host?.lowercased() == "on.soundcloud.com" {
             let (_, response) = try await session.data(for: request(link))
             guard let final = (response as? HTTPURLResponse)?.url, final.host?.hasSuffix("soundcloud.com") == true, final.host != "on.soundcloud.com" else {
-                throw BrowseError.unavailable("This SoundCloud link couldn't be opened.")
+                throw BrowseError.unavailable(L("This SoundCloud link couldn't be opened."))
             }
             link = final
         }
@@ -184,7 +184,7 @@ public actor SoundCloudClient {
         var components = URLComponents(string: "https://\(Self.api)/resolve")!
         components.queryItems = [URLQueryItem(name: "url", value: link.absoluteString)]
         let object = try await json(components.url!)
-        guard let item = SoundCloudParser.item(object) else { throw BrowseError.unavailable("This SoundCloud link isn't a track, profile or playlist.") }
+        guard let item = SoundCloudParser.item(object) else { throw BrowseError.unavailable(L("This SoundCloud link isn't a track, profile or playlist.")) }
         return item
     }
 
@@ -193,7 +193,7 @@ public actor SoundCloudClient {
     public func stream(_ id: String) async throws -> SoundCloudStream {
         guard let number = SoundCloudID.trackNumber(id) else { throw PlaybackError.invalidURL }
         let track = try await json(URL(string: "https://\(Self.api)/tracks/\(number)")!)
-        if track["policy"] as? String == "BLOCK" { throw BrowseError.unavailable("This track isn't available in your country.") }
+        if track["policy"] as? String == "BLOCK" { throw BrowseError.unavailable(L("This track isn't available in your country.")) }
         let transcodings = ((track["media"] as? [String: Any])?["transcodings"] as? [[String: Any]]) ?? []
         guard let transcoding = SoundCloudParser.bestTranscoding(transcodings) else {
             throw BrowseError.unavailable(SoundCloudParser.unplayableReason(transcodings))
@@ -206,7 +206,7 @@ public actor SoundCloudClient {
         }
         let location = try await json(components.url!)
         guard let value = location["url"] as? String, let url = URL(string: value), url.scheme == "https" else { throw BrowseError.unsupportedResponse }
-        return SoundCloudStream(url: url, title: track["title"] as? String ?? "SoundCloud track", description: track["description"] as? String ?? "",
+        return SoundCloudStream(url: url, title: track["title"] as? String ?? L("SoundCloud track"), description: track["description"] as? String ?? "",
                                 item: SoundCloudParser.track(track))
     }
 
@@ -229,9 +229,9 @@ public actor SoundCloudClient {
         try Task.checkCancellation()
         guard let http = response as? HTTPURLResponse, http.url?.host == Self.api, data.count <= 8_000_000 else { throw BrowseError.unsupportedResponse }
         if [401, 403].contains(http.statusCode), retry { clientID = nil; return try await authorized(url, retry: false) }
-        if http.statusCode == 404 { throw BrowseError.unavailable("SoundCloud couldn't find this item. It may be private or removed.") }
-        if http.statusCode == 429 { throw BrowseError.unavailable("SoundCloud is limiting requests right now. Try again later.") }
-        guard http.statusCode == 200 else { throw BrowseError.unavailable("SoundCloud couldn't load this (\(http.statusCode)). Try again later.") }
+        if http.statusCode == 404 { throw BrowseError.unavailable(L("SoundCloud couldn't find this item. It may be private or removed.")) }
+        if http.statusCode == 429 { throw BrowseError.unavailable(L("SoundCloud is limiting requests right now. Try again later.")) }
+        guard http.statusCode == 200 else { throw BrowseError.unavailable(L("SoundCloud couldn't load this (\(http.statusCode)). Try again later.")) }
         return data
     }
     private func currentClientID() async throws -> String {
@@ -249,7 +249,7 @@ public actor SoundCloudClient {
             clientID = id
             return id
         }
-        throw BrowseError.unavailable("SoundCloud couldn't be reached. Try again later.")
+        throw BrowseError.unavailable(L("SoundCloud couldn't be reached. Try again later."))
     }
     private func request(_ url: URL) -> URLRequest {
         var request = URLRequest(url: url)
@@ -330,13 +330,13 @@ enum SoundCloudParser {
     }
     /// Why no transcoding is usable: none at all, DRM-only (encrypted HLS), or previews only.
     static func unplayableReason(_ transcodings: [Object]) -> String {
-        if transcodings.isEmpty { return "SoundCloud doesn't offer playback for this track." }
+        if transcodings.isEmpty { return L("SoundCloud doesn't offer playback for this track.") }
         let protocols = transcodings.compactMap { ($0["format"] as? Object)?["protocol"] as? String }
         if protocols.allSatisfy({ $0.contains("encrypted") }) {
-            return "This track is only available as DRM-protected audio, which DriftLoom can't play."
+            return L("This track is only available as DRM-protected audio, which DriftLoom can't play.")
         }
-        if transcodings.allSatisfy({ $0["snipped"] as? Bool == true }) { return "Only a preview of this track is available." }
-        return "SoundCloud offers this track only in a format this device can't play."
+        if transcodings.allSatisfy({ $0["snipped"] as? Bool == true }) { return L("Only a preview of this track is available.") }
+        return L("SoundCloud offers this track only in a format this device can't play.")
     }
     /// SoundCloud artwork comes as "-large" (100 px); ask for the 500 px rendition.
     static func artwork(_ value: String?) -> URL? {
@@ -369,7 +369,7 @@ public enum SoundCloudDownload {
         var map: URL?, segments: [URL] = []
         for raw in text.split(whereSeparator: \.isNewline) {
             let line = raw.trimmingCharacters(in: .whitespaces)
-            if line.hasPrefix("#EXT-X-KEY"), !line.contains("METHOD=NONE") { throw BrowseError.unavailable("This track is encrypted and can't be saved.") }
+            if line.hasPrefix("#EXT-X-KEY"), !line.contains("METHOD=NONE") { throw BrowseError.unavailable(L("This track is encrypted and can't be saved.")) }
             if line.hasPrefix("#EXT-X-STREAM-INF") { throw BrowseError.unsupportedResponse }
             if line.hasPrefix("#EXT-X-MAP:"), let start = line.range(of: "URI=\""), let end = line[start.upperBound...].firstIndex(of: "\"") {
                 map = URL(string: String(line[start.upperBound..<end]), relativeTo: base)?.absoluteURL
@@ -400,10 +400,10 @@ public enum SoundCloudDownload {
                 try Task.checkCancellation()
                 let (bytes, response) = try await session.data(from: part)
                 guard let http = response as? HTTPURLResponse, http.statusCode == 200, trusted(http.url ?? part) else {
-                    throw BrowseError.unavailable("SoundCloud stopped the download. Retry to get a fresh link.")
+                    throw BrowseError.unavailable(L("SoundCloud stopped the download. Retry to get a fresh link."))
                 }
                 written += bytes.count
-                guard written <= 1_000_000_000 else { throw BrowseError.unavailable("This track is too large to save.") }
+                guard written <= 1_000_000_000 else { throw BrowseError.unavailable(L("This track is too large to save.")) }
                 try handle.write(contentsOf: bytes)
                 progress(Double(index + 1) / Double(parts.count))
             }

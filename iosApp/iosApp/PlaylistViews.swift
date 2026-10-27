@@ -55,7 +55,7 @@ struct BookmarksView: View {
         }
         .toolbar {
             Button { creating = true } label: { Image(systemName: "plus") }
-                .accessibilityLabel("Create playlist").disabled(!playlists.isWritable)
+                .accessibilityLabel("Create playlist").accessibilityIdentifier("createPlaylist").disabled(!playlists.isWritable)
         }
         .sheet(isPresented: $creating) { PlaylistPickerView(item: nil) }
     }
@@ -87,7 +87,7 @@ struct PlaylistPickerView: View {
                 if let error = playlists.lastError { Text(error).font(.footnote).foregroundColor(.red) }
             }
             .navigationTitle(item == nil ? "New playlist" : "Add to playlist").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Cancel") { dismiss() } }
+            .toolbar { Button("Cancel") { dismiss() }.accessibilityIdentifier("closeSheet") }
         }
     }
 }
@@ -126,7 +126,7 @@ struct LocalPlaylistView: View {
                 }.listStyle(.plain)
             } else { EmptyStateView("Playlist unavailable", systemImage: "music.note.list", message: "This playlist is no longer in your library.") }
         }
-        .modifier(PlaylistChrome(embedded: embedded, title: playlist?.name ?? "Playlist", writable: playlists.isWritable, actions: actions))
+        .modifier(PlaylistChrome(embedded: embedded, title: playlist?.name ?? String(localized: "Playlist"), writable: playlists.isWritable, actions: actions))
         .confirmationDialog("Delete this playlist?", isPresented: $deleting, titleVisibility: .visible) {
             Button("Delete playlist", role: .destructive) { playlists.remove(id); if !embedded { dismiss() } }
             Button("Cancel", role: .cancel) {}
@@ -164,7 +164,7 @@ private struct RenamePlaylistView: View {
                 if let error = playlists.lastError { Text(error).font(.footnote).foregroundColor(.red) }
             }
             .navigationTitle("Rename playlist").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Cancel") { dismiss() } }
+            .toolbar { Button("Cancel") { dismiss() }.accessibilityIdentifier("closeSheet") }
         }
     }
 }

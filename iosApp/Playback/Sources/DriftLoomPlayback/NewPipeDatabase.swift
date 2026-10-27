@@ -40,12 +40,12 @@ enum NewPipeDatabase {
             defer { sqlite3_finalize(statement) }
             var result: [[String: String]] = [], status = sqlite3_step(statement)
             while status == SQLITE_ROW {
-                guard result.count < limit else { throw BrowseError.unavailable("This backup exceeds supported migration limits.") }
+                guard result.count < limit else { throw BrowseError.unavailable(L("This backup exceeds supported migration limits.")) }
                 var row: [String: String] = [:]
                 for column in 0..<sqlite3_column_count(statement) {
                     let bytes = Int(sqlite3_column_bytes(statement, column))
                     textBudget -= bytes
-                    guard bytes <= 100_000, textBudget >= 0 else { throw BrowseError.unavailable("This backup exceeds supported text limits.") }
+                    guard bytes <= 100_000, textBudget >= 0 else { throw BrowseError.unavailable(L("This backup exceeds supported text limits.")) }
                     if let name = sqlite3_column_name(statement, column), let value = sqlite3_column_text(statement, column) {
                         row[String(cString: name)] = String(cString: value)
                     }
@@ -58,7 +58,7 @@ enum NewPipeDatabase {
         let tables = Set(try rows("SELECT name FROM sqlite_master WHERE type='table'", limit: 1000).compactMap { $0["name"] })
         guard Set(["subscriptions", "streams", "playlists", "playlist_stream_join", "stream_history"]).isSubset(of: tables),
               let version = try rows("PRAGMA user_version").first?["user_version"].flatMap(Int.init), (1...9).contains(version) else {
-            throw BrowseError.unavailable("This NewPipe database version isn't supported. Existing data is unchanged.")
+            throw BrowseError.unavailable(L("This NewPipe database version isn't supported. Existing data is unchanged."))
         }
         func channelID(_ value: String?) -> String? {
             guard let value, let url = URLComponents(string: value), url.scheme == "https", ["www.youtube.com", "youtube.com"].contains(url.host ?? "") else { return nil }
@@ -91,7 +91,7 @@ enum NewPipeDatabase {
                 document.groups.append(SubscriptionGroup(id: stableID("NewPipe.group." + uid + "." + name), name: name,
                                                          channelIDs: Array(Set(members[uid] ?? [])).sorted()))
             }
-            guard SubscriptionGroups.valid(document) else { throw BrowseError.unavailable("Imported subscription groups exceed supported limits.") }
+            guard SubscriptionGroups.valid(document) else { throw BrowseError.unavailable(L("Imported subscription groups exceed supported limits.")) }
             importedGroups = document
         }
         var streams: [String: BrowseItem] = [:]
@@ -115,7 +115,7 @@ enum NewPipeDatabase {
                 guard let item = streams[join["stream_id"] ?? ""] else { return nil }
                 return PlaylistVideo(id: stableID(namespace + "." + (join["join_index"] ?? "") + "." + item.contentID), item: item)
             }
-            guard entries.count <= 5000 else { throw BrowseError.unavailable("An imported playlist exceeds 5,000 videos.") }
+            guard entries.count <= 5000 else { throw BrowseError.unavailable(L("An imported playlist exceeds 5,000 videos.")) }
             playlists.playlists.append(LocalPlaylist(id: stableID(namespace), name: name, entries: entries))
         }
         if tables.contains("remote_playlists") {
@@ -149,7 +149,7 @@ enum NewPipeDatabase {
             positions = Array(positions.sorted { (order[$0.videoID] ?? .max) < (order[$1.videoID] ?? .max) }.prefix(500))
         }
         guard PlaylistStore.valid(playlists) else { throw CocoaError(.fileReadCorruptFile) }
-        var plan = LibraryImportPlan(summary: "Merge \(library.subscriptions.count) YouTube subscriptions, \(library.history.count) history entries and \(positions.count) resume positions and \(playlists.playlists.count) local playlists and \(playlists.bookmarks.count) playlist bookmarks and \(importedGroups?.groups.count ?? 0) subscription groups from NewPipe.", warnings: ["Group icons and downloaded media aren't migrated; settings come only from preferences.json and are applied only if you choose to. Resume positions are added only for imported history while watch history is on, and never replace positions saved on this device."] + (skipped == 0 ? [] : ["\(skipped) unsupported or invalid entries were skipped."]), library: library, playlists: playlists, groups: importedGroups)
+        var plan = LibraryImportPlan(summary: L("Merge \(ListFormatter.localizedString(byJoining: [L("\(library.subscriptions.count) YouTube subscriptions"), L("\(library.history.count) history entries"), L("\(positions.count) resume positions"), L("\(playlists.playlists.count) local playlists"), L("\(playlists.bookmarks.count) playlist bookmarks"), L("\(importedGroups?.groups.count ?? 0) subscription groups")])) from NewPipe."), warnings: [L("Group icons and downloaded media aren't migrated; settings come only from preferences.json and are applied only if you choose to. Resume positions are added only for imported history while watch history is on, and never replace positions saved on this device.")] + (skipped == 0 ? [] : [L("\(skipped) unsupported or invalid entries were skipped.")]), library: library, playlists: playlists, groups: importedGroups)
         plan.positions = positions
         return plan
     }

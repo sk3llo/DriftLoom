@@ -29,7 +29,7 @@ public actor YouTubeFeedClient: FeedLoading {
         try Task.checkCancellation()
         guard let response = response as? HTTPURLResponse, response.statusCode == 200,
               response.url?.host == "www.youtube.com", data.count <= 1_000_000 else {
-            throw BrowseError.unavailable("This channel's feed could not be loaded.")
+            throw BrowseError.unavailable(L("This channel's feed could not be loaded."))
         }
         return try FeedXMLParser.parse(data, channelID: channelID)
     }

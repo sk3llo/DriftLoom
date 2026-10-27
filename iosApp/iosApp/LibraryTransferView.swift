@@ -71,10 +71,11 @@ struct LibraryTransferView: View {
                             if appliesSettings, let settings = pending.settings {
                                 LibraryTransfer.applySettings(settings, preferences: preferences, library: library, pinnedTabs: pinnedTabs)
                             }
-                            message = "Import complete. Existing items were kept and a recovery copy was saved."
-                                + (appliesSettings && pending.settings != nil ? " NewPipe settings were applied." : "")
+                            message = appliesSettings && pending.settings != nil
+                                ? String(localized: "Import complete. Existing items were kept, a recovery copy was saved and NewPipe settings were applied.")
+                                : String(localized: "Import complete. Existing items were kept and a recovery copy was saved.")
                             self.pending = nil; appliesSettings = false
-                        } catch { message = "Import failed: " + error.localizedDescription }
+                        } catch { message = String(localized: "Import failed: \(error.localizedDescription)") }
                     }
                     Button("Cancel import", role: .cancel) { self.pending = nil }
                 }
@@ -91,7 +92,7 @@ struct LibraryTransferView: View {
                 defer { if scoped { url.stopAccessingSecurityScopedResource() } }
                 guard (try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) <= 50_000_000 else { throw BrowseError.unavailable("This import exceeds the 50 MB ZIP limit (20 MB for JSON).") }
                 pending = try LibraryTransfer.preview(Data(contentsOf: url))
-            } catch { message = "Couldn't read the import: " + error.localizedDescription }
+            } catch { message = String(localized: "Couldn't read the import: \(error.localizedDescription)") }
         }
         .alert("Library transfer", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
             Button("OK") { message = nil }

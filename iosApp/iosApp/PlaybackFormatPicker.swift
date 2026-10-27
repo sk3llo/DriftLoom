@@ -11,7 +11,7 @@ struct PlaybackFormatPicker: View {
     var body: some View {
         AppNavigation {
             List {
-                Button("Automatic playback\(playback.selectedFormat == nil ? " ✓" : "")") { playback.selectFormat(nil); dismiss() }
+                Button(String(localized: "Automatic playback") + (playback.selectedFormat == nil ? " ✓" : "")) { playback.selectFormat(nil); dismiss() }
                 if loading { ProgressView("Finding available formats…") }
                 if let error { Text(error).foregroundStyle(.secondary) }
                 ForEach(choices) { choice in
@@ -23,7 +23,7 @@ struct PlaybackFormatPicker: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .navigationTitle("Playback format").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Done") { dismiss() } }
+            .toolbar { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") }
             .task {
                 do { if let id = playback.videoID { choices = try await YouTubeDownloadResolver().choices(videoID: id) } }
                 catch { self.error = error.localizedDescription }

@@ -281,7 +281,7 @@ struct InlinePlayerControls: View {
         }
     }
 
-    private func controlButton(_ symbol: String, label: String, id: String, size: CGFloat = 24, action: @escaping () -> Void) -> some View {
+    private func controlButton(_ symbol: String, label: LocalizedStringKey, id: String, size: CGFloat = 24, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: size, weight: .semibold)).foregroundColor(.white)
                 .frame(width: 44, height: 44).contentShape(Rectangle())

@@ -42,7 +42,7 @@ public final class PlaylistStore: ObservableObject {
         } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
             publish(PlaylistDocument()); isWritable = true; lastError = nil
         } catch {
-            isWritable = false; lastError = "Your playlists couldn't be read. Their saved file has been left untouched."
+            isWritable = false; lastError = L("Your playlists couldn't be read. Their saved file has been left untouched.")
         }
     }
     public func blockForRecovery(_ message: String) { isWritable = false; lastError = message }
@@ -53,7 +53,7 @@ public final class PlaylistStore: ObservableObject {
     public func dismissError() { lastError = nil }
     @discardableResult public func create(name: String, item: BrowseItem? = nil) -> UUID? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, name.count <= 100 else { lastError = "Choose a playlist name between 1 and 100 characters."; return nil }
+        guard !name.isEmpty, name.count <= 100 else { lastError = L("Choose a playlist name between 1 and 100 characters."); return nil }
         if let item, !Self.video(item) { return nil }
         let playlist = LocalPlaylist(name: name, entries: item.map { [PlaylistVideo(item: $0)] } ?? [])
         var next = document; next.playlists.append(playlist)
@@ -61,12 +61,12 @@ public final class PlaylistStore: ObservableObject {
     }
     @discardableResult public func add(_ item: BrowseItem, to id: UUID) -> Bool {
         guard Self.video(item), let index = document.playlists.firstIndex(where: { $0.id == id }) else { return false }
-        guard document.playlists[index].entries.count < 5000 else { lastError = "This playlist already has 5,000 videos."; return false }
+        guard document.playlists[index].entries.count < 5000 else { lastError = L("This playlist already has 5,000 videos."); return false }
         var next = document; next.playlists[index].entries.append(PlaylistVideo(item: item)); return persist(next)
     }
     public func rename(_ id: UUID, name: String) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, name.count <= 100 else { lastError = "Choose a playlist name between 1 and 100 characters."; return }
+        guard !name.isEmpty, name.count <= 100 else { lastError = L("Choose a playlist name between 1 and 100 characters."); return }
         guard let index = document.playlists.firstIndex(where: { $0.id == id }) else { return }
         var next = document; next.playlists[index].name = name; _ = persist(next)
     }
@@ -95,7 +95,7 @@ public final class PlaylistStore: ObservableObject {
         _ = persist(next)
     }
     private func persist(_ next: PlaylistDocument) -> Bool {
-        guard isWritable else { lastError = "Your playlist file is unavailable. Try loading it again before editing."; return false }
+        guard isWritable else { lastError = L("Your playlist file is unavailable. Try loading it again before editing."); return false }
         do {
             let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
             let data = try encoder.encode(next)
@@ -106,7 +106,7 @@ public final class PlaylistStore: ObservableObject {
 #endif
             try data.write(to: fileURL, options: options)
             publish(next); lastError = nil; return true
-        } catch { lastError = "Your playlists couldn't be saved. Previous saved data is unchanged."; return false }
+        } catch { lastError = L("Your playlists couldn't be saved. Previous saved data is unchanged."); return false }
     }
     private func publish(_ value: PlaylistDocument) { document = value; playlists = value.playlists; bookmarks = value.bookmarks }
     private static func video(_ item: BrowseItem) -> Bool {

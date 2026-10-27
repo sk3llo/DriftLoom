@@ -33,8 +33,8 @@ struct SearchView: View {
             VStack(spacing: 0) {
                 HStack(spacing: 8) {
                     Button(action: onClose) { Image(systemName: "arrow.left").frame(width: 40, height: 44) }
-                        .accessibilityLabel("Back to home")
-                    TextField("Search \(service.rawValue)", text: $query)
+                        .accessibilityLabel("Back to home").accessibilityIdentifier("closeSearch")
+                    TextField(service == .youTube ? "Search YouTube" : "Search SoundCloud", text: $query)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .submitLabel(.search).focused($focused).onSubmit(submit)
                         .accessibilityIdentifier("searchQuery")
@@ -52,19 +52,19 @@ struct SearchView: View {
                 Divider()
                 if let linkError { Text(linkError).font(.footnote).foregroundStyle(.secondary).padding(8) }
                 if service == .soundCloud {
-                    SectionStrip(values: SoundCloudSearchFilter.allCases, selection: $soundCloudFilter, title: { $0.rawValue })
+                    SectionStrip(values: SoundCloudSearchFilter.allCases, selection: $soundCloudFilter, title: { $0.title })
                 } else {
                 HStack(spacing: 0) {
-                    SectionStrip(values: SearchFilter.allCases, selection: $filter, title: { $0.rawValue })
+                    SectionStrip(values: SearchFilter.allCases, selection: $filter, title: { $0.title })
                     Menu {
-                        Picker("Sort by", selection: $order) { ForEach(SearchOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
-                        Picker("Upload date", selection: $date) { ForEach(SearchDate.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
+                        Picker("Sort by", selection: $order) { ForEach(SearchOrder.allCases, id: \.self) { Text($0.title).tag($0) } }
+                        Picker("Upload date", selection: $date) { ForEach(SearchDate.allCases, id: \.self) { Text($0.title).tag($0) } }
                         if filter == .videos || filter == .all {
-                            Picker("Duration", selection: $duration) { ForEach(SearchDuration.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
+                            Picker("Duration", selection: $duration) { ForEach(SearchDuration.allCases, id: \.self) { Text($0.title).tag($0) } }
                         }
                         Button("Reset filters") { order = .relevance; date = .any; duration = .any }
                     } label: { Image(systemName: "line.3.horizontal.decrease.circle").frame(width: 44, height: 46) }
-                    .accessibilityLabel("Search filters")
+                    .accessibilityLabel("Search filters").accessibilityIdentifier("searchFilters")
                 }
                 }
                 if focused, !suggestions.suggestions.isEmpty {
@@ -128,7 +128,7 @@ struct SearchView: View {
         suggestions.clear()
         linkError = nil
         if value.contains("://"), let video = try? VideoRequest(input: value) {
-            onPlay(BrowseItem(contentID: video.videoID, kind: .video, title: "YouTube video")); return
+            onPlay(BrowseItem(contentID: video.videoID, kind: .video, title: PlaybackSession.placeholderTitle)); return
         }
         if value.contains("://"), let link = SharedLink.firstSupportedURL(in: value) {
             NotificationCenter.default.post(name: .driftLoomOpenLink, object: link); return
@@ -161,7 +161,7 @@ struct BrowsePageView: View {
                         AsyncImage(url: channelHeader?.thumbnail) { $0.resizable().scaledToFill() } placeholder: {
                             Image(systemName: "person.crop.circle.fill").resizable().foregroundStyle(.secondary)
                         }.frame(width: 52, height: 52).clipShape(Circle()).accessibilityHidden(true)
-                        Text(channelTitle.isEmpty ? "Channel" : channelTitle).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(channelTitle.isEmpty ? String(localized: "Channel") : channelTitle).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
                         Button(library.isSubscribed(id) ? "SUBSCRIBED" : "SUBSCRIBE") {
                             library.toggleSubscription(BrowseItem(contentID: id, kind: .channel, title: channelTitle,
                                                                   thumbnail: channelHeader?.thumbnail))
@@ -175,7 +175,7 @@ struct BrowsePageView: View {
                     }
                 }.padding(12)
                 if !SoundCloudID.isSoundCloud(id) {
-                    SectionStrip(values: channelHeader?.tabs.isEmpty == false ? channelHeader!.tabs : [.videos], selection: $tab, title: { $0.rawValue })
+                    SectionStrip(values: channelHeader?.tabs.isEmpty == false ? channelHeader!.tabs : [.videos], selection: $tab, title: { $0.title })
                 }
             } else if isPlaylist, !store.items.isEmpty {
                 HStack {
@@ -260,7 +260,7 @@ struct BrowseResultRow: View {
             }.contextMenu { BrowseItemMenu(item: item, onPlay: onPlay) }
             Menu { BrowseItemMenu(item: item, onPlay: onPlay) } label: {
                 Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 36, height: 44)
-            }.foregroundStyle(.secondary).accessibilityLabel("Actions for \(item.title)")
+            }.foregroundStyle(.secondary).accessibilityLabel(Text("Actions for \(item.title)"))
                 .accessibilityIdentifier("itemActions-\(item.id)")
         }
     }
@@ -328,7 +328,7 @@ struct BrowseRow: View {
             Text(item.title).font(.subheadline.weight(.medium)).lineLimit(typeSize.isAccessibilitySize ? nil : 3).foregroundStyle(.primary)
             if !item.subtitle.isEmpty { Text(item.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
             if item.kind != .video || item.isSoundCloud {
-                Text([item.isSoundCloud ? "SoundCloud" : nil, item.kind == .channel ? "Channel" : item.kind == .playlist ? "Playlist" : nil]
+                Text([item.isSoundCloud ? "SoundCloud" : nil, item.kind == .channel ? String(localized: "Channel") : item.kind == .playlist ? String(localized: "Playlist") : nil]
                     .compactMap { $0 }.joined(separator: " · ")).font(.caption2).foregroundStyle(.secondary)
             }
         }

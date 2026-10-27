@@ -15,6 +15,7 @@
 		5370965905399643AF9E58D4 /* DownloadActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E01C67DB2A698C6DA4C1D00 /* DownloadActivityWidget.swift */; };
 		6A219EA3D895D43CDE0F0C60 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F3E6EA7AD3781086713A51E /* Foundation.framework */; };
 		6B7156D1A56573DB7863FE2A /* DriftLoomActivity in Frameworks */ = {isa = PBXBuildFile; productRef = 801D388CCEAE507F6F2BC814 /* DriftLoomActivity */; };
+		6BF4A0B85BB6A487CE4C8258 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E0C0DBA696A39096ED141ED3 /* Localizable.xcstrings */; };
 		83F48F7E7CCF0004CABC8A2D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB578B5F9F6851018024C8DB /* SwiftUI.framework */; };
 		AD1B568042447103A6159561 /* DriftLoomWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BAB7EB6C984C052928D78B57 /* DriftLoomWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D11111111111111111111111 /* DriftLoomPlayback in Frameworks */ = {isa = PBXBuildFile; productRef = D22222222222222222222222 /* DriftLoomPlayback */; };
@@ -75,6 +76,7 @@
 		BB578B5F9F6851018024C8DB /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
 		D40C7CA71C944E883662D7EC /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E00000000000000000000001 /* DriftLoomUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = DriftLoomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E0C0DBA696A39096ED141ED3 /* Localizable.xcstrings */ = {isa = PBXFileReference; includeInIndex = 1; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		E903CDBEAD6067C2E88D0E13 /* DriftLoom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DriftLoom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3C8785D45C8B82432661471 /* DriftLoomShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DriftLoomShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -197,6 +199,7 @@
 			children = (
 				A65FEF6D785B116FE20B1BD9 /* ShareViewController.swift */,
 				D40C7CA71C944E883662D7EC /* Info.plist */,
+				E0C0DBA696A39096ED141ED3 /* Localizable.xcstrings */,
 			);
 			name = DriftLoomShare;
 			path = DriftLoomShare;
@@ -336,6 +339,8 @@
 			knownRegions = (
 				en,
 				Base,
+				uk,
+				pt,
 			);
 			mainGroup = 6ED4AC48A20C6EE0784AF47A;
 			minimizedProjectReferenceProxies = 1;
@@ -374,6 +379,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6BF4A0B85BB6A487CE4C8258 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

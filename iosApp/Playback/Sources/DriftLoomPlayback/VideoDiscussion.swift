@@ -75,7 +75,7 @@ public actor YouTubeDiscussionClient: DiscussionLoading {
         let (data, response) = try await session.data(for: request)
         try Task.checkCancellation()
         guard let http = response as? HTTPURLResponse, http.url?.host == "www.youtube.com", data.count < 8_000_000 else { throw BrowseError.unsupportedResponse }
-        guard http.statusCode == 200 else { throw BrowseError.unavailable("YouTube couldn't load comments (\(http.statusCode)). Try again.") }
+        guard http.statusCode == 200 else { throw BrowseError.unavailable(L("YouTube couldn't load comments (\(http.statusCode)). Try again.")) }
         return data
     }
 }
@@ -135,7 +135,7 @@ enum DiscussionParser {
                    let key = model["commentKey"] as? String, let entity = entities[key],
                    let properties = entity["properties"] as? Object, let id = properties["commentId"] as? String {
                     let author = entity["author"] as? Object ?? [:]
-                    result.append(VideoComment(id: id, author: author["displayName"] as? String ?? "YouTube user",
+                    result.append(VideoComment(id: id, author: author["displayName"] as? String ?? L("YouTube user"),
                         channelID: author["channelId"] as? String, text: text(properties["content"]),
                         published: properties["publishedTime"] as? String ?? "",
                         likes: (entity["toolbar"] as? Object)?["likeCountNotliked"] as? String ?? "", replies: replyCursor))

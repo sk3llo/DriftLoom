@@ -53,7 +53,7 @@ public final class LibraryStore: ObservableObject {
             publish(LibraryDocument()); isWritable = true; lastError = nil
         } catch {
             isWritable = false
-            lastError = "Your library couldn't be read. The saved file has been left untouched."
+            lastError = L("Your library couldn't be read. The saved file has been left untouched.")
         }
     }
 
@@ -115,7 +115,7 @@ public final class LibraryStore: ObservableObject {
 
     private func persist(_ next: LibraryDocument) -> Bool {
         guard isWritable else {
-            lastError = "Your saved library is unavailable. Try loading it again before making changes."
+            lastError = L("Your saved library is unavailable. Try loading it again before making changes.")
             return false
         }
         do {
@@ -132,7 +132,7 @@ public final class LibraryStore: ObservableObject {
             publish(next); lastError = nil
             return true
         } catch {
-            lastError = "Your library couldn't be saved. Your previous saved data is unchanged."
+            lastError = L("Your library couldn't be saved. Your previous saved data is unchanged.")
             return false
         }
     }
@@ -144,7 +144,7 @@ public final class LibraryStore: ObservableObject {
     }
 
     private func invalidItem() -> Bool {
-        lastError = "This item can't be added to your library."
+        lastError = L("This item can't be added to your library.")
         return false
     }
 

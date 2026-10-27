@@ -33,14 +33,14 @@ struct DownloadPicker: View {
                 ForEach(choices) { choice in
                     Button(choice.name) {
                         if manager.start(item: item, choice: choice, subtitleLanguage: subtitleLanguage) != nil { dismiss() }
-                        else { error = manager.library.error ?? "Downloads are reconnecting. Try again shortly." }
+                        else { error = manager.library.error ?? String(localized: "Downloads are reconnecting. Try again shortly.") }
                     }.disabled(manager.reconnecting || !manager.library.isWritable)
                 }
                 Text("Downloads use device storage. Available formats depend on this video. You can cancel or retry in Downloads.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .navigationTitle("Download").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") } }
             .task {
                 if let catalog = try? await YouTubeSubtitleClient().catalog(videoID: item.contentID) {
                     subtitleTracks = catalog.tracks
@@ -68,7 +68,7 @@ struct DownloadsView: View {
     @State private var deleting: DownloadRecord?
     var body: some View {
         List {
-            NavigationLink("Downloads and storage") { DownloadSettingsView() }
+            NavigationLink("Downloads and storage") { DownloadSettingsView() }.accessibilityIdentifier("openDownloadSettings")
             if let error = manager.operationError { Text(error).font(.footnote).foregroundStyle(.secondary) }
             if let error = manager.library.error { Text(error).foregroundStyle(.secondary) }
             if manager.records.isEmpty { Text("Download a video from its playback options to watch it offline.").foregroundStyle(.secondary) }
@@ -76,10 +76,10 @@ struct DownloadsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(record.item.title).font(.headline)
                     Text(record.choice.name).font(.caption).foregroundStyle(.secondary)
-                    if let network = record.network { Text(network.rawValue).font(.caption2).foregroundStyle(.secondary) }
+                    if let network = record.network { Text(network.title).font(.caption2).foregroundStyle(.secondary) }
                     if let language = record.subtitleLanguage {
                         let name = Locale.current.localizedString(forLanguageCode: language) ?? language
-                        Text(record.subtitlePath != nil ? "Subtitles: \(name)" : record.subtitleError.map { "Subtitles unavailable: \($0)" } ?? "Subtitles: \(name) (pending)")
+                        Text(record.subtitlePath != nil ? String(localized: "Subtitles: \(name)") : record.subtitleError.map { String(localized: "Subtitles unavailable: \($0)") } ?? String(localized: "Subtitles: \(name) (pending)"))
                             .font(.caption2).foregroundStyle(.secondary)
                     }
                     if record.state == .downloading || record.state == .preparing {
@@ -91,7 +91,7 @@ struct DownloadsView: View {
                             Button("Play offline") { onPlay(record.item) }
                         } else { Text("The downloaded file is missing. Remove this entry and download it again.").font(.footnote) }
                     } else {
-                        Text(record.error ?? "Cancelled").font(.footnote).foregroundStyle(.secondary)
+                        Text(record.error ?? String(localized: "Cancelled")).font(.footnote).foregroundStyle(.secondary)
                         Button("Retry download") { manager.retry(record.id) }
                     }
                 }.padding(.vertical, 4)

@@ -92,7 +92,7 @@ final class DownloadManager: ObservableObject {
             }
             if !descriptions.contains(description(record)) {
                 discardParts(&record)
-                record.state = .failed; record.error = "Download interrupted. Retry to obtain a fresh stream."
+                record.state = .failed; record.error = String(localized: "Download interrupted. Retry to obtain a fresh stream.")
                 _ = library.update(record)
             }
         }
@@ -141,7 +141,7 @@ final class DownloadManager: ObservableObject {
                     var background = UIBackgroundTaskIdentifier.invalid
                     background = UIApplication.shared.beginBackgroundTask(withName: "SoundCloud download") { [weak self] in
                         self?.preparations[id]?.cancel(); self?.preparations[id] = nil
-                        self?.failed(transfer, message: "Interrupted while DriftLoom was in the background. Retry to continue.")
+                        self?.failed(transfer, message: String(localized: "Interrupted while DriftLoom was in the background. Retry to continue."))
                         UIApplication.shared.endBackgroundTask(background); background = .invalid
                     }
                     defer { if background != .invalid { UIApplication.shared.endBackgroundTask(background) } }
@@ -170,7 +170,7 @@ final class DownloadManager: ObservableObject {
                     let asset = AVURLAsset(url: source.url, options: [AVURLAssetAllowsCellularAccessKey: record.network != .wifiOnly])
                     let duration = try await asset.load(.duration)
                     try Task.checkCancellation()
-                    guard duration.isNumeric, duration.seconds > 0 else { throw BrowseError.unavailable("Live streams cannot be saved as offline downloads.") }
+                    guard duration.isNumeric, duration.seconds > 0 else { throw BrowseError.unavailable(String(localized: "Live streams cannot be saved as offline downloads.")) }
                     guard self.matching(transfer)?.state == .preparing else { return }
                     let session = record.network == .wifiOnly ? self.wifiHLS! : self.hls!
                     guard let download = session.makeAssetDownloadTask(asset: asset, assetTitle: record.item.title, assetArtworkData: nil, options: nil) else { throw PlaybackError.noPlayableStream }
@@ -208,7 +208,7 @@ final class DownloadManager: ObservableObject {
         if record.state != .completed { cancel(id) }
         if let url = managedURL(record) {
             do { try FileManager.default.removeItem(at: url) }
-            catch { operationError = "The downloaded media couldn't be deleted. Try again after playback stops."; return }
+            catch { operationError = String(localized: "The downloaded media couldn't be deleted. Try again after playback stops."); return }
         }
         if let url = subtitleURL(record) { try? FileManager.default.removeItem(at: url) }
         var parts = record; discardParts(&parts)
@@ -235,7 +235,7 @@ final class DownloadManager: ObservableObject {
             let client = YouTubeSubtitleClient()
             let translates = AppPreferences(defaults: makeAppDefaults()).translatesSubtitles
             guard let track = try await client.catalog(videoID: record.item.contentID).preferred(language: language, allowTranslation: translates) else {
-                throw BrowseError.unavailable("Subtitles in this language aren't available for this video.")
+                throw BrowseError.unavailable(String(localized: "Subtitles in this language aren't available for this video."))
             }
             let cues = try await client.cues(for: track)
             let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DriftLoom/Media")
@@ -310,7 +310,7 @@ final class DownloadManager: ObservableObject {
         do {
             try await MergedMedia.export(video: home.appendingPathComponent(videoPath), audio: home.appendingPathComponent(audioPath), to: output)
         } catch {
-            failed(transfer, message: "The video and audio couldn't be combined. Retry the download."); return
+            failed(transfer, message: String(localized: "The video and audio couldn't be combined. Retry the download.")); return
         }
         guard var current = matching(transfer) else { try? FileManager.default.removeItem(at: output); return }
         discardParts(&current); _ = library.update(current)
@@ -333,7 +333,7 @@ final class DownloadManager: ObservableObject {
             try? FileManager.default.removeItem(at: location); return
         }
         guard let relativePath = DownloadPaths.relativePath(for: location, home: URL(fileURLWithPath: NSHomeDirectory())) else {
-            failed(transfer, message: "Downloaded media location is unavailable."); return
+            failed(transfer, message: String(localized: "Downloaded media location is unavailable.")); return
         }
         let asset = AVURLAsset(url: location)
         do {
@@ -346,7 +346,7 @@ final class DownloadManager: ObservableObject {
             try? local.setResourceValues(values)
             if library.update(record) { DownloadNotifier.shared.finished(record) }
             else { try? FileManager.default.removeItem(at: location) }
-        } catch { try? FileManager.default.removeItem(at: location); failed(transfer, message: "The downloaded media couldn't be verified for offline playback. Retry the download.") }
+        } catch { try? FileManager.default.removeItem(at: location); failed(transfer, message: String(localized: "The downloaded media couldn't be verified for offline playback. Retry the download.")) }
     }
 }
 
@@ -356,7 +356,7 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, AVAs
         let transfer = downloadTask.taskDescription
         guard let transfer, let rawID = transfer.split(separator: ":").first, let id = UUID(uuidString: String(rawID)),
               let http = downloadTask.response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            Task { @MainActor in self.owner?.failed(transfer, message: "The server refused the download. Retry to refresh the stream.") }; return
+            Task { @MainActor in self.owner?.failed(transfer, message: String(localized: "The server refused the download. Retry to refresh the stream.")) }; return
         }
         let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("DriftLoom/Media")
         let destination = directory.appendingPathComponent(id.uuidString + "-" + UUID().uuidString + (TransferParts.part(transfer).map { "." + $0 + ".part" } ?? "") + (TransferParts.part(transfer) == TransferParts.audio ? ".m4a" : ".mp4"))
@@ -364,7 +364,7 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, AVAs
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try FileManager.default.moveItem(at: location, to: destination)
             Task { @MainActor in await self.owner?.completed(transfer, location: destination, hls: false) }
-        } catch { Task { @MainActor in self.owner?.failed(transfer, message: "The downloaded file couldn't be saved. Check available storage.") } }
+        } catch { Task { @MainActor in self.owner?.failed(transfer, message: String(localized: "The downloaded file couldn't be saved. Check available storage.")) } }
     }
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         guard totalBytesExpectedToWrite > 0 else { return }

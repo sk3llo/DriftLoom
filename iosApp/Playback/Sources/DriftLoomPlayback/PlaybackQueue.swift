@@ -62,7 +62,7 @@ public final class PlaybackQueue: ObservableObject {
 
     public func start(_ items: [BrowseItem], at index: Int = 0) {
         let videos = items.filter { $0.kind == .video && (try? VideoRequest(input: $0.contentID).videoID) == $0.contentID }
-        guard videos.count <= 5000 else { storageError = "A queue can contain up to 5,000 videos."; return }
+        guard videos.count <= 5000 else { storageError = L("A queue can contain up to 5,000 videos."); return }
         guard videos.indices.contains(index) else { return }
         entries = videos.map(QueueEntry.init)
         select(entries[index].id)
@@ -71,7 +71,7 @@ public final class PlaybackQueue: ObservableObject {
     }
     public func enqueue(_ item: BrowseItem, next: Bool = false) {
         guard item.kind == .video, (try? VideoRequest(input: item.contentID).videoID) == item.contentID else { return }
-        guard entries.count < 5000 else { storageError = "A queue can contain up to 5,000 videos."; return }
+        guard entries.count < 5000 else { storageError = L("A queue can contain up to 5,000 videos."); return }
         if entries.isEmpty { start([item]); return }
         let entry = QueueEntry(item: item)
         if next, let index = currentIndex { entries.insert(entry, at: index + 1) }
@@ -140,7 +140,7 @@ public final class PlaybackQueue: ObservableObject {
             entries = value.entries; currentID = value.currentID; repeatMode = value.repeatMode
             shuffled = value.shuffled; shuffleOrder = value.order
             if let item = entries.first(where: { $0.id == currentID })?.item { playback.prepare(item) }
-        } catch { writable = false; storageError = "Your saved queue couldn't be read and has been left untouched. The current queue will not be saved." }
+        } catch { writable = false; storageError = L("Your saved queue couldn't be read and has been left untouched. The current queue will not be saved.") }
     }
     private func save() {
         guard !restoring, writable, let archiveURL else { return }
@@ -154,7 +154,7 @@ public final class PlaybackQueue: ObservableObject {
             options.insert(.completeFileProtectionUntilFirstUserAuthentication)
 #endif
             try data.write(to: archiveURL, options: options)
-        } catch { storageError = "Your current queue couldn't be saved. The previously saved queue is unchanged." }
+        } catch { storageError = L("Your current queue couldn't be saved. The previously saved queue is unchanged.") }
     }
     private func rebuildShuffleOrder() {
         guard shuffled else { shuffleOrder = []; return }

@@ -62,6 +62,9 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - YouTube Google Takeout import, as in NewPipe: the Takeout ZIP (folder and file names may be translated),
   its subscriptions.csv, or the older subscriptions.json. Only subscriptions are imported; your own channel
   file in the ZIP is ignored. Settings → Backup and import has the steps and a link to Takeout.
+- Interface in English, Ukrainian and Portuguese (Brazilian wording, used for every Portuguese region), following
+  the iPhone's language or the per-app language in iOS Settings. Counts use each language's plural forms.
+  Translations live in string catalogs: `iosApp/iosApp`, `iosApp/DriftLoomShare` and the two package targets.
 - Opening links from other apps: "DriftLoom" in the share sheet (Safari, the YouTube and SoundCloud apps, …) and a
   `driftloom://open?url=<link>` URL scheme (also usable from Shortcuts). Videos and tracks play; YouTube channels,
   @handles and playlists, and SoundCloud profiles and playlists open as pages, including on.soundcloud.com links.
@@ -174,7 +177,7 @@ screen. The `StreamResolving` interface allows replacing the extractor independe
 Browsing is a separate `Browsing` interface. Its client reads YouTube page data directly and
 keeps continuation context in memory; it does not use a third-party browsing server or a
 hard-coded web client version. Browsing defaults to English/Portugal, with content language and
-region controls for new requests. App-interface localization remains future work.
+region controls for new requests (separate from the interface language).
 
 Verification on 25 October 2026: all 43 package tests pass in Debug and Release. Three optimized
 UI journeys pass on iPhone SE (3rd generation)/iOS 17.5: drawer/settings/subscriptions; search,

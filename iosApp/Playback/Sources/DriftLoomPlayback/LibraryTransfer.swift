@@ -45,13 +45,13 @@ public enum LibraryTransfer {
         let playlistData = try JSONDecoder().decode(PlaylistDocument.self, from: playlists.snapshotData())
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
         let data = try encoder.encode(Backup(version: groups == nil ? 1 : 2, library: libraryData, playlists: playlistData, groups: try groups?.snapshot()))
-        guard data.count <= 20_000_000 else { throw BrowseError.unavailable("This library exceeds the 20 MB backup limit.") }
+        guard data.count <= 20_000_000 else { throw BrowseError.unavailable(L("This library exceeds the 20 MB backup limit.")) }
         return data
     }
     public static func preview(_ data: Data) throws -> LibraryImportPlan {
         if data.starts(with: [0x50, 0x4b]) {
             guard data.count <= 50_000_000 else {
-                throw BrowseError.unavailable("This ZIP is larger than 50 MB. For Takeout, export only YouTube subscriptions or choose the subscriptions.csv file.")
+                throw BrowseError.unavailable(L("This ZIP is larger than 50 MB. For Takeout, export only YouTube subscriptions or choose the subscriptions.csv file."))
             }
             let database: Data
             do { database = try NewPipeArchive.database(data) }
@@ -64,7 +64,7 @@ public enum LibraryTransfer {
             }
             return plan
         }
-        guard data.count <= 20_000_000 else { throw BrowseError.unavailable("This import exceeds the 20 MB limit.") }
+        guard data.count <= 20_000_000 else { throw BrowseError.unavailable(L("This import exceeds the 20 MB limit.")) }
         if let takeout = try YouTubeTakeout.plan(json: data) { return takeout }
         if let text = String(data: data, encoding: .utf8), !text.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{"),
            !text.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("[") {
@@ -94,9 +94,9 @@ public enum LibraryTransfer {
             let id = String(path[1]); guard ids.insert(id).inserted else { continue }
             records.append(LibraryRecord(item: BrowseItem(contentID: id, kind: .channel, title: subscription.name), date: Date()))
         }
-        guard !records.isEmpty || source.subscriptions.isEmpty else { throw BrowseError.unavailable("No supported YouTube channel subscriptions were found. Export NewPipe subscriptions as JSON; ZIP database backups are also supported.") }
+        guard !records.isEmpty || source.subscriptions.isEmpty else { throw BrowseError.unavailable(L("No supported YouTube channel subscriptions were found. Export NewPipe subscriptions as JSON; ZIP database backups are also supported.")) }
         var document = LibraryDocument(); document.subscriptions = records
-        return LibraryImportPlan(summary: "Merge \(records.count) YouTube subscriptions.", warnings: skipped == 0 ? [] : ["\(skipped) unsupported service or invalid channel entries will be skipped."], library: document, playlists: PlaylistDocument())
+        return LibraryImportPlan(summary: L("Merge \(records.count) YouTube subscriptions."), warnings: skipped == 0 ? [] : [L("\(skipped) unsupported service or invalid channel entries will be skipped.")], library: document, playlists: PlaylistDocument())
     }
     private static func valid(_ document: LibraryDocument) -> Bool {
         document.saved.count <= 50_000 && document.subscriptions.count <= 50_000 && document.history.count <= 50_000
@@ -110,7 +110,7 @@ public enum LibraryTransfer {
         if plan.groups != nil {
             guard let groups, groups.isWritable,
                   groups.fileURL == library.fileURL.deletingLastPathComponent().appendingPathComponent("subscription-groups.json") else {
-                throw BrowseError.unavailable("Subscription groups are unavailable. Existing library data is unchanged.")
+                throw BrowseError.unavailable(L("Subscription groups are unavailable. Existing library data is unchanged."))
             }
         }
         var current = try JSONDecoder().decode(LibraryDocument.self, from: library.snapshotData())
@@ -131,7 +131,7 @@ public enum LibraryTransfer {
         }
         var ids = Set(currentPlaylists.bookmarks.map(\.id))
         currentPlaylists.bookmarks += plan.playlists.bookmarks.filter { ids.insert($0.id).inserted }
-        guard valid(current), PlaylistStore.valid(currentPlaylists) else { throw BrowseError.unavailable("The merged library exceeds supported limits. Existing data is unchanged.") }
+        guard valid(current), PlaylistStore.valid(currentPlaylists) else { throw BrowseError.unavailable(L("The merged library exceeds supported limits. Existing data is unchanged.")) }
         let directory = library.fileURL.deletingLastPathComponent()
         var groupData: Data?
         if let incoming = plan.groups, let groups {
@@ -141,7 +141,7 @@ public enum LibraryTransfer {
                     merged.groups[index].channelIDs = Array(Set(merged.groups[index].channelIDs + group.channelIDs)).sorted()
                 } else { merged.groups.append(group) }
             }
-            guard SubscriptionGroups.valid(merged) else { throw BrowseError.unavailable("The merged subscription groups exceed supported limits.") }
+            guard SubscriptionGroups.valid(merged) else { throw BrowseError.unavailable(L("The merged subscription groups exceed supported limits.")) }
             let bytes = try JSONEncoder().encode(merged)
             guard bytes.count <= 2_000_000 else { throw CocoaError(.fileWriteOutOfSpace) }
             groupData = bytes
@@ -150,7 +150,7 @@ public enum LibraryTransfer {
             try transaction(directory: directory, library: JSONEncoder().encode(current), playlists: JSONEncoder().encode(currentPlaylists), groups: groupData)
         } catch {
             if FileManager.default.fileExists(atPath: directory.appendingPathComponent("transfer-recovery.json").path) {
-                let message = "The import recovery couldn't finish. Saved files are preserved and edits are disabled until recovery succeeds."
+                let message = L("The import recovery couldn't finish. Saved files are preserved and edits are disabled until recovery succeeds.")
                 library.blockForRecovery(message); playlists.blockForRecovery(message); groups?.blockForRecovery(message)
             }
             throw error
@@ -199,7 +199,7 @@ public enum LibraryTransfer {
                                 groups: groups == nil ? nil : try existing(directory.appendingPathComponent("subscription-groups.json")),
                                 capturesGroups: groups != nil)
         let data = try JSONEncoder().encode(recovery)
-        guard data.count < 60_000_000 else { throw BrowseError.unavailable("This library is too large to create a safe import recovery copy.") }
+        guard data.count < 60_000_000 else { throw BrowseError.unavailable(L("This library is too large to create a safe import recovery copy.")) }
         let backups = directory.appendingPathComponent("PreImportBackups")
         try FileManager.default.createDirectory(at: backups, withIntermediateDirectories: true)
         try atomicWrite(data, backups.appendingPathComponent(UUID().uuidString + ".json"))

@@ -17,7 +17,17 @@ struct VideoDetailView: View {
     @State private var downloading = false
     @State private var choosingFormat = false
     @StateObject private var inline = InlinePlayerController()
-    private enum DetailTab: String, CaseIterable { case related = "Related", comments = "Comments", description = "Description", queue = "Queue" }
+    private enum DetailTab: CaseIterable {
+        case related, comments, description, queue
+        var title: String {
+            switch self {
+            case .related: return String(localized: "Related")
+            case .comments: return String(localized: "Comments")
+            case .description: return String(localized: "Description")
+            case .queue: return String(localized: "Queue")
+            }
+        }
+    }
 
     var body: some View {
         AppNavigation {
@@ -61,13 +71,13 @@ struct VideoDetailView: View {
                             HStack {
                                 if let id = item.channelID {
                                     BrowseLink(route: .channel(id), onPlay: onPlay) {
-                                        Label(item.subtitle.isEmpty ? "Channel" : item.subtitle, systemImage: "person.crop.circle")
+                                        Label(item.subtitle.isEmpty ? String(localized: "Channel") : item.subtitle, systemImage: "person.crop.circle")
                                             .font(.subheadline).foregroundStyle(.primary).lineLimit(1)
                                     }
                                     Spacer()
                                     Button(library.isSubscribed(id) ? "SUBSCRIBED" : "SUBSCRIBE") {
                                         library.toggleSubscription(BrowseItem(contentID: id, kind: .channel,
-                                                                              title: item.subtitle.isEmpty ? "Channel" : item.subtitle))
+                                                                              title: item.subtitle.isEmpty ? String(localized: "Channel") : item.subtitle))
                                     }.font(.caption.weight(.semibold)).disabled(!library.isWritable)
                                 } else { Text(item.isSoundCloud ? "SoundCloud" : "YouTube").font(.caption).foregroundStyle(.secondary) }
                             }
@@ -80,11 +90,11 @@ struct VideoDetailView: View {
                                 detailAction("Playlist", symbol: "plus.rectangle.on.rectangle") {
                                     NotificationCenter.default.post(name: .driftLoomAddToPlaylist, object: item)
                                 }
-                                detailAction("Download", symbol: "arrow.down.circle") { downloading = true }
+                                detailAction("Download", symbol: "arrow.down.circle") { downloading = true }.accessibilityIdentifier("detailDownload")
                             }
                         }
                     }.padding(12)
-                    SectionStrip(values: DetailTab.allCases, selection: $tab, title: { $0.rawValue })
+                    SectionStrip(values: DetailTab.allCases, selection: $tab, title: { $0.title })
                     switch tab {
                     case .related:
                         LazyVStack(spacing: 14) {
@@ -102,7 +112,7 @@ struct VideoDetailView: View {
                     case .comments:
                         CommentsPanel(store: discussion)
                     case .description:
-                        Text(discussion.details?.description.isEmpty == false ? discussion.details!.description : playback.video?.description.isEmpty == false ? playback.video!.description : "No description is available.")
+                        Text(discussion.details?.description.isEmpty == false ? discussion.details!.description : playback.video?.description.isEmpty == false ? playback.video!.description : String(localized: "No description is available."))
                             .font(.subheadline).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
                     case .queue:
                         QueuePanel()
@@ -137,7 +147,7 @@ struct VideoDetailView: View {
                         if playback.currentItemMetadata?.isSoundCloud != true {
                         Menu("Maximum video resolution") {
                             ForEach([0, 360, 480, 720, 1080], id: \.self) { height in
-                                Button((height == 0 ? "Auto" : "Up to \(height)p") + (playback.maximumHeight == height ? " ✓" : "")) {
+                                Button((height == 0 ? String(localized: "Auto") : String(localized: "Up to \(String(height))p")) + (playback.maximumHeight == height ? " ✓" : "")) {
                                     playback.setMaximumHeight(height)
                                 }
                             }
@@ -145,9 +155,9 @@ struct VideoDetailView: View {
                         }
                         if !playback.subtitleTracks.isEmpty {
                             Menu("Subtitles") {
-                                Button("Off" + (playback.selectedSubtitle == nil ? " ✓" : "")) { playback.selectSubtitle(nil) }
+                                Button(String(localized: "Off") + (playback.selectedSubtitle == nil ? " ✓" : "")) { playback.selectSubtitle(nil) }
                                 ForEach(playback.subtitleTracks) { track in
-                                    Button(track.name + (track.isAutoGenerated && !track.name.localizedCaseInsensitiveContains("auto") ? " (auto-generated)" : "")
+                                    Button((track.isAutoGenerated && !track.name.localizedCaseInsensitiveContains("auto") ? String(localized: "\(track.name) (auto-generated)") : track.name)
                                            + (playback.selectedSubtitle == track ? " ✓" : "")) { playback.selectSubtitle(track) }
                                 }
                                 if !playback.subtitleTranslations.isEmpty {
@@ -169,7 +179,7 @@ struct VideoDetailView: View {
                             }
                         }
                         IconButton("Stop playback", systemImage: "stop") { queue.stop(); onCollapse() }
-                    } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }.accessibilityLabel("Playback options")
+                    } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }.accessibilityLabel("Playback options").accessibilityIdentifier("playbackOptions")
     }
 
     @ViewBuilder private var playbackStatus: some View {
@@ -189,11 +199,11 @@ struct VideoDetailView: View {
             Label("Stream refreshed", systemImage: "arrow.clockwise").font(.caption).foregroundStyle(.secondary)
         }
     }
-    private func detailAction(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
+    private func detailAction(_ title: LocalizedStringKey, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) { actionLabel(title, symbol: symbol) }.buttonStyle(.plain)
     }
-    private func actionLabel(_ title: String, symbol: String) -> some View {
-        VStack(spacing: 6) { Image(systemName: symbol).font(.title3); Text(title).font(.caption) }
+    private func actionLabel(_ title: LocalizedStringKey, symbol: String) -> some View {
+        VStack(spacing: 6) { Image(systemName: symbol).font(.title3); Text(title).font(.caption).lineLimit(1).minimumScaleFactor(0.75) }
             .frame(maxWidth: .infinity, minHeight: 54).foregroundColor(AppStyle.accent)
     }
 }
@@ -209,13 +219,13 @@ private struct QueuePanel: View {
                     .disabled(!queue.canGoNext).accessibilityLabel("Next")
                 Button { queue.shuffled.toggle() } label: {
                     Image(systemName: "shuffle").foregroundColor(queue.shuffled ? AppStyle.accent : .secondary).frame(width: 44, height: 44)
-                }.accessibilityLabel("Shuffle \(queue.shuffled ? "on" : "off")")
+                }.accessibilityLabel(queue.shuffled ? "Shuffle on" : "Shuffle off")
                 Menu {
-                    ForEach(QueueRepeat.allCases, id: \.self) { mode in Button(mode.rawValue) { queue.repeatMode = mode } }
+                    ForEach(QueueRepeat.allCases, id: \.self) { mode in Button(mode.title) { queue.repeatMode = mode } }
                 } label: {
                     Image(systemName: queue.repeatMode == .one ? "repeat.1" : "repeat")
                         .foregroundColor(queue.repeatMode == .off ? .secondary : AppStyle.accent).frame(width: 44, height: 44)
-                }.accessibilityLabel("Repeat \(queue.repeatMode.rawValue)")
+                }.accessibilityLabel("Repeat: \(queue.repeatMode.title)")
             }
             // An embedded list supplies native accessible drag handles without nesting scroll views.
             List {
@@ -308,7 +318,7 @@ private struct CommentsPanel: View {
     private func commentBody(_ comment: VideoComment) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(comment.author).font(.subheadline.weight(.semibold))
-            Text([comment.published, comment.likes.isEmpty ? "" : "\(comment.likes) likes"].filter { !$0.isEmpty }.joined(separator: " · "))
+            Text([comment.published, comment.likes.isEmpty ? "" : String(localized: "\(comment.likes) likes")].filter { !$0.isEmpty }.joined(separator: " · "))
                 .font(.caption).foregroundStyle(.secondary)
             Text(comment.text).font(.subheadline).textSelection(.enabled).accessibilityIdentifier("commentText")
         }

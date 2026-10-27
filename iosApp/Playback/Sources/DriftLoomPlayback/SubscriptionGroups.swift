@@ -31,7 +31,7 @@ public final class SubscriptionGroups: ObservableObject {
             groups = document.groups; isWritable = true; error = nil
         } catch let issue as CocoaError where issue.code == .fileReadNoSuchFile {
             groups = []; isWritable = true; error = nil
-        } catch { isWritable = false; self.error = "Your subscription groups couldn't be read. The saved file has been left untouched." }
+        } catch { isWritable = false; self.error = L("Your subscription groups couldn't be read. The saved file has been left untouched.") }
     }
     @discardableResult
     public func upsert(id: UUID = UUID(), name: String, channelIDs: [String]) -> Bool {
@@ -75,7 +75,7 @@ public final class SubscriptionGroups: ObservableObject {
     private func save(_ next: [SubscriptionGroup]) -> Bool {
         guard isWritable else { return false }
         let document = SubscriptionGroupDocument(groups: next)
-        guard Self.valid(document) else { error = "Use a name of 1–100 characters, up to 100 groups and up to 5,000 channels per group."; return false }
+        guard Self.valid(document) else { error = L("Use a name of 1–100 characters, up to 100 groups and up to 5,000 channels per group."); return false }
         do {
             let bytes = try JSONEncoder().encode(document)
             guard bytes.count <= 2_000_000 else { throw CocoaError(.fileWriteOutOfSpace) }
@@ -86,7 +86,7 @@ public final class SubscriptionGroups: ObservableObject {
 #endif
             try bytes.write(to: fileURL, options: options)
             groups = next; error = nil; return true
-        } catch { self.error = "Your subscription groups couldn't be saved. Previous data is unchanged."; return false }
+        } catch { self.error = L("Your subscription groups couldn't be saved. Previous data is unchanged."); return false }
     }
 }
 

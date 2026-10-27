@@ -21,15 +21,15 @@ public struct MigratedSettings: Equatable, Sendable {
     /// Human-readable lines for the import preview.
     public var changes: [String] {
         var lines: [String] = []
-        if let appearance { lines.append("Theme: \(appearance)") }
-        if let contentLanguage { lines.append("Content language: " + (Locale.current.localizedString(forLanguageCode: contentLanguage) ?? contentLanguage)) }
-        if let contentCountry { lines.append("Content region: " + (Locale.current.localizedString(forRegionCode: contentCountry) ?? contentCountry)) }
-        if let recordsWatchHistory { lines.append("Record watch history: " + (recordsWatchHistory ? "on" : "off")) }
-        if let recordsSearchHistory { lines.append("Record search history: " + (recordsSearchHistory ? "on" : "off")) }
-        if let resumesPlayback { lines.append("Resume playback position: " + (resumesPlayback ? "on" : "off")) }
-        if let usesSearchSuggestions { lines.append("Search suggestions: " + (usesSearchSuggestions ? "on" : "off")) }
-        if let downloadNetwork { lines.append("Download network: " + downloadNetwork.rawValue) }
-        if !homeTabs.isEmpty { lines.append("Home tabs: " + homeTabs.map(\.title).joined(separator: ", ")) }
+        if let appearance { lines.append(L("Theme: \(L(String.LocalizationValue(appearance)))")) }
+        if let contentLanguage { lines.append(L("Content language: \(Locale.current.localizedString(forLanguageCode: contentLanguage) ?? contentLanguage)")) }
+        if let contentCountry { lines.append(L("Content region: \(Locale.current.localizedString(forRegionCode: contentCountry) ?? contentCountry)")) }
+        if let recordsWatchHistory { lines.append(recordsWatchHistory ? L("Record watch history: on") : L("Record watch history: off")) }
+        if let recordsSearchHistory { lines.append(recordsSearchHistory ? L("Record search history: on") : L("Record search history: off")) }
+        if let resumesPlayback { lines.append(resumesPlayback ? L("Resume playback position: on") : L("Resume playback position: off")) }
+        if let usesSearchSuggestions { lines.append(usesSearchSuggestions ? L("Search suggestions: on") : L("Search suggestions: off")) }
+        if let downloadNetwork { lines.append(L("Download network: \(downloadNetwork.title)")) }
+        if !homeTabs.isEmpty { lines.append(L("Home tabs: \(homeTabs.map(\.title).joined(separator: ", "))")) }
         return lines
     }
 }

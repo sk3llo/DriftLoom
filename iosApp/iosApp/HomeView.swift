@@ -23,6 +23,7 @@ struct SectionStrip<Value: Hashable>: View {
                                 Rectangle().fill(selection == value ? AppStyle.accent : .clear).frame(height: 2)
                             }
                         }.contentShape(Rectangle()).buttonStyle(.plain).id(value)
+                            .accessibilityIdentifier("sectionTab-\(values.firstIndex(of: value) ?? 0)")
                             .accessibilityAddTraits(selection == value ? .isSelected : [])
                     }
                 }
@@ -66,9 +67,9 @@ struct HomeView: View {
     }
     private func tabTitle(_ tab: HomeTabKey) -> String {
         switch tab {
-        case let .section(section): return section.rawValue
-        case let .pinned(id): return pinnedTabs.tabs.first { $0.id == id }?.item.title ?? "Home"
-        case let .local(id): return playlists.playlists.first { $0.id == id }?.name ?? "Playlist"
+        case let .section(section): return section.title
+        case let .pinned(id): return pinnedTabs.tabs.first { $0.id == id }?.item.title ?? String(localized: "Home")
+        case let .local(id): return playlists.playlists.first { $0.id == id }?.name ?? String(localized: "Playlist")
         }
     }
     var body: some View {
@@ -88,7 +89,7 @@ struct HomeView: View {
                             IconButton("Settings", systemImage: "gearshape") { sheet = .settings }
                             IconButton("About", systemImage: "info.circle") { sheet = .about }
                         } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }
-                        .accessibilityLabel("More options")
+                        .accessibilityLabel("More options").accessibilityIdentifier("moreOptions")
                     }.padding(.horizontal, 6).background(Color(.systemBackground))
                     SectionStrip(values: homeTabs, selection: currentTab, title: tabTitle)
                     if let id = selectedLocal, playlists.playlists.contains(where: { $0.id == id }) {
@@ -123,7 +124,7 @@ struct HomeView: View {
                                             if !preferences.homeSections.contains(section) { preferences.setHomeSections(preferences.homeSections + [section]) }
                                             selectedPinned = nil; selectedLocal = nil; selection = section; menuVisible = false
                                         } label: {
-                                            Label(section.rawValue, systemImage: section.symbol)
+                                            Label(section.title, systemImage: section.symbol)
                                                 .frame(maxWidth: .infinity, alignment: .leading).padding(16)
                                                 .foregroundColor(selection == section ? AppStyle.accent : .primary)
                                                 .background(selection == section ? AppStyle.accent.opacity(0.08) : .clear)
@@ -138,11 +139,11 @@ struct HomeView: View {
                                             .accessibilityIdentifier("drawer-local-" + playlist.id.uuidString)
                                     }
                                     Divider().padding(.vertical, 8)
-                                    drawerButton("Search", symbol: "magnifyingglass") { onSearch() }
-                                    drawerButton("Open a link", symbol: "link") { sheet = .link }
-                                    drawerButton("Downloads", symbol: "arrow.down.circle") { sheet = .downloads }
-                                    drawerButton("Settings", symbol: "gearshape") { sheet = .settings }
-                                    drawerButton("About", symbol: "info.circle") { sheet = .about }
+                                    drawerButton(String(localized: "Search"), id: "Search", symbol: "magnifyingglass") { onSearch() }
+                                    drawerButton(String(localized: "Open a link"), id: "Open a link", symbol: "link") { sheet = .link }
+                                    drawerButton(String(localized: "Downloads"), id: "Downloads", symbol: "arrow.down.circle") { sheet = .downloads }
+                                    drawerButton(String(localized: "Settings"), id: "Settings", symbol: "gearshape") { sheet = .settings }
+                                    drawerButton(String(localized: "About"), id: "About", symbol: "info.circle") { sheet = .about }
                                 }
                             }
                         }
@@ -178,7 +179,7 @@ struct HomeView: View {
             case .downloads:
                 AppNavigation {
                     DownloadsView { video in pendingVideo = video; sheet = nil }
-                        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { sheet = nil } } }
+                        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { sheet = nil }.accessibilityIdentifier("closeSheet") } }
                 }
             case .groups: SubscriptionGroupsView()
             case .settings: SettingsView()
@@ -187,10 +188,10 @@ struct HomeView: View {
             }
         }
     }
-    private func drawerButton(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
+    private func drawerButton(_ title: String, id: String? = nil, symbol: String, action: @escaping () -> Void) -> some View {
         Button { menuVisible = false; action() } label: {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading).padding(16).foregroundStyle(.primary)
-        }.buttonStyle(.plain).accessibilityIdentifier("drawer-" + title)
+        }.buttonStyle(.plain).accessibilityIdentifier("drawer-" + (id ?? title))
     }
 }
 
@@ -201,7 +202,7 @@ private struct KioskView: View {
     @StateObject private var store = BrowseStore()
     var body: some View {
         VStack(spacing: 0) {
-            Text("YouTube · " + kiosk.rawValue + " · " + preferences.contentLocale.country).font(.caption).foregroundStyle(.secondary).padding(8)
+            Text("YouTube · " + kiosk.title + " · " + preferences.contentLocale.country).font(.caption).foregroundStyle(.secondary).padding(8)
                 .accessibilityIdentifier("kioskSource")
             BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(.kiosk(kiosk)) } })
         }.task(id: preferences.contentLocale) { await store.load(.kiosk(kiosk)) }
@@ -281,7 +282,7 @@ private struct FeedView: View {
             HStack {
                 Menu {
                     Picker("Upload date", selection: Binding(get: { preferences.feedPeriod }, set: preferences.setFeedPeriod)) {
-                        ForEach(FeedPeriod.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(FeedPeriod.allCases) { Text($0.title).tag($0) }
                     }
                     Toggle("Hide watched videos", isOn: Binding(get: { preferences.hidesWatchedFeed }, set: preferences.setHidesWatchedFeed))
                 } label: { Label("Feed filters", systemImage: "slider.horizontal.3").frame(minHeight: 44) }
@@ -297,7 +298,7 @@ private struct FeedView: View {
                     Text("Recent uploads from channel RSS feeds; each channel supplies a limited number of videos.")
                         .font(.caption).foregroundStyle(.secondary)
                     if preferences.feedPeriod != .all || preferences.hidesWatchedFeed {
-                        Text(preferences.feedPeriod.rawValue + (preferences.hidesWatchedFeed ? " · Watched videos hidden" : "")).font(.caption)
+                        Text(preferences.feedPeriod.title + (preferences.hidesWatchedFeed ? " · " + String(localized: "Watched videos hidden") : "")).font(.caption)
                     }
                     if store.loading {
                         HStack { ProgressView(); Text("Refreshing \(store.completedChannels) of \(channels.count) channels…").font(.footnote) }
@@ -337,7 +338,7 @@ struct OpenVideoLinkView: View {
                 Button("Open", action: open).disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .navigationTitle("Open a link").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Cancel") { dismiss() } }
+            .toolbar { Button("Cancel") { dismiss() }.accessibilityIdentifier("closeSheet") }
         }
     }
     private func open() {
@@ -351,7 +352,7 @@ struct OpenVideoLinkView: View {
         }
         do {
             let video = try VideoRequest(input: text)
-            onOpen(BrowseItem(contentID: video.videoID, kind: .video, title: "YouTube video"))
+            onOpen(BrowseItem(contentID: video.videoID, kind: .video, title: PlaybackSession.placeholderTitle))
         } catch { self.error = error.localizedDescription }
     }
 }

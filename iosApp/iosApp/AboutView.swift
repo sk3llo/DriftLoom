@@ -29,11 +29,11 @@ struct AboutView: View {
             }
             .navigationTitle("About")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Done") { dismiss() } }
+            .toolbar { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") }
         }
     }
     private var notices: String {
         Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt")
-            .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? "License information is unavailable."
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? String(localized: "License information is unavailable.")
     }
 }

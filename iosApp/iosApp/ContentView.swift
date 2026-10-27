@@ -88,13 +88,13 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomPlayVideo)) { note in
             guard let id = note.object as? String, (try? VideoRequest(input: id))?.videoID == id else { return }
             closeSearch(); linkedPage = nil
-            play(BrowseItem(contentID: id, kind: .video, title: SoundCloudID.isSoundCloud(id) ? "SoundCloud track" : "YouTube video"))
+            play(BrowseItem(contentID: id, kind: .video, title: SoundCloudID.isSoundCloud(id) ? String(localized: "SoundCloud track") : PlaybackSession.placeholderTitle))
         }
         .onChange(of: scenePhase) { if $0 == .background { FeedRefresher.shared.schedule() } }
         .sheet(item: $linkedPage) { page in
             AppNavigation {
                 BrowsePageView(route: page.route, onPlay: { item in linkedPage = nil; play(item) })
-                    .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { linkedPage = nil } } }
+                    .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { linkedPage = nil }.accessibilityIdentifier("closeSheet") } }
             }
             .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists)
             .environmentObject(pinnedTabs).environmentObject(subscriptionGroups).environmentObject(positions)
@@ -156,7 +156,7 @@ struct ContentView: View {
     /// videos and tracks play; channels, profiles and playlists open as a page.
     private func openLink(_ url: URL) {
         guard let link = SharedLink.target(of: url) else {
-            linkError = "DriftLoom opens YouTube and SoundCloud links."; return
+            linkError = String(localized: "DriftLoom opens YouTube and SoundCloud links."); return
         }
         linkTask?.cancel()
         closeSearch(); linkedPage = nil

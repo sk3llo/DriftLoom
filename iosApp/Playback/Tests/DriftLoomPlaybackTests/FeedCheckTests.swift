@@ -30,7 +30,7 @@ final class FeedCheckTests: XCTestCase {
         let few = FeedCheck.messages(for: [video("a", hoursAgo: 1, channel: "Lofi Girl")])
         XCTAssertEqual(few.count, 1); XCTAssertEqual(few[0].title, "Lofi Girl"); XCTAssertEqual(few[0].body, "Video a"); XCTAssertEqual(few[0].videoID, "a")
         let many = FeedCheck.messages(for: (0..<6).map { video("v\($0)", hoursAgo: 1, channel: "C\($0)") })
-        XCTAssertEqual(many.count, 1); XCTAssertEqual(many[0].title, "6 new videos"); XCTAssertEqual(many[0].body, "From C0, C1, C2 and 3 more")
+        XCTAssertEqual(many.count, 1); XCTAssertEqual(many[0].title, "6 new videos"); XCTAssertEqual(many[0].body, "From C0, C1, C2, and 3 more channels")
         XCTAssertNil(many[0].videoID)
         XCTAssertTrue(FeedCheck.messages(for: []).isEmpty)
     }

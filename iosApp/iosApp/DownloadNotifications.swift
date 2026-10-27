@@ -18,7 +18,7 @@ final class DownloadNotifier: NSObject, UNUserNotificationCenterDelegate {
 
     func install() {
         center.delegate = self
-        let retry = UNNotificationAction(identifier: Self.retryAction, title: "Retry", options: [])
+        let retry = UNNotificationAction(identifier: Self.retryAction, title: String(localized: "Retry"), options: [])
         center.setNotificationCategories([UNNotificationCategory(identifier: Self.failureCategory, actions: [retry], intentIdentifiers: [])])
     }
     /// Ask now, for a feature the user just turned on.
@@ -36,10 +36,10 @@ final class DownloadNotifier: NSObject, UNUserNotificationCenterDelegate {
         center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
     func finished(_ record: DownloadRecord) {
-        post(record, title: "Downloaded", body: record.item.title + " is ready to watch offline.", failed: false)
+        post(record, title: String(localized: "Downloaded"), body: String(localized: "\(record.item.title) is ready to watch offline."), failed: false)
     }
     func failed(_ record: DownloadRecord) {
-        post(record, title: "Download failed", body: record.item.title + (record.error.map { " — " + $0 } ?? ""), failed: true)
+        post(record, title: String(localized: "Download failed"), body: record.item.title + (record.error.map { " — " + $0 } ?? ""), failed: true)
     }
     private func post(_ record: DownloadRecord, title: String, body: String, failed: Bool) {
         let content = UNMutableNotificationContent()

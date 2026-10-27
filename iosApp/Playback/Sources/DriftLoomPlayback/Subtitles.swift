@@ -192,7 +192,7 @@ public actor YouTubeSubtitleClient: SubtitleLoading {
         let data = try await fetch(URLRequest(url: url), limit: 6_000_000)
         guard let text = String(data: data, encoding: .utf8) else { throw BrowseError.unsupportedResponse }
         let cues = WebVTT.parse(text)
-        guard !cues.isEmpty else { throw BrowseError.unavailable("These subtitles are empty or couldn't be read.") }
+        guard !cues.isEmpty else { throw BrowseError.unavailable(L("These subtitles are empty or couldn't be read.")) }
         return cues
     }
     /// The track's caption URL asking for WebVTT, plus a translation target when set.
@@ -248,9 +248,9 @@ public actor YouTubeSubtitleClient: SubtitleLoading {
             throw BrowseError.unsupportedResponse
         }
         if http.statusCode == 429 {
-            throw BrowseError.unavailable("YouTube is limiting subtitle requests from this network right now, which affects auto-translated subtitles most. Try again later or choose another track.")
+            throw BrowseError.unavailable(L("YouTube is limiting subtitle requests from this network right now, which affects auto-translated subtitles most. Try again later or choose another track."))
         }
-        guard http.statusCode == 200 else { throw BrowseError.unavailable("YouTube couldn't load subtitles (\(http.statusCode)).") }
+        guard http.statusCode == 200 else { throw BrowseError.unavailable(L("YouTube couldn't load subtitles (\(http.statusCode)).")) }
         return data
     }
 }

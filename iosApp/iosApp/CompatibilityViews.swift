@@ -22,10 +22,10 @@ struct BrowseLink<Content: View>: View {
 }
 
 struct IconButton: View {
-    let title: String
+    let title: LocalizedStringKey
     let systemImage: String
     let action: () -> Void
-    init(_ title: String, systemImage: String, action: @escaping () -> Void) {
+    init(_ title: LocalizedStringKey, systemImage: String, action: @escaping () -> Void) {
         self.title = title; self.systemImage = systemImage; self.action = action
     }
     var body: some View {
@@ -34,18 +34,22 @@ struct IconButton: View {
 }
 
 struct EmptyStateView: View {
-    let title: String
+    let title: LocalizedStringKey
     let systemImage: String
-    let message: String
-    init(_ title: String, systemImage: String, message: String) {
-        self.title = title; self.systemImage = systemImage; self.message = message
+    let message: Text
+    init(_ title: LocalizedStringKey, systemImage: String, message: LocalizedStringKey) {
+        self.title = title; self.systemImage = systemImage; self.message = Text(message)
+    }
+    /// A message that is already user-facing text, such as an error from the server.
+    @_disfavoredOverload init<S: StringProtocol>(_ title: LocalizedStringKey, systemImage: String, message: S) {
+        self.title = title; self.systemImage = systemImage; self.message = Text(message)
     }
     var body: some View {
         VStack(spacing: 14) {
             Image(systemName: systemImage).font(.system(size: 44)).foregroundStyle(.secondary)
                 .accessibilityHidden(true)
             Text(title).font(.title2.weight(.semibold))
-            Text(message).foregroundStyle(.secondary)
+            message.foregroundStyle(.secondary)
         }
         .multilineTextAlignment(.center).padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)

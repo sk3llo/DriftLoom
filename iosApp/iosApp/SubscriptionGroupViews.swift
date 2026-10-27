@@ -12,7 +12,7 @@ struct SubscriptionGroupFilter: View {
         choosing = true
       } label: {
         Label(
-          groups.groups.first { $0.id == selection }?.name ?? "All subscriptions",
+          groups.groups.first { $0.id == selection }?.name ?? String(localized: "All subscriptions"),
           systemImage: "line.3.horizontal.decrease.circle"
         )
         .lineLimit(1).frame(minHeight: 44).contentShape(Rectangle())
@@ -135,7 +135,7 @@ private struct SubscriptionGroupEditor: View {
   var body: some View {
     VStack(spacing: 0) {
       HStack {
-        Button("Cancel") { onClose() }.frame(minWidth: 44, minHeight: 44)
+        Button("Cancel") { onClose() }.frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("cancelGroupEdit")
         Spacer()
         Text("Edit group").font(.headline)
         Spacer()
@@ -143,7 +143,7 @@ private struct SubscriptionGroupEditor: View {
           if groups.upsert(id: id, name: name, channelIDs: Array(members)) {
             onClose()
           } else {
-            error = groups.error ?? "Couldn't save this group."
+            error = groups.error ?? String(localized: "Couldn't save this group.")
           }
         }.frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("saveSubscriptionGroup")
           .disabled(

@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "DriftLoomPlayback",
+    defaultLocalization: "en",
     platforms: [.iOS(.v15), .macOS(.v14)],
     products: [
         .library(name: "DriftLoomPlayback", targets: ["DriftLoomPlayback"]),
@@ -16,8 +17,8 @@ let package = Package(
                  revision: "e5b7d0396ce12bf3444f0d209e8436c83373b7af")
     ],
     targets: [
-        .target(name: "DriftLoomPlayback", dependencies: ["YouTubeKit", "DriftLoomActivity"]),
-        .target(name: "DriftLoomActivity"),
+        .target(name: "DriftLoomPlayback", dependencies: ["YouTubeKit", "DriftLoomActivity"], resources: [.process("Localizable.xcstrings")]),
+        .target(name: "DriftLoomActivity", resources: [.process("Localizable.xcstrings")]),
         .executableTarget(name: "PlaybackProbe", dependencies: ["DriftLoomPlayback"]),
         .executableTarget(name: "BrowseProbe", dependencies: ["DriftLoomPlayback"]),
         .testTarget(name: "DriftLoomPlaybackTests", dependencies: ["DriftLoomPlayback"])

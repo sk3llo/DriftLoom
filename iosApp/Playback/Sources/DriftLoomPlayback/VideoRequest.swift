@@ -39,10 +39,10 @@ public enum PlaybackError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .invalidURL: return "Enter a YouTube video link or video ID."
-        case .noPlayableStream: return "No stream supported by this device is available for this video."
+        case .invalidURL: return L("Enter a YouTube video link or video ID.")
+        case .noPlayableStream: return L("No stream supported by this device is available for this video.")
         case .extractionRefused:
-            return "YouTube didn't provide this video's streams. It may need a signed-in account, or YouTube may be limiting requests from this network. Try again later or on another network."
+            return L("YouTube didn't provide this video's streams. It may need a signed-in account, or YouTube may be limiting requests from this network. Try again later or on another network.")
         }
     }
 
@@ -51,8 +51,8 @@ public enum PlaybackError: LocalizedError {
         guard let kit = error as? YouTubeKitError else { return error }
         switch kit {
         case .extractError, .htmlParseError, .regexMatchError, .maxRetriesExceeded: return PlaybackError.extractionRefused
-        case .videoRegionBlocked: return BrowseError.unavailable("This video isn't available in your region.")
-        case .recordingUnavailable: return BrowseError.unavailable("This live recording isn't available.")
+        case .videoRegionBlocked: return BrowseError.unavailable(L("This video isn't available in your region."))
+        case .recordingUnavailable: return BrowseError.unavailable(L("This live recording isn't available."))
         default: return kit
         }
     }

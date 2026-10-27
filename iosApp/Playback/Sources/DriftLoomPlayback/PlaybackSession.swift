@@ -102,7 +102,7 @@ public final class PlaybackSession: ObservableObject {
             videoID = request.videoID
             recoveryPolicy = PlaybackRecoveryPolicy()
             didRecover = false
-            title = "YouTube video"
+            title = Self.placeholderTitle
             let saved = remembersPositions && resumesPositions ? positions?.seconds(for: request.videoID) ?? 0 : 0
             let position = CMTime(seconds: saved, preferredTimescale: 600)
             if let url = localMedia?(request.videoID), url.isFileURL {
@@ -110,7 +110,7 @@ public final class PlaybackSession: ObservableObject {
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
                 try AVAudioSession.sharedInstance().setActive(true)
 #endif
-                install(ResolvedVideo(title: "Downloaded video", streamURL: url, usesHLS: url.pathExtension == "movpkg"), position: position)
+                install(ResolvedVideo(title: L("Downloaded video"), streamURL: url, usesHLS: url.pathExtension == "movpkg"), position: position)
             } else { resolve(request, position: position) }
             loadSubtitles(videoID: request.videoID)
         } catch { phase = .failed(error.localizedDescription) }
@@ -122,10 +122,13 @@ public final class PlaybackSession: ObservableObject {
         if videoID == item.contentID { sourceItem = item; if video?.streamURL.isFileURL == true { title = item.title } }
     }
 
+    /// Title shown until the real one is known.
+    nonisolated public static var placeholderTitle: String { L("YouTube video") }
+
     public var currentItemMetadata: BrowseItem? {
         guard let videoID else { return nil }
         return BrowseItem(contentID: videoID, kind: .video,
-                          title: title == "YouTube video" ? (sourceItem?.title ?? title) : title,
+                          title: title == Self.placeholderTitle ? (sourceItem?.title ?? title) : title,
                           subtitle: sourceItem?.subtitle ?? "",
                           thumbnail: sourceItem?.thumbnail ?? (SoundCloudID.isSoundCloud(videoID) ? nil : URL(string: "https://i.ytimg.com/vi/\(videoID)/hqdefault.jpg")),
                           duration: sourceItem?.duration, channelID: sourceItem?.channelID, webURL: sourceItem?.webURL)
@@ -375,7 +378,7 @@ public final class PlaybackSession: ObservableObject {
                 self.resolve(request, position: position)
             } else {
                 self.phase = .failed(item.error?.localizedDescription
-                    ?? "Playback stopped. Try opening the video again.")
+                    ?? L("Playback stopped. Try opening the video again."))
             }
         }
     }

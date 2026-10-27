@@ -12,11 +12,11 @@ public actor YouTubeChartsClient {
         self.session = session ?? URLSession(configuration: configuration)
     }
     public func music(locale: ContentLocale) async throws -> BrowsePage {
-        try await chart(locale: locale, type: "TRENDING_VIDEOS", page: "TrendingVideos", title: "Trending music")
+        try await chart(locale: locale, type: "TRENDING_VIDEOS", page: "TrendingVideos", title: L("Trending music"))
     }
     /// Trending movie and show trailers, the chart behind NewPipe's trailers kiosk.
     public func trailers(locale: ContentLocale) async throws -> BrowsePage {
-        try await chart(locale: locale, type: "TRENDING_MOVIES", page: "TrendingMovies", title: "Movie trailers")
+        try await chart(locale: locale, type: "TRENDING_MOVIES", page: "TrendingMovies", title: L("Movie trailers"))
     }
     private func chart(locale: ContentLocale, type: String, page path: String, title: String) async throws -> BrowsePage {
         var page = URLComponents(string: "https://charts.youtube.com/charts/\(path)/\(locale.country.lowercased())")!
@@ -45,14 +45,14 @@ public actor YouTubeChartsClient {
         let (data, response) = try await session.data(for: request)
         try Task.checkCancellation()
         guard let http = response as? HTTPURLResponse, http.url?.host == "charts.youtube.com", data.count < 8_000_000 else { throw BrowseError.unsupportedResponse }
-        guard http.statusCode == 200 else { throw BrowseError.unavailable("YouTube couldn't load this chart (\(http.statusCode)). Try another content region or try again later.") }
+        guard http.statusCode == 200 else { throw BrowseError.unavailable(L("YouTube couldn't load this chart (\(http.statusCode)). Try another content region or try again later.")) }
         return data
     }
 }
 
 enum ChartsParser {
     typealias Object = [String: Any]
-    static func music(_ root: Object, country: String, title: String = "Trending music") throws -> BrowsePage {
+    static func music(_ root: Object, country: String, title: String = L("Trending music")) throws -> BrowsePage {
         guard let sections = ((root["contents"] as? Object)?["sectionListRenderer"] as? Object)?["contents"] as? [Object] else { throw BrowseError.unsupportedResponse }
         var rows: [Object] = [], found = false
         for section in sections {

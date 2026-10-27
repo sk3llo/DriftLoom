@@ -11,19 +11,19 @@ enum YouTubeTakeout {
     /// CSV is read and only rows shaped like subscriptions count.
     static func plan(zip data: Data) throws -> LibraryImportPlan {
         guard data.count <= 50_000_000 else {
-            throw BrowseError.unavailable("This ZIP is too large. Export only YouTube subscriptions from Takeout, or choose the subscriptions.csv file inside it.")
+            throw BrowseError.unavailable(L("This ZIP is too large. Export only YouTube subscriptions from Takeout, or choose the subscriptions.csv file inside it."))
         }
         let files = try NewPipeArchive.members(data) { $0.lowercased().hasSuffix(".csv") ? 5_000_000 : nil }
         let best = files.values.compactMap { String(data: $0, encoding: .utf8) }.map(subscriptions).max { $0.count < $1.count } ?? []
         guard !best.isEmpty else {
-            throw BrowseError.unavailable("This ZIP has no YouTube subscriptions. In Takeout, include \"subscriptions\" in the YouTube export.")
+            throw BrowseError.unavailable(L("This ZIP has no YouTube subscriptions. In Takeout, include \"subscriptions\" in the YouTube export."))
         }
         return plan(best, skipped: 0)
     }
     static func plan(csv text: String) throws -> LibraryImportPlan {
         let rows = csvRows(text)
         let channels = subscriptions(in: text)
-        guard !channels.isEmpty else { throw BrowseError.unavailable("This CSV doesn't contain YouTube subscriptions from Takeout.") }
+        guard !channels.isEmpty else { throw BrowseError.unavailable(L("This CSV doesn't contain YouTube subscriptions from Takeout.")) }
         // Everything except the header row and accepted rows was unusable.
         return plan(channels, skipped: max(0, rows.filter { $0.contains { !$0.isEmpty } }.count - 1 - channels.count))
     }
@@ -42,21 +42,21 @@ enum YouTubeTakeout {
                                            thumbnail: thumbnail.flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil }))
             }
         }
-        guard !channels.isEmpty else { throw BrowseError.unavailable("This JSON doesn't contain YouTube subscriptions.") }
+        guard !channels.isEmpty else { throw BrowseError.unavailable(L("This JSON doesn't contain YouTube subscriptions.")) }
         return plan(channels, skipped: skipped)
     }
 
     private static func plan(_ channels: [BrowseItem], skipped: Int) -> LibraryImportPlan {
         var library = LibraryDocument()
         library.subscriptions = channels.map { LibraryRecord(item: $0, date: Date(timeIntervalSince1970: 0)) }
-        return LibraryImportPlan(summary: "Merge \(channels.count) YouTube subscriptions from Google Takeout.",
-                                 warnings: ["Only subscriptions are imported from Takeout; playlists and watch history aren't."]
-                                    + (skipped == 0 ? [] : ["\(skipped) rows that aren't YouTube channels will be skipped."]),
+        return LibraryImportPlan(summary: L("Merge \(channels.count) YouTube subscriptions from Google Takeout."),
+                                 warnings: [L("Only subscriptions are imported from Takeout; playlists and watch history aren't.")]
+                                    + (skipped == 0 ? [] : [L("\(skipped) rows that aren't YouTube channels will be skipped.")]),
                                  library: library, playlists: PlaylistDocument())
     }
     private static func title(_ value: String?) -> String {
         let text = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return text.isEmpty ? "YouTube channel" : String(text.prefix(500))
+        return text.isEmpty ? L("YouTube channel") : String(text.prefix(500))
     }
 
     /// Rows of "Channel Id,Channel Url,Channel Title" (headers are translated) whose URL names the same channel.

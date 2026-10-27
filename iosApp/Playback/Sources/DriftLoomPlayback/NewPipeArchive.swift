@@ -7,7 +7,7 @@ enum NewPipeArchive {
     static func database(_ data: Data) throws -> Data {
         let found = try members(data, limits: ["newpipe.db": 100_000_000, "driftloom.db": 100_000_000])
         guard found.count <= 1, let database = found.values.first, database.starts(with: Data("SQLite format 3\0".utf8)) else {
-            throw BrowseError.unavailable("This ZIP doesn't contain a supported NewPipe database backup.")
+            throw BrowseError.unavailable(L("This ZIP doesn't contain a supported NewPipe database backup."))
         }
         return database
     }
