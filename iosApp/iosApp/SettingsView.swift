@@ -16,14 +16,36 @@ struct SettingsView: View {
             }
         }
     }
+    @Environment(\.openURL) private var openURL
+    /// The language DriftLoom is shown in, named in that language's own terms for the current interface.
+    private var interfaceLanguage: String {
+        let code = Bundle.main.preferredLocalizations.first ?? "en"
+        let name = Locale.current.localizedString(forLanguageCode: code) ?? code
+        return name.prefix(1).uppercased() + name.dropFirst()
+    }
     var body: some View {
         AppNavigation {
             List {
-                Section("Appearance") {
+                Section {
                     Picker("Theme", selection: Binding(get: { preferences.appearance }, set: preferences.setAppearance)) {
                         ForEach(["System", "Light", "Dark"], id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
                     }
+                    // iOS keeps each app's language in the Settings app; this row shows it and opens that page.
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    } label: {
+                        HStack {
+                            Text("Language").foregroundStyle(.primary)
+                            Spacer()
+                            Text(interfaceLanguage).foregroundStyle(.secondary)
+                            Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary).accessibilityHidden(true)
+                        }
+                    }
+                    .accessibilityValue(interfaceLanguage).accessibilityHint("Opens DriftLoom in the Settings app")
+                    .accessibilityIdentifier("interfaceLanguage")
                     NavigationLink("Home tabs") { HomeTabsSettings() }.accessibilityIdentifier("openHomeTabs")
+                } header: { Text("Appearance") } footer: {
+                    Text("Choose English, Ukrainian or Portuguese under Language in the Settings app. If Language isn't there, add another language to the iPhone first in General → Language & Region.")
                 }
                 Section("YouTube content") {
                     Toggle("Show search suggestions", isOn: Binding(get: { preferences.usesSearchSuggestions }, set: preferences.setUsesSearchSuggestions))

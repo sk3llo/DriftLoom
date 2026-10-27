@@ -1022,6 +1022,22 @@
         }
       }
     },
+    "Choose English, Ukrainian or Portuguese under Language in the Settings app. If Language isn't there, add another language to the iPhone first in General → Language & Region.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha inglês, ucraniano ou português em Idioma no app Ajustes. Se Idioma não aparecer, primeiro adicione outro idioma ao iPhone em Geral → Idioma e Região."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виберіть англійську, українську чи португальську в розділі «Мова» застосунку «Параметри». Якщо розділу «Мова» немає, спершу додайте ще одну мову на iPhone у «Загальні» → «Мова та регіон»."
+          }
+        }
+      }
+    },
     "Choose a DriftLoom library backup, a NewPipe subscriptions JSON export or ZIP database backup, or a YouTube Google Takeout export. Review the import before merging. Existing items and privacy settings are kept; a recovery copy is saved on this device.": {
       "localizations": {
         "pt": {
@@ -2259,6 +2275,22 @@
         }
       }
     },
+    "Language": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мова"
+          }
+        }
+      }
+    },
     "Library": {
       "localizations": {
         "pt": {
@@ -3073,6 +3105,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Відкриття відео…"
+          }
+        }
+      }
+    },
+    "Opens DriftLoom in the Settings app": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre o DriftLoom no app Ajustes"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкриває DriftLoom у застосунку «Параметри»"
           }
         }
       }

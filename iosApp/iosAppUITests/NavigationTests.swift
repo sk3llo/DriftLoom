@@ -724,6 +724,21 @@ final class NavigationTests: XCTestCase {
         XCTAssertEqual(app.buttons["resizeMode"].value as? String, "Fit")
     }
 
+    func testLanguageRowOpensDriftLoomInTheSettingsApp() {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
+        if !settings.isHittable { app.swipeUp() }
+        XCTAssertTrue(settings.waitForExistence(timeout: 5)); settings.tap()
+        let language = app.buttons["interfaceLanguage"]
+        XCTAssertTrue(language.waitForExistence(timeout: 5))
+        XCTAssertEqual(language.value as? String, "English", "The row names the current interface language")
+        language.tap()
+        let preferences = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
+        XCTAssertTrue(preferences.wait(for: .runningForeground, timeout: 10), "It opens the Settings app")
+        app.activate()
+    }
+
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
