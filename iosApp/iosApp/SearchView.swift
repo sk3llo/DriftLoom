@@ -129,6 +129,11 @@ struct SearchView: View {
                 if submittedQuery.isEmpty, let flag = arguments.firstIndex(of: "--browse-smoke-query"), arguments.indices.contains(flag + 1) {
                     query = arguments[flag + 1]; submit()
                 }
+                // --suggestion-smoke TEXT: type TEXT without searching, so the suggestions can be inspected.
+                if let flag = arguments.firstIndex(of: "--suggestion-smoke"), arguments.indices.contains(flag + 1) {
+                    query = arguments[flag + 1]
+                    Task { try? await Task.sleep(nanoseconds: 1_000_000_000); focused = true }
+                }
 #endif
             }
         }

@@ -18,10 +18,14 @@ public actor YouTubeSuggestionsClient: Suggesting {
     public func suggestions(for query: String, locale: ContentLocale) async throws -> [String] {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard (2...500).contains(query.count), !query.contains("://") else { return [] }
+        // Suggest in the language being typed (борщ gets Ukrainian completions, not Russian ones), and always ask for
+        // UTF-8: without it non-English answers come as windows-1251 JSON or as HTML character codes.
+        let language = locale.titles(in: YouTubeBrowsingClient.queryLanguage(query)).titleLanguage ?? locale.language
         var components = URLComponents(string: "https://suggestqueries-clients6.youtube.com/complete/search")!
         components.queryItems = [URLQueryItem(name: "client", value: "youtube"), URLQueryItem(name: "ds", value: "yt"),
                                  URLQueryItem(name: "xhr", value: "t"), URLQueryItem(name: "q", value: query),
-                                 URLQueryItem(name: "gl", value: locale.country), URLQueryItem(name: "hl", value: locale.language)]
+                                 URLQueryItem(name: "gl", value: locale.country), URLQueryItem(name: "hl", value: language),
+                                 URLQueryItem(name: "ie", value: "utf8"), URLQueryItem(name: "oe", value: "utf8")]
         var request = URLRequest(url: components.url!)
         request.setValue("https://www.youtube.com", forHTTPHeaderField: "Origin")
         request.setValue("https://www.youtube.com", forHTTPHeaderField: "Referer")
@@ -34,6 +38,23 @@ public actor YouTubeSuggestionsClient: Suggesting {
 }
 
 enum SuggestionParser {
+    /// Undo HTML character references (&#1073; &amp; &#39;) that the endpoint can return for non-ASCII text.
+    static func decodeEntities(_ text: String) -> String {
+        guard text.contains("&") else { return text }
+        var result = "", rest = Substring(text)
+        while let amp = rest.firstIndex(of: "&") {
+            result += rest[..<amp]
+            let tail = rest[amp...]
+            guard let semi = tail.firstIndex(of: ";"), tail.distance(from: amp, to: semi) <= 10 else { result += "&"; rest = tail.dropFirst(); continue }
+            let entity = tail[tail.index(after: amp)..<semi]
+            var decoded: String?
+            if entity.hasPrefix("#x") || entity.hasPrefix("#X") { decoded = UInt32(entity.dropFirst(2), radix: 16).flatMap(Unicode.Scalar.init).map { String(Character($0)) } }
+            else if entity.hasPrefix("#") { decoded = UInt32(entity.dropFirst()).flatMap(Unicode.Scalar.init).map { String(Character($0)) } }
+            else { decoded = ["amp": "&", "quot": "\"", "apos": "'", "lt": "<", "gt": ">"][String(entity)] }
+            if let decoded { result += decoded; rest = tail[tail.index(after: semi)...] } else { result += "&"; rest = tail.dropFirst() }
+        }
+        return result + rest
+    }
     static func parse(_ data: Data) throws -> [String] {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [Any], root.count >= 2,
               let suggestions = root[1] as? [Any] else { throw BrowseError.unsupportedResponse }
@@ -41,7 +62,7 @@ enum SuggestionParser {
         return Array(suggestions.compactMap { entry -> String? in
             let value = ((entry as? [Any])?.first as? String) ?? entry as? String
             guard let value else { return nil }
-            let text = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = decodeEntities(value).trimmingCharacters(in: .whitespacesAndNewlines)
             return !text.isEmpty && text.count <= 500 && seen.insert(text).inserted ? text : nil
         }.prefix(10))
     }

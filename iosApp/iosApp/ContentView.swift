@@ -134,7 +134,7 @@ struct ContentView: View {
             if nowPlaying == nil { nowPlaying = NowPlayingController(playback: playback, queue: queue) }
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
             let arguments = ProcessInfo.processInfo.arguments
-            searching = arguments.contains("--browse-smoke-query")
+            searching = arguments.contains("--browse-smoke-query") || arguments.contains("--suggestion-smoke")
             if arguments.contains("--library-smoke-run") {
                 runLibrarySmokeSetup(library)
                 if let flag = arguments.firstIndex(of: "--library-smoke-section"), arguments.indices.contains(flag + 1) {
