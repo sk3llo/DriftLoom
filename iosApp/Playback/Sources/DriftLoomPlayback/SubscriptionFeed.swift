@@ -21,6 +21,42 @@ public actor YouTubeFeedClient: FeedLoading {
         session = URLSession(configuration: config)
     }
     public func videos(channelID: String) async throws -> [FeedVideo] {
+        do { return try await rssVideos(channelID: channelID) } catch {
+            // YouTube's RSS feeds sometimes fail for every channel (404); the Videos tab still lists recent uploads.
+            guard !SoundCloudID.isSoundCloud(channelID), channelID.hasPrefix("UC") else { throw error }
+            let uploads = try await channelPageVideos(channelID: channelID)
+            guard !uploads.isEmpty else { throw error }
+            return uploads
+        }
+    }
+
+    /// Recent uploads from the channel's Videos tab, read in English so their relative times can be dated.
+    func channelPageVideos(channelID: String, now: Date = Date()) async throws -> [FeedVideo] {
+        guard channelID.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil else { throw BrowseError.invalidInput }
+        var url = URLComponents(string: "https://www.youtube.com/channel/\(channelID)/videos")!
+        url.queryItems = [URLQueryItem(name: "hl", value: "en"), URLQueryItem(name: "gl", value: "US")]
+        var request = URLRequest(url: url.url!)
+        request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+        request.setValue("en-US,en;q=0.9", forHTTPHeaderField: "Accept-Language")
+        let (data, response) = try await session.data(for: request)
+        try Task.checkCancellation()
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200, http.url?.host == "www.youtube.com", data.count <= 8_000_000,
+              let html = String(data: data, encoding: .utf8) else { throw BrowseError.unavailable(L("This channel's feed could not be loaded.")) }
+        return try Self.uploads(fromChannelPage: html, channelID: channelID, now: now)
+    }
+
+    static func uploads(fromChannelPage html: String, channelID: String, now: Date) throws -> [FeedVideo] {
+        let page = BrowseParser.channelUploads(try BrowseParser.initialData(in: html))
+        var seen = Set<String>()
+        return page.uploads.compactMap { upload -> FeedVideo? in
+            guard let date = RelativeTime.date(upload.age, now: now), seen.insert(upload.item.contentID).inserted else { return nil }
+            let item = upload.item
+            return FeedVideo(item: BrowseItem(contentID: item.contentID, kind: .video, title: item.title, subtitle: page.channel,
+                                              thumbnail: item.thumbnail, duration: item.duration, channelID: channelID), published: date)
+        }
+    }
+
+    private func rssVideos(channelID: String) async throws -> [FeedVideo] {
         if SoundCloudID.userNumber(channelID) != nil { return try await SoundCloudClient.shared.feed(channelID) }
         guard channelID.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil else { throw BrowseError.invalidInput }
         var url = URLComponents(string: "https://www.youtube.com/feeds/videos.xml")!
@@ -32,6 +68,29 @@ public actor YouTubeFeedClient: FeedLoading {
             throw BrowseError.unavailable(L("This channel's feed could not be loaded."))
         }
         return try FeedXMLParser.parse(data, channelID: channelID)
+    }
+}
+
+/// Relative times as YouTube's English pages write them: "13 min ago", "1h ago", "2 days ago", "Streamed 3w ago".
+enum RelativeTime {
+    private static let pattern = try! NSRegularExpression(pattern: #"(\d+)\s*(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|wks?|w|months?|mos?|years?|yrs?|y)\b\s*ago"#, options: .caseInsensitive)
+    static func date(_ text: String, now: Date = Date()) -> Date? {
+        let text = text.replacingOccurrences(of: "\u{00A0}", with: " ")
+        guard let match = pattern.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let numberRange = Range(match.range(at: 1), in: text), let unitRange = Range(match.range(at: 2), in: text),
+              let count = Double(text[numberRange]) else { return nil }
+        let unit = text[unitRange].lowercased()
+        let seconds: Double
+        switch unit {
+        case let u where u.hasPrefix("mo"): seconds = 30 * 86400
+        case let u where u.hasPrefix("mi") || u == "m": seconds = 60
+        case let u where u.hasPrefix("s"): seconds = 1
+        case let u where u.hasPrefix("h"): seconds = 3600
+        case let u where u.hasPrefix("d"): seconds = 86400
+        case let u where u.hasPrefix("w"): seconds = 7 * 86400
+        default: seconds = 365 * 86400
+        }
+        return now.addingTimeInterval(-count * seconds)
     }
 }
 

@@ -86,6 +86,33 @@ enum BrowseParser {
         return BrowsePage(title: title, items: items, next: next, header: header)
     }
 
+    /// A channel's Videos tab as uploads with their relative times ("3h ago"), for when its RSS feed fails.
+    static func channelUploads(_ root: Object) -> (channel: String, uploads: [(item: BrowseItem, age: String)]) {
+        let channel = ((root["metadata"] as? Object)?["channelMetadataRenderer"] as? Object)?["title"] as? String ?? ""
+        var uploads: [(BrowseItem, String)] = []
+        func visit(_ value: Any) {
+            if let values = value as? [Any] { values.forEach(visit); return }
+            guard let object = value as? Object else { return }
+            if let lockup = object["lockupViewModel"] as? Object {
+                let metadata = (lockup["metadata"] as? Object)?["lockupMetadataViewModel"] as? Object
+                let rows = ((metadata?["metadata"] as? Object)?["contentMetadataViewModel"] as? Object)?["metadataRows"] as? [Object] ?? []
+                let parts = rows.flatMap { $0["metadataParts"] as? [Object] ?? [] }.map { text($0["text"]) }
+                if let item = item(lockup, renderer: "lockupViewModel"), item.kind == .video, let age = parts.last(where: { $0.contains("ago") }) {
+                    uploads.append((item, age))
+                }
+                return
+            }
+            if let renderer = (object["videoRenderer"] ?? object["gridVideoRenderer"]) as? Object {
+                let age = text(renderer["publishedTimeText"])
+                if let item = item(renderer, renderer: "videoRenderer"), !age.isEmpty { uploads.append((item, age)) }
+                return
+            }
+            for key in object.keys.sorted() where !["menu", "trackingParams", "navigationEndpoint"].contains(key) { visit(object[key]!) }
+        }
+        visit(root)
+        return (channel, uploads)
+    }
+
     private static func walk(_ value: Any, items: inout [BrowseItem], continuation: inout String?) {
         if let values = value as? [Any] {
             for value in values { walk(value, items: &items, continuation: &continuation) }

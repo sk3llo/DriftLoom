@@ -3545,18 +3545,18 @@
         }
       }
     },
-    "Recent uploads from channel RSS feeds; each channel supplies a limited number of videos.": {
+    "Recent uploads from each channel; each channel supplies a limited number of videos.": {
       "localizations": {
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Envios recentes dos feeds RSS dos canais; cada canal fornece um número limitado de vídeos."
+            "value": "Envios recentes de cada canal; cada canal fornece um número limitado de vídeos."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Нещодавні відео з RSS-стрічок каналів; кожен канал надає обмежену кількість відео."
+            "value": "Нещодавні відео кожного каналу; кожен канал надає обмежену кількість відео."
           }
         }
       }

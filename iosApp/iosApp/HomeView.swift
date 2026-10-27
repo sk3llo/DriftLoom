@@ -284,6 +284,8 @@ struct HomeView: View {
             if arguments.contains("--settings-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .settings }
             // --guide-smoke [page.md]: open the user guide, optionally at a page.
             if arguments.contains("--guide-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .guide }
+            // --feed-smoke: open What's new, for device screenshots.
+            if arguments.contains("--feed-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); NotificationCenter.default.post(name: .driftLoomOpenFeed, object: nil) }
         }
 #endif
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomManageGroups)) { _ in sheet = .groups }
@@ -411,6 +413,8 @@ private struct FeedView: View {
     @ObservedObject var store: SubscriptionFeedStore
     let onPlay: (BrowseItem) -> Void
     @State private var selectedGroup: UUID?
+    /// "21 min ago": upload times from a channel's Videos tab are approximate, so no live seconds counter.
+    private static let age: RelativeDateTimeFormatter = { let formatter = RelativeDateTimeFormatter(); formatter.unitsStyle = .short; return formatter }()
     private var channels: [String] { groups.channelIDs(for: selectedGroup, subscribed: library.subscriptions.map { $0.item.contentID }) }
     private var visible: [FeedVideo] {
         FeedFilter.apply(store.items, period: preferences.feedPeriod, hidingWatched: preferences.hidesWatchedFeed,
@@ -435,7 +439,7 @@ private struct FeedView: View {
                 EmptyStateView("No channels in this feed", systemImage: "tray", message: selectedGroup == nil ? "Subscribe to channels to build your feed." : "Edit this group to add subscribed channels.")
             } else {
                 List {
-                    Text("Recent uploads from channel RSS feeds; each channel supplies a limited number of videos.")
+                    Text("Recent uploads from each channel; each channel supplies a limited number of videos.")
                         .font(.caption).foregroundStyle(.secondary)
                     if preferences.feedPeriod != .all || preferences.hidesWatchedFeed {
                         Text(preferences.feedPeriod.title + (preferences.hidesWatchedFeed ? " · " + String(localized: "Watched videos hidden") : "")).font(.caption)
@@ -453,7 +457,7 @@ private struct FeedView: View {
                     ForEach(visible) { entry in
                         VStack(alignment: .leading, spacing: 5) {
                             BrowseResultRow(item: entry.item, onPlay: onPlay)
-                            Text(entry.published, style: .relative).font(.caption2).foregroundStyle(.secondary)
+                            Text(Self.age.localizedString(for: entry.published, relativeTo: Date())).font(.caption2).foregroundStyle(.secondary)
                         }.listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets(top: 7, leading: 12, bottom: 7, trailing: 4))
                     }
