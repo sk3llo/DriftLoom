@@ -80,12 +80,7 @@ struct VideoDetailView: View {
                                 detailAction("Playlist", symbol: "plus.rectangle.on.rectangle") {
                                     NotificationCenter.default.post(name: .driftLoomAddToPlaylist, object: item)
                                 }
-                                Menu {
-                                    ForEach([Float(0.25), 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2], id: \.self) { rate in
-                                        Button("\(String(format: "%g", rate))×\(playback.playbackRate == rate ? " ✓" : "")") { playback.setPlaybackRate(rate) }
-                                    }
-                                } label: { actionLabel("\(String(format: "%g", playback.playbackRate))×", symbol: "speedometer") }
-                                .accessibilityLabel("Playback speed")
+                                detailAction("Download", symbol: "arrow.down.circle") { downloading = true }
                             }
                         }
                     }.padding(12)
@@ -136,9 +131,6 @@ struct VideoDetailView: View {
 
     private var playbackOptions: some View {
                     Menu {
-                        if playback.currentItemMetadata != nil {
-                            IconButton("Download", systemImage: "arrow.down.circle") { downloading = true }
-                        }
                         if playback.video?.streamURL.isFileURL != true, playback.currentItemMetadata?.isSoundCloud != true {
                             IconButton("Playback format", systemImage: "film") { choosingFormat = true }
                         }

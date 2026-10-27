@@ -177,9 +177,8 @@ final class NavigationTests: XCTestCase {
 
     func testDownloadChooserAndDeviceOfflinePlayback() {
         let app = application(extraArguments: Self.liveVideo)
-        let options = app.buttons["Playback options"]
-        XCTAssertTrue(options.waitForExistence(timeout: 15)); options.tap()
-        app.buttons["Download"].tap()
+        let download = app.buttons["Download"]
+        XCTAssertTrue(download.waitForExistence(timeout: 15)); download.tap()
         let choice = app.buttons["Video · automatic quality (HLS)"]
         XCTAssertTrue(choice.waitForExistence(timeout: 60)); choice.tap()
         let pickerDismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: choice)
@@ -211,8 +210,8 @@ final class NavigationTests: XCTestCase {
 
     func testQueuedDownloadNetworkPolicyAndRelaunchRecovery() {
         let app = application(extraArguments: ["--download-smoke-no-network"] + Self.liveVideo)
-        XCTAssertTrue(app.buttons["Playback options"].waitForExistence(timeout: 15))
-        app.buttons["Playback options"].tap(); app.buttons["Download"].tap()
+        XCTAssertTrue(app.buttons["Download"].waitForExistence(timeout: 15))
+        app.buttons["Download"].tap()
         let hls = app.buttons["Video · automatic quality (HLS)"]
         XCTAssertTrue(hls.waitForExistence(timeout: 45)); hls.tap()
         app.buttons["minimizePlayer"].tap()
@@ -412,11 +411,18 @@ final class NavigationTests: XCTestCase {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
         let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
-        safari.launch()
-        let address = safari.textFields["TabBarItemTitle"].exists ? safari.textFields["TabBarItemTitle"] : safari.buttons["Address"]
-        if address.waitForExistence(timeout: 10) { address.tap() }
-        let field = safari.textFields["URL"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10)); field.typeText("https://www.youtube.com/watch?v=dQw4w9WgXcQ\n")
+        let video = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        if #available(iOS 16.4, *) {
+            // Safari's address bar label depends on its leftover state (e.g. "Reader Available"), so open the URL directly.
+            XCUIDevice.shared.system.open(URL(string: video)!)
+            XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 10))
+        } else {
+            safari.launch()
+            let address = safari.textFields["TabBarItemTitle"].exists ? safari.textFields["TabBarItemTitle"] : safari.buttons["Address"]
+            if address.waitForExistence(timeout: 10) { address.tap() }
+            let field = safari.textFields["URL"]
+            XCTAssertTrue(field.waitForExistence(timeout: 10)); field.typeText(video + "\n")
+        }
         let share = safari.buttons["ShareButton"]
         XCTAssertTrue(share.waitForExistence(timeout: 30)); share.tap()
         var target = safari.cells["DriftLoom"].firstMatch
@@ -494,6 +500,16 @@ final class NavigationTests: XCTestCase {
         wait(for: [moved], timeout: 5)
         app.buttons["Play"].tap()
         XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Download"].exists, "Download sits in the action row")
+        showControls()
+        let speed = app.buttons["playbackSpeed"]
+        XCTAssertEqual(app.buttons.matching(identifier: "playbackSpeed").count, 1, "Speed lives only in the HUD")
+        speed.tap()
+        let rate = app.buttons["1.5×"]
+        XCTAssertTrue(rate.waitForExistence(timeout: 5)); rate.tap()
+        showControls()
+        XCTAssertEqual(speed.value as? String, "1.5×")
+        speed.tap(); app.buttons["1×"].tap()
         showControls()
         app.buttons["fullscreen"].tap()
         let close = app.buttons.matching(NSPredicate(format: "label IN {'Close', 'Done', 'Dismiss'}")).firstMatch

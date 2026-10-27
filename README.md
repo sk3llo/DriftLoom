@@ -21,9 +21,10 @@ GPL-3.0-or-later license, contributor credits, and third-party library identitie
 - Background-audio configuration, Now Playing/remote command integration, and Picture in Picture.
   Physical background playback and starting PiP from the inline player have been verified on an iPhone 7;
   not every system control or PiP scenario has been tested.
-- Inline player with DriftLoom's own controls, like NewPipe's: play/pause, skip back/forward 10 s, one seek bar
-  under the video, fullscreen, Picture in Picture (where supported) and AirPlay. Tap the video to show them;
+- Inline player with DriftLoom's own controls, like NewPipe's: play/pause, skip back/forward 10 s, playback speed,
+  one seek bar under the video, fullscreen, Picture in Picture (where supported) and AirPlay. Tap the video to show them;
   they hide after 3 s while playing. Fullscreen opens Apple's full player with its native controls.
+  Download sits in the action row under the title (Save, Share, Queue, Playlist, Download).
 - Saved videos, subscriptions, history, local playlists, and remote playlist bookmarks persist locally.
   Resume positions are bounded, tied to history recording, and removed with deleted history.
 - Appearance, home-tab visibility, one combined tab order across built-in sections, pinned channels/playlists and

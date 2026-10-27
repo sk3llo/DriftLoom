@@ -159,6 +159,7 @@ struct InlinePlayerControls: View {
     let overlay: SubtitleOverlay
     @State private var visible = true
     @State private var hideTask: Task<Void, Never>?
+    @State private var choosingSpeed = false
 
     var body: some View {
         ZStack {
@@ -173,6 +174,13 @@ struct InlinePlayerControls: View {
                 VStack {
                     Spacer()
                     HStack(spacing: 4) {
+                        Button { hideTask?.cancel(); choosingSpeed = true } label: {
+                            Text("\(String(format: "%g", playback.playbackRate))×")
+                                .font(.system(size: 15, weight: .semibold)).monospacedDigit().foregroundColor(.white)
+                                .frame(minWidth: 44, minHeight: 40).contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Playback speed").accessibilityValue("\(String(format: "%g", playback.playbackRate))×")
+                        .accessibilityIdentifier("playbackSpeed")
                         Spacer()
                         AirPlayButton().frame(width: 40, height: 40)
                         if controller.isPictureInPicturePossible || controller.isPictureInPictureActive {
@@ -191,11 +199,34 @@ struct InlinePlayerControls: View {
         .contentShape(Rectangle())
         .onTapGesture { visible.toggle(); scheduleHide() }
         .animation(.easeInOut(duration: 0.2), value: visible)
+        // Attached to the always-present container so auto-hiding the controls can't dismiss it.
+        .confirmationDialog("Playback speed", isPresented: $choosingSpeed, titleVisibility: .visible) {
+            ForEach([Float(0.25), 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2], id: \.self) { rate in
+                Button("\(String(format: "%g", rate))×\(playback.playbackRate == rate ? " ✓" : "")") { playback.setPlaybackRate(rate) }
+            }
+        }
+        .onChange(of: choosingSpeed) { open in if !open { scheduleHide() } }
         .onAppear(perform: scheduleHide)
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
         .task(id: playback.phase == .playing) {
-            // --player-smoke fullscreen: open the full-screen player once playback runs.
-            guard playback.phase == .playing, controller.smokeAction == "fullscreen", !controller.smokeDone else { return }
+            // --player-smoke fullscreen|speed|hud: open the full-screen player, the speed choices or the paused controls once playback runs.
+            guard playback.phase == .playing, !controller.smokeDone else { return }
+            if controller.smokeAction == "speed" {
+                controller.smokeDone = true
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                visible = true; choosingSpeed = true
+                NSLog("DriftLoomPlayerSmoke: PASS speed choices shown at %g×", playback.playbackRate)
+                return
+            }
+            if controller.smokeAction == "hud" {
+                // Pause so the controls stay up for a screenshot.
+                controller.smokeDone = true
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                playback.togglePlayPause(); visible = true
+                NSLog("DriftLoomPlayerSmoke: PASS controls shown")
+                return
+            }
+            guard controller.smokeAction == "fullscreen" else { return }
             controller.smokeDone = true
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             controller.presentFullscreen(player: playback.player, overlay: overlay)
@@ -220,7 +251,7 @@ struct InlinePlayerControls: View {
     }
     private func scheduleHide() {
         hideTask?.cancel()
-        guard visible, playback.phase == .playing, !UIAccessibility.isVoiceOverRunning else { return }
+        guard visible, !choosingSpeed, playback.phase == .playing, !UIAccessibility.isVoiceOverRunning else { return }
         hideTask = Task {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             if !Task.isCancelled { visible = false }
