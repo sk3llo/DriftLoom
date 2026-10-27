@@ -31,9 +31,17 @@ public struct SearchOptions: Hashable, Sendable {
 public struct ContentLocale: Hashable, Sendable {
     public let language: String
     public let country: String
-    public init(language: String = "en", country: String = "PT") {
+    /// The language video titles are asked for first, when it differs from `language`: a search typed in
+    /// Portuguese shows Portuguese videos under their own titles rather than YouTube's translations.
+    public let titleLanguage: String?
+    public init(language: String = "en", country: String = "PT", titleLanguage: String? = nil) {
         self.language = Locale.isoLanguageCodes.contains(language) ? language : "en"
         self.country = Locale.isoRegionCodes.contains(country) ? country : "PT"
+        let base = self.language
+        self.titleLanguage = titleLanguage.flatMap { Locale.isoLanguageCodes.contains($0) && $0 != base ? $0 : nil }
+    }
+    func titles(in language: String?) -> ContentLocale {
+        ContentLocale(language: self.language, country: country, titleLanguage: language)
     }
     public static func current(defaults: UserDefaults = .standard) -> ContentLocale {
         ContentLocale(language: defaults.string(forKey: "contentLanguage") ?? "en", country: defaults.string(forKey: "contentCountry") ?? "PT")

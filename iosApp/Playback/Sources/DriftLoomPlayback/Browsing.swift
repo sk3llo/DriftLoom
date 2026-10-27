@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Combine
 import Foundation
+import NaturalLanguage
 
 public enum BrowseRoute: Hashable, Sendable {
     case search(String), channel(String), playlist(String), related(String)
@@ -142,6 +143,25 @@ public actor YouTubeBrowsingClient: Browsing {
         self.session = session ?? URLSession(configuration: configuration)
     }
 
+    static func acceptLanguage(_ locale: ContentLocale) -> String {
+        let content = "\(locale.language)-\(locale.country),\(locale.language);q=0.9"
+        guard let titles = locale.titleLanguage else { return content }
+        return "\(titles),\(locale.language)-\(locale.country);q=0.8,\(locale.language);q=0.7"
+    }
+    /// The language a search was typed in, when Apple's on-device recognizer is fairly sure of it.
+    /// Short or ambiguous queries (борщ could be Ukrainian or Russian) go to the interface language when the
+    /// recognizer finds it plausible, so view counts and dates don't switch to a neighbouring language.
+    static func queryLanguage(_ text: String, preferring preferred: String? = Locale.preferredLanguages.first) -> String? {
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(text)
+        let hypotheses = recognizer.languageHypotheses(withMaximum: 5)
+        func base(_ code: String) -> String { code.split(separator: "-").first.map(String.init) ?? code }
+        if let preferred = preferred.map(base), let match = hypotheses.first(where: { base($0.key.rawValue) == preferred }), match.value >= 0.15 {
+            return preferred
+        }
+        guard let (language, confidence) = hypotheses.max(by: { $0.value < $1.value }), confidence >= 0.5 else { return nil }
+        return base(language.rawValue)
+    }
     public func page(for route: BrowseRoute) async throws -> BrowsePage {
         if route == .trendingMusic { return try await YouTubeChartsClient(session: session).music(locale: .current()) }
         if route == .kiosk(.trailers) { return try await YouTubeChartsClient(session: session).trailers(locale: .current()) }
@@ -159,7 +179,10 @@ public actor YouTubeBrowsingClient: Browsing {
         let isSearch: Bool
         var isRelated = false
         var isMix = false
-        let locale = ContentLocale.current()
+        var locale = ContentLocale.current()
+        if case let .search(value) = route { locale = locale.titles(in: Self.queryLanguage(value)) }
+        if case let .filteredSearch(value, _) = route { locale = locale.titles(in: Self.queryLanguage(value)) }
+        if case let .advancedSearch(value, _) = route { locale = locale.titles(in: Self.queryLanguage(value)) }
         var query = [URLQueryItem(name: "hl", value: locale.language), URLQueryItem(name: "gl", value: locale.country)]
         switch route {
         case .trendingMusic, .soundCloudSearch, .soundCloudTrending: throw BrowseError.invalidInput // Handled above.
@@ -203,7 +226,7 @@ public actor YouTubeBrowsingClient: Browsing {
             title = "Playlist"; isSearch = false
         }
         components.queryItems = query
-        let data = try await fetch(URLRequest(url: components.url!))
+        let data = try await fetch(URLRequest(url: components.url!), locale: locale)
         guard let html = String(data: data, encoding: .utf8) else { throw BrowseError.unsupportedResponse }
         let root = try BrowseParser.initialData(in: html)
         let version = BrowseParser.clientVersion(in: html)
@@ -224,7 +247,7 @@ public actor YouTubeBrowsingClient: Browsing {
                                      "hl": cursor.locale.language, "gl": cursor.locale.country]],
             "continuation": cursor.token
         ])
-        let data = try await fetch(request)
+        let data = try await fetch(request, locale: cursor.locale)
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw BrowseError.unsupportedResponse
         }
@@ -232,11 +255,13 @@ public actor YouTubeBrowsingClient: Browsing {
                                      isSearch: cursor.isSearch, isRelated: cursor.isRelated, locale: cursor.locale)
     }
 
-    private func fetch(_ original: URLRequest) async throws -> Data {
+    private func fetch(_ original: URLRequest, locale: ContentLocale) async throws -> Data {
         var request = original
         request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15",
                          forHTTPHeaderField: "User-Agent")
-        request.setValue("en-US,en;q=0.9", forHTTPHeaderField: "Accept-Language")
+        // YouTube picks the language of video titles (uploaders' translations and its own) from this header,
+        // not from hl; a fixed English header showed foreign videos under English titles.
+        request.setValue(Self.acceptLanguage(locale), forHTTPHeaderField: "Accept-Language")
         let (data, response) = try await session.data(for: request)
         try Task.checkCancellation()
         guard let response = response as? HTTPURLResponse else { throw BrowseError.unsupportedResponse }
