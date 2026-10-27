@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+import Foundation
+import YouTubeKit
+
+public struct ResolvedVideo: Sendable {
+    public let title: String
+    public let streamURL: URL
+    public let usesHLS: Bool
+    public let description: String
+    /// Separate audio stream to play alongside a video-only `streamURL`.
+    public let audioURL: URL?
+    /// Metadata found while resolving (artist, artwork, link), for items opened by ID alone.
+    public var item: BrowseItem?
+
+    public init(title: String, streamURL: URL, usesHLS: Bool, description: String = "", audioURL: URL? = nil, item: BrowseItem? = nil) {
+        self.item = item
+        self.title = title
+        self.streamURL = streamURL
+        self.usesHLS = usesHLS
+        self.description = description
+        self.audioURL = audioURL
+    }
+}
+
+public protocol StreamResolving: Sendable {
+    func resolve(_ request: VideoRequest) async throws -> ResolvedVideo
+    func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo
+    /// The best audio-only stream, or nil when there is none (audio-only playback then uses the normal stream).
+    func resolveAudio(_ request: VideoRequest) async throws -> ResolvedVideo?
+}
+
+public extension StreamResolving {
+    func resolveAudio(_ request: VideoRequest) async throws -> ResolvedVideo? { nil }
+    func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+        guard choice == nil else { throw PlaybackError.noPlayableStream }
+        return try await resolve(request)
+    }
+}
+
+public struct YouTubeStreamResolver: StreamResolving {
+    public init() {}
+
+    public func resolve(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+        if request.isSoundCloud { return try await soundCloud(request) }
+        do { return try await resolveChoice(request, choice: choice) } catch { throw PlaybackError.readable(error) }
+    }
+    /// SoundCloud tracks have a single HLS audio stream; every format choice resolves to it.
+    private func soundCloud(_ request: VideoRequest) async throws -> ResolvedVideo {
+        let stream = try await SoundCloudClient.shared.stream(request.videoID)
+        return ResolvedVideo(title: stream.title, streamURL: stream.url, usesHLS: true, description: stream.description, item: stream.item)
+    }
+    private func resolveChoice(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
+        guard let choice else { return try await resolveDefault(request) }
+        let source = try await YouTubeDownloadResolver().source(videoID: request.videoID, choice: choice)
+        let metadata = try? await YouTube(videoID: request.videoID, methods: [.local]).metadata
+        return ResolvedVideo(title: metadata?.title ?? PlaybackSession.placeholderTitle, streamURL: source.url,
+                             usesHLS: choice.kind == .hls, description: metadata?.description ?? "", audioURL: source.audioURL)
+    }
+
+    /// One extraction for both the title and the highest-bitrate audio track this device plays.
+    public func resolveAudio(_ request: VideoRequest) async throws -> ResolvedVideo? {
+        guard !request.isSoundCloud else { return nil }
+        let video = YouTube(videoID: request.videoID, methods: [.local])
+        let metadata = try? await video.metadata
+        try Task.checkCancellation()
+        guard let stream = try await video.streams.filter({ !$0.includesVideoTrack && $0.isNativelyPlayable })
+            .max(by: { ($0.bitrate ?? 0) < ($1.bitrate ?? 0) }) else { return nil }
+        return ResolvedVideo(title: metadata?.title ?? PlaybackSession.placeholderTitle, streamURL: stream.url, usesHLS: false,
+                             description: metadata?.description ?? "")
+    }
+
+    public func resolve(_ request: VideoRequest) async throws -> ResolvedVideo {
+        if request.isSoundCloud { return try await soundCloud(request) }
+        do { return try await resolveDefault(request) } catch { throw PlaybackError.readable(error) }
+    }
+    private func resolveDefault(_ request: VideoRequest) async throws -> ResolvedVideo {
+        // A new instance for every resolution avoids reusing expired signed URLs.
+        // Explicitly disable the library's optional third-party remote extraction.
+        let video = YouTube(videoID: request.videoID, methods: [.local])
+        let metadata = try? await video.metadata
+        let title = metadata?.title ?? PlaybackSession.placeholderTitle
+        try Task.checkCancellation()
+        if let stream = try? await video.livestreams.first(where: { $0.streamType == .hls }) {
+            return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: true, description: metadata?.description ?? "")
+        }
+        try Task.checkCancellation()
+        let streams = try await video.streams
+        guard let stream = streams.filterVideoAndAudio()
+            .filter({ $0.isNativelyPlayable }).highestResolutionStream() else {
+            throw PlaybackError.noPlayableStream
+        }
+        return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: false, description: metadata?.description ?? "")
+    }
+}
+
+public struct PlaybackRecoveryPolicy {
+    public private(set) var hasRefreshed = false
+    public init() {}
+
+    public mutating func shouldRefresh(httpStatus: Int?) -> Bool {
+        guard httpStatus == 403, !hasRefreshed else { return false }
+        hasRefreshed = true
+        return true
+    }
+}

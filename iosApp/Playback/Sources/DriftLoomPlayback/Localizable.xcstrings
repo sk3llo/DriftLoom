@@ -1,0 +1,3531 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%lld YouTube subscriptions": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld YouTube subscription"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld YouTube subscriptions"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld inscrição do YouTube"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld inscrições do YouTube"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld inscrições do YouTube"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld підписки YouTube"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld підписок YouTube"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld підписку YouTube"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld підписок YouTube"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld history entries": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld history entry"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld history entries"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld item do histórico"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld itens do histórico"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld itens do histórico"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld записи історії"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld записів історії"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld запис історії"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld записів історії"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld local playlists": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld local playlist"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld local playlists"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlist local"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlists locais"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlists locais"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld локальні плейлисти"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld локальних плейлистів"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld локальний плейлист"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld локальних плейлистів"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld more channels": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more channel"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more channels"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "mais %lld canal"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "mais %lld canais"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "mais %lld canais"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "ще %lld канали"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "ще %lld каналів"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "ще %lld канал"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "ще %lld каналів"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld new videos": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new video"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld new videos"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vídeo novo"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vídeos novos"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld vídeos novos"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld нові відео"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld нових відео"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld нове відео"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld нових відео"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld playlist bookmarks": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlist bookmark"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlist bookmarks"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlist favorita"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlists favoritas"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld playlists favoritas"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld закладки плейлистів"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld закладок плейлистів"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld закладку плейлиста"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld закладок плейлистів"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld plays": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld play"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld plays"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld reprodução"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld reproduções"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld reproduções"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld прослуховування"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld прослуховувань"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld прослуховування"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld прослуховувань"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld resume positions": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld resume position"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld resume positions"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld posição de reprodução"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld posições de reprodução"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld posições de reprodução"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld позиції відтворення"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld позицій відтворення"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld позицію відтворення"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld позицій відтворення"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld rows that aren't YouTube channels will be skipped.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld row that isn't a YouTube channel will be skipped."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rows that aren't YouTube channels will be skipped."
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld linha que não é um canal do YouTube será ignorada."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld linhas que não são canais do YouTube serão ignoradas."
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld linhas que não são canais do YouTube serão ignoradas."
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld рядки, що не є каналами YouTube, буде пропущено."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld рядків, що не є каналами YouTube, буде пропущено."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld рядок, що не є каналом YouTube, буде пропущено."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld рядків, що не є каналами YouTube, буде пропущено."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld subscription groups": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld subscription group"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld subscription groups"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld grupo de inscrições"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld grupos de inscrições"
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld grupos de inscrições"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld групи підписок"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld груп підписок"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld групу підписок"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld груп підписок"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld unsupported or invalid entries were skipped.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld unsupported or invalid entry was skipped."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld unsupported or invalid entries were skipped."
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld item não suportado ou inválido foi ignorado."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld itens não suportados ou inválidos foram ignorados."
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld itens não suportados ou inválidos foram ignorados."
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld непідтримувані чи некоректні записи пропущено."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld непідтримуваних чи некоректних записів пропущено."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld непідтримуваний чи некоректний запис пропущено."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld непідтримуваних чи некоректних записів пропущено."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld unsupported service or invalid channel entries will be skipped.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld unsupported service or invalid channel entry will be skipped."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld unsupported service or invalid channel entries will be skipped."
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld item de serviço não suportado ou canal inválido será ignorado."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld itens de serviços não suportados ou canais inválidos serão ignorados."
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld itens de serviços não suportados ou canais inválidos serão ignorados."
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld записи непідтримуваних сервісів чи некоректних каналів буде пропущено."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld записів непідтримуваних сервісів чи некоректних каналів буде пропущено."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld запис непідтримуваного сервісу чи некоректного каналу буде пропущено."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld записів непідтримуваних сервісів чи некоректних каналів буде пропущено."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "4–20 minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4–20 minutos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4–20 хвилин"
+          }
+        }
+      }
+    },
+    "A queue can contain up to 5,000 videos.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uma fila pode ter até 5.000 vídeos."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Черга може містити до 5000 відео."
+          }
+        }
+      }
+    },
+    "All": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Усі"
+          }
+        }
+      }
+    },
+    "All recent uploads": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos os envios recentes"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Усі нещодавні відео"
+          }
+        }
+      }
+    },
+    "An imported playlist exceeds 5,000 videos.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uma playlist importada tem mais de 5.000 vídeos."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Імпортований плейлист містить понад 5000 відео."
+          }
+        }
+      }
+    },
+    "Any duration": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qualquer duração"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Будь-яка тривалість"
+          }
+        }
+      }
+    },
+    "Any time": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qualquer data"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Будь-коли"
+          }
+        }
+      }
+    },
+    "Audio · %lld kbps": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Áudio · %lld kbps"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аудіо · %lld кбіт/с"
+          }
+        }
+      }
+    },
+    "Audio · SoundCloud stream": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Áudio · stream do SoundCloud"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аудіо · потік SoundCloud"
+          }
+        }
+      }
+    },
+    "Bookmarked": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoritos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закладки"
+          }
+        }
+      }
+    },
+    "Channels": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canais"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Канали"
+          }
+        }
+      }
+    },
+    "Choose a playlist name between 1 and 100 characters.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha um nome de playlist com 1 a 100 caracteres."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назва плейлиста має містити від 1 до 100 символів."
+          }
+        }
+      }
+    },
+    "Choose a supported channel or playlist to add to home.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha um canal ou playlist suportado para adicionar ao início."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виберіть підтримуваний канал або плейлист, щоб додати на головну."
+          }
+        }
+      }
+    },
+    "Content language: %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma do conteúdo: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мова вмісту: %@"
+          }
+        }
+      }
+    },
+    "Content region: %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Região do conteúdo: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Регіон вмісту: %@"
+          }
+        }
+      }
+    },
+    "Dark": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuro"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Темна"
+          }
+        }
+      }
+    },
+    "Download network: %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rede para downloads: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мережа для завантажень: %@"
+          }
+        }
+      }
+    },
+    "Downloaded video": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeo baixado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завантажене відео"
+          }
+        }
+      }
+    },
+    "DriftLoom opens YouTube and SoundCloud links.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O DriftLoom abre links do YouTube e do SoundCloud."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DriftLoom відкриває посилання YouTube і SoundCloud."
+          }
+        }
+      }
+    },
+    "Enter a YouTube video link or video ID.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digite um link ou ID de vídeo do YouTube."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введіть посилання на відео YouTube або його ID."
+          }
+        }
+      }
+    },
+    "Enter a search term or choose a valid channel or playlist.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digite um termo de busca ou escolha um canal ou playlist válido."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Введіть пошуковий запит або виберіть коректний канал чи плейлист."
+          }
+        }
+      }
+    },
+    "From %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Від: %@"
+          }
+        }
+      }
+    },
+    "From your subscriptions": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das suas inscrições"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "З ваших підписок"
+          }
+        }
+      }
+    },
+    "Gaming": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jogos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ігри"
+          }
+        }
+      }
+    },
+    "Group icons and downloaded media aren't migrated; settings come only from preferences.json and are applied only if you choose to. Resume positions are added only for imported history while watch history is on, and never replace positions saved on this device.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ícones de grupos e mídias baixadas não são migrados; os ajustes vêm só do preferences.json e só são aplicados se você quiser. Posições de reprodução são adicionadas só ao histórico importado com o histórico ativado e nunca substituem as salvas neste dispositivo."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Значки груп і завантажені медіа не переносяться; налаштування беруться лише з preferences.json і застосовуються тільки за вашим вибором. Позиції відтворення додаються лише для імпортованої історії, коли історію переглядів увімкнено, і ніколи не замінюють збережених на цьому пристрої."
+          }
+        }
+      }
+    },
+    "History": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histórico"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Історія"
+          }
+        }
+      }
+    },
+    "Home tabs: %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abas do início: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вкладки головної: %@"
+          }
+        }
+      }
+    },
+    "Imported subscription groups exceed supported limits.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os grupos de inscrições importados excedem os limites suportados."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Імпортовані групи підписок перевищують підтримувані обмеження."
+          }
+        }
+      }
+    },
+    "Large": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grande"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Великий"
+          }
+        }
+      }
+    },
+    "Last 24 hours": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Últimas 24 horas"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Останні 24 години"
+          }
+        }
+      }
+    },
+    "Last 30 days": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Últimos 30 dias"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Останні 30 днів"
+          }
+        }
+      }
+    },
+    "Last 7 days": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Últimos 7 dias"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Останні 7 днів"
+          }
+        }
+      }
+    },
+    "Last hour": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última hora"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остання година"
+          }
+        }
+      }
+    },
+    "Light": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claro"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світла"
+          }
+        }
+      }
+    },
+    "Live": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ao vivo"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Наживо"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Médio"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Середній"
+          }
+        }
+      }
+    },
+    "Merge %@ from NewPipe.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesclar do NewPipe: %@."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Об’єднати з NewPipe: %@."
+          }
+        }
+      }
+    },
+    "Merge %lld YouTube subscriptions from Google Takeout.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Merge %lld YouTube subscription from Google Takeout."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Merge %lld YouTube subscriptions from Google Takeout."
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mesclar %lld inscrição do YouTube do Google Takeout."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mesclar %lld inscrições do YouTube do Google Takeout."
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mesclar %lld inscrições do YouTube do Google Takeout."
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписки YouTube з Google Takeout."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписок YouTube з Google Takeout."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписку YouTube з Google Takeout."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписок YouTube з Google Takeout."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Merge %lld YouTube subscriptions.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Merge %lld YouTube subscription."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Merge %lld YouTube subscriptions."
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mesclar %lld inscrição do YouTube."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mesclar %lld inscrições do YouTube."
+                }
+              },
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mesclar %lld inscrições do YouTube."
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписки YouTube."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписок YouTube."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписку YouTube."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Об’єднати %lld підписок YouTube."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Movie trailers": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trailers de filmes"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Трейлери фільмів"
+          }
+        }
+      }
+    },
+    "New video": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novo vídeo"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нове відео"
+          }
+        }
+      }
+    },
+    "No stream supported by this device is available for this video.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não há stream compatível com este dispositivo para este vídeo."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для цього відео немає потоку, який підтримує цей пристрій."
+          }
+        }
+      }
+    },
+    "No supported YouTube channel subscriptions were found. Export NewPipe subscriptions as JSON; ZIP database backups are also supported.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma inscrição de canal do YouTube suportada foi encontrada. Exporte as inscrições do NewPipe em JSON; backups ZIP do banco de dados também funcionam."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підтримуваних підписок на канали YouTube не знайдено. Експортуйте підписки NewPipe у JSON; також підтримуються ZIP-копії бази даних."
+          }
+        }
+      }
+    },
+    "Off": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вимкнено"
+          }
+        }
+      }
+    },
+    "One": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Um"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Одне"
+          }
+        }
+      }
+    },
+    "Only a preview of this track is available.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Só há uma prévia desta faixa."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступний лише уривок цього треку."
+          }
+        }
+      }
+    },
+    "Only subscriptions are imported from Takeout; playlists and watch history aren't.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do Takeout só são importadas as inscrições, não playlists nem histórico."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "З Takeout імпортуються лише підписки, без плейлистів та історії переглядів."
+          }
+        }
+      }
+    },
+    "Over 20 minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mais de 20 minutos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Понад 20 хвилин"
+          }
+        }
+      }
+    },
+    "Playback stopped. Try opening the video again.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A reprodução parou. Tente abrir o vídeo de novo."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відтворення зупинилося. Спробуйте відкрити відео знову."
+          }
+        }
+      }
+    },
+    "Playlists": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Плейлисти"
+          }
+        }
+      }
+    },
+    "Podcasts": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podcasts"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подкасти"
+          }
+        }
+      }
+    },
+    "Rating": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classificação"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За рейтингом"
+          }
+        }
+      }
+    },
+    "Record search history: off": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrar histórico de busca: desativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запис історії пошуку: вимкнено"
+          }
+        }
+      }
+    },
+    "Record search history: on": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrar histórico de busca: ativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запис історії пошуку: увімкнено"
+          }
+        }
+      }
+    },
+    "Record watch history: off": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrar histórico de vídeos: desativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запис історії переглядів: вимкнено"
+          }
+        }
+      }
+    },
+    "Record watch history: on": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrar histórico de vídeos: ativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запис історії переглядів: увімкнено"
+          }
+        }
+      }
+    },
+    "Related tracks": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faixas relacionadas"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Схожі треки"
+          }
+        }
+      }
+    },
+    "Related videos": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeos relacionados"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Схожі відео"
+          }
+        }
+      }
+    },
+    "Relevance": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relevância"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За релевантністю"
+          }
+        }
+      }
+    },
+    "Resume playback position: off": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retomar de onde parou: desativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продовжувати з місця зупинки: вимкнено"
+          }
+        }
+      }
+    },
+    "Resume playback position: on": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retomar de onde parou: ativado"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продовжувати з місця зупинки: увімкнено"
+          }
+        }
+      }
+    },
+    "Search suggestions: off": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sugestões de busca: desativadas"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підказки пошуку: вимкнено"
+          }
+        }
+      }
+    },
+    "Search suggestions: on": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sugestões de busca: ativadas"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підказки пошуку: увімкнено"
+          }
+        }
+      }
+    },
+    "Shorts": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shorts"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shorts"
+          }
+        }
+      }
+    },
+    "Small": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pequeno"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Малий"
+          }
+        }
+      }
+    },
+    "SoundCloud couldn't be reached. Try again later.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível acessar o SoundCloud. Tente mais tarde."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося з’єднатися з SoundCloud. Спробуйте пізніше."
+          }
+        }
+      }
+    },
+    "SoundCloud couldn't find this item. It may be private or removed.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O SoundCloud não encontrou este item. Ele pode ser privado ou ter sido removido."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SoundCloud не знайшов цей елемент. Можливо, він приватний або видалений."
+          }
+        }
+      }
+    },
+    "SoundCloud couldn't load this (%lld). Try again later.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O SoundCloud não conseguiu carregar isso (%lld). Tente mais tarde."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SoundCloud не зміг це завантажити (%lld). Спробуйте пізніше."
+          }
+        }
+      }
+    },
+    "SoundCloud doesn't offer playback for this track.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O SoundCloud não oferece reprodução desta faixa."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SoundCloud не надає відтворення цього треку."
+          }
+        }
+      }
+    },
+    "SoundCloud is limiting requests right now. Try again later.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O SoundCloud está limitando solicitações agora. Tente mais tarde."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SoundCloud зараз обмежує запити. Спробуйте пізніше."
+          }
+        }
+      }
+    },
+    "SoundCloud offers this track only in a format this device can't play.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O SoundCloud oferece esta faixa só num formato que este dispositivo não reproduz."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SoundCloud надає цей трек лише у форматі, який цей пристрій не відтворює."
+          }
+        }
+      }
+    },
+    "SoundCloud stopped the download. Retry to get a fresh link.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O SoundCloud interrompeu o download. Tente de novo para obter um link novo."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SoundCloud зупинив завантаження. Повторіть, щоб отримати нове посилання."
+          }
+        }
+      }
+    },
+    "SoundCloud track": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faixa do SoundCloud"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Трек SoundCloud"
+          }
+        }
+      }
+    },
+    "SoundCloud trending": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Em alta no SoundCloud"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Популярне на SoundCloud"
+          }
+        }
+      }
+    },
+    "SoundCloud user": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuário do SoundCloud"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Користувач SoundCloud"
+          }
+        }
+      }
+    },
+    "Subscription groups are unavailable. Existing library data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os grupos de inscrições não estão disponíveis. Os dados da biblioteca não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Групи підписок недоступні. Наявні дані бібліотеки не змінено."
+          }
+        }
+      }
+    },
+    "Subscriptions": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inscrições"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підписки"
+          }
+        }
+      }
+    },
+    "System": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistema"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Системна"
+          }
+        }
+      }
+    },
+    "The import recovery couldn't finish. Saved files are preserved and edits are disabled until recovery succeeds.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A recuperação da importação não terminou. Os arquivos salvos foram preservados e as edições ficam desativadas até a recuperação dar certo."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося завершити відновлення після імпорту. Збережені файли вціліли, а редагування вимкнено до успішного відновлення."
+          }
+        }
+      }
+    },
+    "The merged library exceeds supported limits. Existing data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A biblioteca mesclada excede os limites suportados. Os dados existentes não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Об’єднана бібліотека перевищує підтримувані обмеження. Наявні дані не змінено."
+          }
+        }
+      }
+    },
+    "The merged subscription groups exceed supported limits.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os grupos de inscrições mesclados excedem os limites suportados."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Об’єднані групи підписок перевищують підтримувані обмеження."
+          }
+        }
+      }
+    },
+    "Theme: %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tema: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тема: %@"
+          }
+        }
+      }
+    },
+    "These subtitles are empty or couldn't be read.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estas legendas estão vazias ou não puderam ser lidas."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ці субтитри порожні або їх не вдалося прочитати."
+          }
+        }
+      }
+    },
+    "This CSV doesn't contain YouTube subscriptions from Takeout.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este CSV não contém inscrições do YouTube do Takeout."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей CSV не містить підписок YouTube з Takeout."
+          }
+        }
+      }
+    },
+    "This JSON doesn't contain YouTube subscriptions.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este JSON não contém inscrições do YouTube."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей JSON не містить підписок YouTube."
+          }
+        }
+      }
+    },
+    "This NewPipe database version isn't supported. Existing data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta versão do banco de dados do NewPipe não é suportada. Os dados existentes não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ця версія бази даних NewPipe не підтримується. Наявні дані не змінено."
+          }
+        }
+      }
+    },
+    "This SoundCloud link couldn't be opened.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível abrir este link do SoundCloud."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося відкрити це посилання SoundCloud."
+          }
+        }
+      }
+    },
+    "This SoundCloud link isn't a track, profile or playlist.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este link do SoundCloud não é uma faixa, perfil ou playlist."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Це посилання SoundCloud не веде на трек, профіль чи плейлист."
+          }
+        }
+      }
+    },
+    "This YouTube link isn't a video, playlist or channel DriftLoom can open.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este link do YouTube não é um vídeo, playlist ou canal que o DriftLoom consiga abrir."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Це посилання YouTube не веде на відео, плейлист чи канал, які може відкрити DriftLoom."
+          }
+        }
+      }
+    },
+    "This ZIP doesn't contain a supported NewPipe database backup.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este ZIP não contém um backup do banco de dados do NewPipe suportado."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей ZIP не містить підтримуваної резервної копії бази даних NewPipe."
+          }
+        }
+      }
+    },
+    "This ZIP has no YouTube subscriptions. In Takeout, include \"subscriptions\" in the YouTube export.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este ZIP não tem inscrições do YouTube. No Takeout, inclua \"inscrições\" na exportação do YouTube."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У цьому ZIP немає підписок YouTube. У Takeout додайте «підписки» до експорту YouTube."
+          }
+        }
+      }
+    },
+    "This ZIP is larger than 50 MB. For Takeout, export only YouTube subscriptions or choose the subscriptions.csv file.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este ZIP tem mais de 50 MB. No Takeout, exporte só as inscrições do YouTube ou escolha o arquivo subscriptions.csv."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей ZIP більший за 50 МБ. У Takeout експортуйте лише підписки YouTube або виберіть файл subscriptions.csv."
+          }
+        }
+      }
+    },
+    "This ZIP is too large. Export only YouTube subscriptions from Takeout, or choose the subscriptions.csv file inside it.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este ZIP é grande demais. Exporte só as inscrições do YouTube no Takeout ou escolha o arquivo subscriptions.csv dentro dele."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей ZIP завеликий. Експортуйте з Takeout лише підписки YouTube або виберіть файл subscriptions.csv усередині."
+          }
+        }
+      }
+    },
+    "This backup exceeds supported migration limits.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este backup excede os limites de migração suportados."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Резервна копія перевищує підтримувані обмеження перенесення."
+          }
+        }
+      }
+    },
+    "This backup exceeds supported text limits.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este backup excede os limites de texto suportados."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Резервна копія перевищує підтримувані обмеження тексту."
+          }
+        }
+      }
+    },
+    "This channel's feed could not be loaded.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível carregar o feed deste canal."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося завантажити стрічку цього каналу."
+          }
+        }
+      }
+    },
+    "This import exceeds the 20 MB limit.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta importação excede o limite de 20 MB."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Імпорт перевищує обмеження у 20 МБ."
+          }
+        }
+      }
+    },
+    "This item can't be added to your library.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este item não pode ser adicionado à biblioteca."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей елемент не можна додати до бібліотеки."
+          }
+        }
+      }
+    },
+    "This library exceeds the 20 MB backup limit.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta biblioteca excede o limite de backup de 20 MB."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бібліотека перевищує обмеження резервної копії у 20 МБ."
+          }
+        }
+      }
+    },
+    "This library is too large to create a safe import recovery copy.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A biblioteca é grande demais para criar uma cópia de recuperação segura."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бібліотека завелика, щоб створити безпечну копію для відновлення."
+          }
+        }
+      }
+    },
+    "This live recording isn't available.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta gravação ao vivo não está disponível."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей запис трансляції недоступний."
+          }
+        }
+      }
+    },
+    "This month": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este mês"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цього місяця"
+          }
+        }
+      }
+    },
+    "This playlist already has 5,000 videos.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta playlist já tem 5.000 vídeos."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У цьому плейлисті вже 5000 відео."
+          }
+        }
+      }
+    },
+    "This playlist is too large to open.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta playlist é grande demais para abrir."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Плейлист завеликий, щоб його відкрити."
+          }
+        }
+      }
+    },
+    "This track is encrypted and can't be saved.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta faixa é criptografada e não pode ser salva."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей трек зашифровано, його не можна зберегти."
+          }
+        }
+      }
+    },
+    "This track is only available as DRM-protected audio, which DriftLoom can't play.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta faixa só está disponível como áudio protegido por DRM, que o DriftLoom não reproduz."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей трек доступний лише як аудіо із захистом DRM, яке DriftLoom не може відтворити."
+          }
+        }
+      }
+    },
+    "This track is too large to save.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta faixa é grande demais para salvar."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Трек завеликий, щоб його зберегти."
+          }
+        }
+      }
+    },
+    "This track isn't available in your country.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta faixa não está disponível no seu país."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей трек недоступний у вашій країні."
+          }
+        }
+      }
+    },
+    "This video isn't available in your region.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este vídeo não está disponível na sua região."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Це відео недоступне у вашому регіоні."
+          }
+        }
+      }
+    },
+    "This week": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta semana"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цього тижня"
+          }
+        }
+      }
+    },
+    "This year": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este ano"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цього року"
+          }
+        }
+      }
+    },
+    "Today": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoje"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сьогодні"
+          }
+        }
+      }
+    },
+    "Tracks": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faixas"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Треки"
+          }
+        }
+      }
+    },
+    "Trending music": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Músicas em alta"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Популярна музика"
+          }
+        }
+      }
+    },
+    "Under 4 minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menos de 4 minutos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "До 4 хвилин"
+          }
+        }
+      }
+    },
+    "Upload date": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data de envio"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дата публікації"
+          }
+        }
+      }
+    },
+    "Use a name of 1–100 characters, up to 100 groups and up to 5,000 channels per group.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use um nome de 1 a 100 caracteres, até 100 grupos e até 5.000 canais por grupo."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назва має містити 1–100 символів; можна до 100 груп і до 5000 каналів у групі."
+          }
+        }
+      }
+    },
+    "Users": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuários"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Користувачі"
+          }
+        }
+      }
+    },
+    "Video · %@p": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeo · %@p"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відео · %@p"
+          }
+        }
+      }
+    },
+    "Video · %@p (separate audio)": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeo · %@p (áudio separado)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відео · %@p (окреме аудіо)"
+          }
+        }
+      }
+    },
+    "Video · automatic quality (HLS)": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeo · qualidade automática (HLS)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відео · автоматична якість (HLS)"
+          }
+        }
+      }
+    },
+    "Videos": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відео"
+          }
+        }
+      }
+    },
+    "View count": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizações"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За переглядами"
+          }
+        }
+      }
+    },
+    "What's new": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novidades"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Що нового"
+          }
+        }
+      }
+    },
+    "Wi-Fi and mobile data": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wi-Fi e dados móveis"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wi-Fi і мобільні дані"
+          }
+        }
+      }
+    },
+    "Wi-Fi only": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Somente Wi-Fi"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лише Wi-Fi"
+          }
+        }
+      }
+    },
+    "You can pin up to 50 channel and playlist tabs.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Você pode fixar até 50 abas de canais e playlists."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Можна закріпити до 50 вкладок каналів і плейлистів."
+          }
+        }
+      }
+    },
+    "You can pin up to 50 local playlists.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Você pode fixar até 50 playlists locais."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Можна закріпити до 50 локальних плейлистів."
+          }
+        }
+      }
+    },
+    "YouTube channel": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canal do YouTube"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Канал YouTube"
+          }
+        }
+      }
+    },
+    "YouTube couldn't find this channel.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube não encontrou este canal."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube не знайшов цей канал."
+          }
+        }
+      }
+    },
+    "YouTube couldn't load comments (%lld). Try again.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube não conseguiu carregar os comentários (%lld). Tente de novo."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube не зміг завантажити коментарі (%lld). Спробуйте ще раз."
+          }
+        }
+      }
+    },
+    "YouTube couldn't load subtitles (%lld).": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube não conseguiu carregar as legendas (%lld)."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube не зміг завантажити субтитри (%lld)."
+          }
+        }
+      }
+    },
+    "YouTube couldn't load this chart (%lld). Try another content region or try again later.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube não conseguiu carregar esta parada (%lld). Escolha outra região de conteúdo ou tente mais tarde."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube не зміг завантажити чарт (%lld). Виберіть інший регіон вмісту або спробуйте пізніше."
+          }
+        }
+      }
+    },
+    "YouTube couldn't load this page (%lld). Try again later.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube não conseguiu carregar a página (%lld). Tente mais tarde."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube не зміг завантажити сторінку (%lld). Спробуйте пізніше."
+          }
+        }
+      }
+    },
+    "YouTube didn't provide this video's streams. It may need a signed-in account, or YouTube may be limiting requests from this network. Try again later or on another network.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube não forneceu os streams deste vídeo. Talvez seja preciso uma conta conectada, ou o YouTube está limitando pedidos desta rede. Tente mais tarde ou em outra rede."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube не надав потоки цього відео. Можливо, потрібен вхід в обліковий запис, або YouTube обмежує запити з цієї мережі. Спробуйте пізніше або в іншій мережі."
+          }
+        }
+      }
+    },
+    "YouTube is limiting subtitle requests from this network right now, which affects auto-translated subtitles most. Try again later or choose another track.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube está limitando pedidos de legendas desta rede agora, o que afeta mais as legendas traduzidas. Tente mais tarde ou escolha outra faixa."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube зараз обмежує запити субтитрів із цієї мережі, найбільше це стосується автоперекладу. Спробуйте пізніше або виберіть інші субтитри."
+          }
+        }
+      }
+    },
+    "YouTube returned a page DriftLoom cannot read. Please try again later.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube retornou uma página que o DriftLoom não consegue ler. Tente mais tarde."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube повернув сторінку, яку DriftLoom не може прочитати. Спробуйте пізніше."
+          }
+        }
+      }
+    },
+    "YouTube user": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuário do YouTube"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Користувач YouTube"
+          }
+        }
+      }
+    },
+    "YouTube video": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeo do YouTube"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відео YouTube"
+          }
+        }
+      }
+    },
+    "Your current queue couldn't be saved. The previously saved queue is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar a fila atual. A fila salva anteriormente não mudou."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти поточну чергу. Попередньо збережену чергу не змінено."
+          }
+        }
+      }
+    },
+    "Your download list couldn't be read and has been left untouched.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler a lista de downloads, que não foi alterada."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати список завантажень, його залишено без змін."
+          }
+        }
+      }
+    },
+    "Your download list couldn't be saved. Previous data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar a lista de downloads. Os dados anteriores não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти список завантажень. Попередні дані не змінено."
+          }
+        }
+      }
+    },
+    "Your library couldn't be read. The saved file has been left untouched.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler sua biblioteca. O arquivo salvo não foi alterado."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати бібліотеку. Збережений файл залишено без змін."
+          }
+        }
+      }
+    },
+    "Your library couldn't be saved. Your previous saved data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar a biblioteca. Os dados salvos anteriormente não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти бібліотеку. Попередні збережені дані не змінено."
+          }
+        }
+      }
+    },
+    "Your pinned home tabs couldn't be read. The saved file has been left untouched.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler as abas fixadas. O arquivo salvo não foi alterado."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати закріплені вкладки. Збережений файл залишено без змін."
+          }
+        }
+      }
+    },
+    "Your pinned home tabs couldn't be saved. Previous saved data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar as abas fixadas. Os dados salvos anteriormente não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти закріплені вкладки. Попередні збережені дані не змінено."
+          }
+        }
+      }
+    },
+    "Your playlist file is unavailable. Try loading it again before editing.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O arquivo de playlists não está disponível. Tente carregá-lo de novo antes de editar."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл плейлистів недоступний. Спробуйте завантажити його знову перед редагуванням."
+          }
+        }
+      }
+    },
+    "Your playlists couldn't be read. Their saved file has been left untouched.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler suas playlists. O arquivo salvo delas não foi alterado."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати плейлисти. Їхній збережений файл залишено без змін."
+          }
+        }
+      }
+    },
+    "Your playlists couldn't be saved. Previous saved data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar suas playlists. Os dados salvos anteriormente não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти плейлисти. Попередні збережені дані не змінено."
+          }
+        }
+      }
+    },
+    "Your saved library is unavailable. Try loading it again before making changes.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sua biblioteca salva não está disponível. Tente carregá-la de novo antes de fazer alterações."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Збережена бібліотека недоступна. Спробуйте завантажити її знову, перш ніж вносити зміни."
+          }
+        }
+      }
+    },
+    "Your saved queue couldn't be read and has been left untouched. The current queue will not be saved.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler a fila salva, que não foi alterada. A fila atual não será salva."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати збережену чергу, її залишено без змін. Поточна черга не зберігатиметься."
+          }
+        }
+      }
+    },
+    "Your subscription groups couldn't be read. The saved file has been left untouched.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler os grupos de inscrições. O arquivo salvo não foi alterado."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати групи підписок. Збережений файл залишено без змін."
+          }
+        }
+      }
+    },
+    "Your subscription groups couldn't be saved. Previous data is unchanged.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar os grupos de inscrições. Os dados anteriores não mudaram."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти групи підписок. Попередні дані не змінено."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

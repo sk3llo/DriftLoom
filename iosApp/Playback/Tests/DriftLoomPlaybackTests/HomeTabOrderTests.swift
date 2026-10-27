@@ -1,0 +1,127 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+import XCTest
+@testable import DriftLoomPlayback
+
+@MainActor
+final class HomeTabOrderTests: XCTestCase {
+    private var file: URL!
+    override func setUp() async throws {
+        file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathComponent("home-tabs.json")
+    }
+    override func tearDown() async throws { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
+    private let channel = BrowseItem(contentID: "UC" + String(repeating: "a", count: 22), kind: .channel, title: "Channel")
+
+    func testKeysRoundTripAndRejectMalformedValues() {
+        let id = UUID()
+        for key in [HomeTabKey.section(.feed), .pinned("channel:x"), .local(id)] { XCTAssertEqual(HomeTabKey(rawValue: key.rawValue), key) }
+        for raw in ["", "section:Nope", "local:not-a-uuid", "pinned:", "other:x", "nocolon"] { XCTAssertNil(HomeTabKey(rawValue: raw), raw) }
+    }
+    func testDefaultArrangementGroupsAndSavedOrderInterleaves() throws {
+        let tabs = PinnedHomeTabs(fileURL: file)
+        let playlist = UUID()
+        tabs.toggle(channel); tabs.toggleLocal(playlist)
+        let pinned = try XCTUnwrap(tabs.tabs.first).id
+        XCTAssertEqual(tabs.arrangement(sections: [.subscriptions, .feed], localPlaylistIDs: [playlist]),
+                       [.section(.subscriptions), .section(.feed), .pinned(pinned), .local(playlist)])
+        tabs.setOrder([.local(playlist), .section(.feed), .pinned(pinned), .section(.subscriptions)])
+        let reloaded = PinnedHomeTabs(fileURL: file)
+        XCTAssertEqual(reloaded.arrangement(sections: [.subscriptions, .feed], localPlaylistIDs: [playlist]),
+                       [.local(playlist), .section(.feed), .pinned(pinned), .section(.subscriptions)])
+        // Hidden sections and deleted playlists drop out; newly shown sections are appended.
+        XCTAssertEqual(reloaded.arrangement(sections: [.feed, .history], localPlaylistIDs: []),
+                       [.section(.feed), .pinned(pinned), .section(.history)])
+    }
+    func testOnlyPinnedTabsStillWriteVersionOneForEarlierBuilds() throws {
+        let tabs = PinnedHomeTabs(fileURL: file)
+        tabs.toggle(channel)
+        var json = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as! [String: Any]
+        XCTAssertEqual(json["version"] as? Int, 1); XCTAssertNil(json["order"])
+        let playlist = UUID()
+        tabs.toggleLocal(playlist)
+        json = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as! [String: Any]
+        XCTAssertEqual(json["version"] as? Int, 2)
+        tabs.removeLocal(playlist)
+        json = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as! [String: Any]
+        XCTAssertEqual(json["version"] as? Int, 1)
+    }
+    func testRemovingTabsAndDeletedPlaylistsCleansSavedOrder() throws {
+        let tabs = PinnedHomeTabs(fileURL: file)
+        let kept = UUID(), deleted = UUID()
+        tabs.toggle(channel); tabs.toggleLocal(kept); tabs.toggleLocal(deleted)
+        let pinned = try XCTUnwrap(tabs.tabs.first).id
+        tabs.setOrder([.local(deleted), .pinned(pinned), .local(kept), .section(.feed)])
+        tabs.retainLocal([kept])
+        XCTAssertEqual(tabs.localPlaylists, [kept]); XCTAssertEqual(tabs.order, [.pinned(pinned), .local(kept), .section(.feed)])
+        tabs.remove(pinned)
+        XCTAssertEqual(tabs.order, [.local(kept), .section(.feed)])
+        tabs.toggleLocal(kept)
+        XCTAssertFalse(tabs.containsLocal(kept)); XCTAssertEqual(tabs.order, [.section(.feed)])
+    }
+    func testInvalidOrNewerDocumentsStayUntouched() throws {
+        try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        for body in [#"{"version":3,"tabs":[]}"#, #"{"version":1,"tabs":[],"order":["section:Trending music"]}"#,
+                     #"{"version":2,"tabs":[],"order":["section:History","section:History"]}"#, #"{"version":2,"tabs":[],"order":["bogus"]}"#] {
+            try Data(body.utf8).write(to: file)
+            let tabs = PinnedHomeTabs(fileURL: file)
+            XCTAssertFalse(tabs.isWritable, body)
+            tabs.toggleLocal(UUID())
+            XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), body)
+        }
+    }
+}
+
+@MainActor
+final class KioskSectionTests: XCTestCase {
+    func testKiosksAreOptInAndMapToYouTubePages() {
+        let name = "DriftLoom.Tests." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let preferences = AppPreferences(defaults: defaults)
+        XCTAssertEqual(preferences.homeSections, HomeSection.defaultSections)
+        XCTAssertEqual(HomeSection.defaultSections.first, .live, "Live is the first tab")
+        XCTAssertEqual(HomeSection.defaultSections.compactMap(\.kiosk), [.live], "Other kiosks stay opt-in")
+        XCTAssertEqual([HomeSection.live, .gaming, .podcasts, .trailers].compactMap(\.kiosk), YouTubeKiosk.allCases)
+        preferences.setHomeSections([.gaming, .subscriptions])
+        XCTAssertEqual(AppPreferences(defaults: defaults).homeSections, [.gaming, .subscriptions])
+        // The user's later choices are kept once the one-time Live update has run.
+        XCTAssertEqual(AppPreferences(defaults: defaults).homeSections, [.gaming, .subscriptions])
+        XCTAssertNotNil(YouTubeKiosk.live.path); XCTAssertNil(YouTubeKiosk.trailers.path)
+    }
+}
+
+@MainActor
+final class LiveFirstMigrationTests: XCTestCase {
+    func testSavedLayoutsGetLiveFirstOnceAndKeepLaterChanges() throws {
+        let name = "DriftLoom.Tests." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(["History", "Bookmarked", "Live"], forKey: "homeSections")
+        let migrated = AppPreferences(defaults: defaults)
+        XCTAssertEqual(migrated.homeSections, [.live, .history, .bookmarks]); XCTAssertTrue(migrated.movedLiveFirst)
+        migrated.setHomeSections([.history, .live])
+        let later = AppPreferences(defaults: defaults)
+        XCTAssertEqual(later.homeSections, [.history, .live], "Runs only once"); XCTAssertFalse(later.movedLiveFirst)
+
+        let hidden = UserDefaults(suiteName: name + ".hidden")!
+        defer { hidden.removePersistentDomain(forName: name + ".hidden") }
+        hidden.set(["Subscriptions"], forKey: "homeSections")
+        XCTAssertEqual(AppPreferences(defaults: hidden).homeSections, [.live, .subscriptions], "A hidden Live tab is added")
+
+        let fresh = UserDefaults(suiteName: name + ".fresh")!
+        defer { fresh.removePersistentDomain(forName: name + ".fresh") }
+        let first = AppPreferences(defaults: fresh)
+        XCTAssertEqual(first.homeSections.first, .live); XCTAssertFalse(first.movedLiveFirst)
+    }
+    func testCombinedOrderMovesLiveToTheFront() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let tabs = PinnedHomeTabs(fileURL: directory.appendingPathComponent("home-tabs.json"))
+        tabs.moveToFront(.section(.live))
+        XCTAssertTrue(tabs.order.isEmpty, "Without a combined order nothing is written")
+        let playlist = UUID(); tabs.toggleLocal(playlist)
+        tabs.setOrder([.local(playlist), .section(.subscriptions), .section(.live)])
+        tabs.moveToFront(.section(.live))
+        XCTAssertEqual(tabs.arrangement(sections: [.live, .subscriptions], localPlaylistIDs: [playlist]),
+                       [.section(.live), .local(playlist), .section(.subscriptions)])
+    }
+}
