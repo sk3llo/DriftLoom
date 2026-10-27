@@ -102,7 +102,7 @@ struct VideoDetailView: View {
                             IconButton("Playback format", systemImage: "film") { choosingFormat = true }
                         }
                         if playback.currentItemMetadata?.isSoundCloud != true {
-                        Menu("Maximum video resolution") {
+                        Menu("Quality") {
                             ForEach([0, 360, 480, 720, 1080], id: \.self) { height in
                                 Button((height == 0 ? String(localized: "Auto") : String(localized: "Up to \(String(height))p")) + (playback.maximumHeight == height ? " ✓" : "")) {
                                     playback.setMaximumHeight(height)

@@ -2436,22 +2436,6 @@
         }
       }
     },
-    "Maximum video resolution": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Resolução máxima do vídeo"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Максимальна роздільність відео"
-          }
-        }
-      }
-    },
     "Measuring storage…": {
       "localizations": {
         "pt": {
@@ -3313,6 +3297,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Проєкт і подяки"
+          }
+        }
+      }
+    },
+    "Quality": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qualidade"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Якість"
           }
         }
       }
