@@ -739,6 +739,19 @@ final class NavigationTests: XCTestCase {
         app.activate()
     }
 
+    func testPlayerShowsElapsedAndTotalTime() {
+        let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+        let total = app.staticTexts["totalTime"]
+        XCTAssertTrue(total.waitForExistence(timeout: 30), "The video's length is shown")
+        XCTAssertEqual(total.label, "3:33")
+        let elapsed = app.staticTexts["elapsedTime"]
+        XCTAssertTrue(elapsed.exists)
+        let start = elapsed.label
+        let moving = expectation(for: NSPredicate(format: "label != %@", start), evaluatedWith: elapsed)
+        wait(for: [moving], timeout: 15)
+        XCTAssertTrue(elapsed.label.range(of: "^[0-9]+:[0-9]{2}$", options: .regularExpression) != nil, "Elapsed time reads like 1:05")
+    }
+
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

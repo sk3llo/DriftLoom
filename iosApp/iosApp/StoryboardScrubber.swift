@@ -9,6 +9,8 @@ import UIKit
 final class PlaybackClock: ObservableObject {
     @Published private(set) var time: Double = 0
     @Published private(set) var duration: Double = 0
+    /// Live streams have no end, so no total time.
+    @Published private(set) var isLive = false
     private weak var player: AVPlayer?
     private var observer: Any?
     init(player: AVPlayer) {
@@ -17,8 +19,10 @@ final class PlaybackClock: ObservableObject {
             Task { @MainActor [weak self, weak player] in
                 guard let self else { return }
                 self.time = time.seconds.isFinite ? time.seconds : 0
-                let duration = player?.currentItem?.duration.seconds ?? 0
+                let length = player?.currentItem?.duration
+                let duration = length?.seconds ?? 0
                 self.duration = duration.isFinite ? duration : 0
+                self.isLive = length?.isIndefinite == true && player?.currentItem?.status == .readyToPlay
             }
         }
     }
@@ -72,10 +76,24 @@ struct StoryboardScrubber: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             bar
-            if let chapter = currentChapter {
-                Text(chapter.title).font(.caption.weight(.medium)).foregroundColor(AppStyle.accent).lineLimit(1)
-                    .padding(.horizontal, 12).accessibilityIdentifier("currentChapter")
+            // Elapsed time on the left, the total on the right and the chapter between them, as in NewPipe.
+            HStack(spacing: 8) {
+                Text(format(dragFraction.map { $0 * clock.duration } ?? clock.time))
+                    .accessibilityIdentifier("elapsedTime")
+                if let chapter = currentChapter {
+                    Text(chapter.title).font(.caption.weight(.medium)).foregroundColor(AppStyle.accent).lineLimit(1)
+                        .frame(maxWidth: .infinity).accessibilityIdentifier("currentChapter")
+                } else {
+                    Spacer(minLength: 0)
+                }
+                if clock.isLive {
+                    Text("Live").font(.caption.weight(.semibold)).foregroundColor(AppStyle.accent).accessibilityIdentifier("totalTime")
+                } else if clock.duration > 0 {
+                    Text(format(clock.duration)).accessibilityIdentifier("totalTime")
+                }
             }
+            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
         }
     }
     private var chapters: [VideoChapter] { playback.chapters }

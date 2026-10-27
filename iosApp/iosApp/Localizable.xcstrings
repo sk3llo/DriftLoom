@@ -2388,6 +2388,23 @@
         }
       }
     },
+    "Live": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ao vivo"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Наживо"
+          }
+        }
+      }
+    },
     "Live streams cannot be saved as offline downloads.": {
       "localizations": {
         "pt": {
