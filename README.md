@@ -4,6 +4,8 @@ DriftLoom is a personal fork of [NewPipe](https://github.com/TeamNewPipe/NewPipe
 based on version 0.29.1. This repository preserves the upstream Git history and
 GPL-3.0-or-later license, contributor credits, and third-party library identities.
 
+**User guide:** [docs/user-guide](docs/user-guide/README.md), also built into the app (Settings → Help → User guide).
+
 ## Current status
 
 - Android app rebranded as DriftLoom, including application IDs, resources, and source namespaces.

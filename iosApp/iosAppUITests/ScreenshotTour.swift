@@ -95,7 +95,7 @@ final class ScreenshotTour: XCTestCase {
 
         // The player with a live video: controls, options, tabs and sheets.
         app.terminate()
-        app.launchArguments += ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "--player-smoke", "hud"]
+        app.launchArguments += ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "--player-smoke", "hud", "--chapters-smoke"]
         app.launch()
         XCTAssertTrue(element("videoPlayer").waitForExistence(timeout: 30))
         sleep(6); shot("player")
@@ -106,5 +106,12 @@ final class ScreenshotTour: XCTestCase {
         tapVisible("sectionTab-3"); shot("queue")
         tap("detailDownload"); sleep(8); shot("download-sheet"); closeSheet()
         tap("minimizePlayer"); sleep(1); shot("mini-player")
+
+        // Scrubbing: the preview frame, chapter and time over the video.
+        app.terminate()
+        app.launchArguments = app.launchArguments.filter { $0 != "hud" && $0 != "--player-smoke" } + ["--seek-preview-smoke", "0.45"]
+        app.launch()
+        XCTAssertTrue(element("videoPlayer").waitForExistence(timeout: 30))
+        sleep(8); shot("player-scrub")
     }
 }

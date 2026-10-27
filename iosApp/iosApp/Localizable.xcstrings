@@ -397,6 +397,9 @@
     "%lld%%": {
       "shouldTranslate": false
     },
+    "%lld.": {
+      "shouldTranslate": false
+    },
     "+10 s": {
       "localizations": {
         "pt": {
@@ -2066,6 +2069,22 @@
         }
       }
     },
+    "Help": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajuda"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Довідка"
+          }
+        }
+      }
+    },
     "Hide watched videos": {
       "localizations": {
         "pt": {
@@ -2287,6 +2306,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Мова"
+          }
+        }
+      }
+    },
+    "Last updated: %@": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atualizado: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оновлено: %@"
           }
         }
       }
@@ -4150,6 +4185,22 @@
         }
       }
     },
+    "Search the guide": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar no guia"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пошук у посібнику"
+          }
+        }
+      }
+    },
     "Seek": {
       "localizations": {
         "pt": {
@@ -4682,6 +4733,22 @@
         }
       }
     },
+    "The guide is in English.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O guia está em inglês."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Посібник англійською мовою."
+          }
+        }
+      }
+    },
     "The server refused the download. Retry to refresh the stream.": {
       "localizations": {
         "pt": {
@@ -4694,6 +4761,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сервер відхилив завантаження. Повторіть, щоб оновити потік."
+          }
+        }
+      }
+    },
+    "The user guide isn't available in this build.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O guia do usuário não está disponível nesta versão."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Посібник користувача недоступний у цій збірці."
           }
         }
       }
@@ -4951,6 +5034,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Використовується для нових запитів до YouTube. Мова інтерфейсу застосунку налаштовується окремо."
+          }
+        }
+      }
+    },
+    "User guide": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guia do usuário"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Посібник користувача"
           }
         }
       }
@@ -5248,6 +5347,9 @@
           }
         }
       }
+    },
+    "•": {
+      "shouldTranslate": false
     },
     "−10 s": {
       "localizations": {

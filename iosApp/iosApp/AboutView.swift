@@ -17,6 +17,8 @@ struct AboutView: View {
                     Text("Saved videos, subscriptions, and watch history stay on this device. Manage and clear history in Library.")
                 }
                 Section("Project and credits") {
+                    NavigationLink { UserGuideView() } label: { Label("User guide", systemImage: "book") }
+                        .accessibilityIdentifier("aboutUserGuide")
                     Link("DriftLoom source code", destination: URL(string: "https://github.com/sk3llo/DriftLoom")!)
                     Link("Based on NewPipe", destination: URL(string: "https://github.com/TeamNewPipe/NewPipe")!)
                     Text("An independent fork of NewPipe, licensed under GPL-3.0-or-later. Thanks to the NewPipe contributors.")

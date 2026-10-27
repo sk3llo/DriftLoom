@@ -786,6 +786,38 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(result.waitForExistence(timeout: 45), "A previous search runs again")
     }
 
+    func testUserGuideOpensFromSettingsAndTheMenu() {
+        let app = application()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
+        let menuEntry = app.descendants(matching: .any)["drawer-User guide"].firstMatch
+        if !menuEntry.isHittable { app.descendants(matching: .any)["navigationDrawer"].firstMatch.swipeUp() }
+        XCTAssertTrue(menuEntry.waitForExistence(timeout: 5)); menuEntry.tap()
+        let player = app.buttons["guidePage-player.md"]
+        XCTAssertTrue(player.waitForExistence(timeout: 5), "The menu opens the guide's contents")
+        player.tap()
+        XCTAssertTrue(app.staticTexts["Controls on the video"].waitForExistence(timeout: 5), "A page shows its headings")
+        XCTAssertTrue(app.images["The player with its controls showing"].exists, "and its screenshots")
+        for _ in 0..<12 where !app.buttons["guideNext"].isHittable { app.swipeUp() }
+        app.buttons["guideNext"].tap()
+        XCTAssertTrue(app.staticTexts["Playback speed"].waitForExistence(timeout: 5), "Next goes to the following page")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons["closeSheet"].waitForExistence(timeout: 5)); app.buttons["closeSheet"].tap()
+
+        // Settings → Help → User guide, with search across the pages.
+        app.buttons["mainMenu"].tap()
+        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
+        if !settings.isHittable { app.descendants(matching: .any)["navigationDrawer"].firstMatch.swipeUp() }
+        settings.tap()
+        let guide = app.buttons["openUserGuide"]
+        for _ in 0..<8 where !guide.isHittable { app.swipeUp() }
+        guide.tap()
+        let search = app.searchFields.firstMatch
+        if !search.waitForExistence(timeout: 3) { app.swipeDown() }
+        XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("Takeout")
+        XCTAssertTrue(app.buttons["guidePage-backup-and-import.md"].waitForExistence(timeout: 5), "Search finds pages by their text")
+        XCTAssertFalse(app.buttons["guidePage-player.md"].exists)
+    }
+
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

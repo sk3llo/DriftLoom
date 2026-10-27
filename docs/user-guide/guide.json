@@ -1,0 +1,28 @@
+{
+  "title": "DriftLoom User Guide",
+  "updated": "October 2026",
+  "sections": [
+    { "title": "About", "pages": [ { "file": "about.md", "title": "About DriftLoom" } ] },
+    { "title": "Getting started", "pages": [
+      { "file": "getting-started.md", "title": "First steps" },
+      { "file": "home-and-menu.md", "title": "Home, tabs and the menu" },
+      { "file": "languages-and-regions.md", "title": "Language and region" } ] },
+    { "title": "Finding videos", "pages": [
+      { "file": "search.md", "title": "Search" },
+      { "file": "live-and-charts.md", "title": "Live, gaming and charts" },
+      { "file": "channels-and-playlists.md", "title": "Channels and playlists" },
+      { "file": "opening-links.md", "title": "Opening links from other apps" } ] },
+    { "title": "Watching", "pages": [
+      { "file": "player.md", "title": "The player" },
+      { "file": "player-options.md", "title": "Speed, quality, subtitles and more" },
+      { "file": "queue-and-autoplay.md", "title": "Queue and autoplay" } ] },
+    { "title": "Your library", "pages": [
+      { "file": "subscriptions.md", "title": "Subscriptions and What's new" },
+      { "file": "saved-and-history.md", "title": "Saved videos, playlists and history" },
+      { "file": "downloads.md", "title": "Downloads" },
+      { "file": "backup-and-import.md", "title": "Backup and import" } ] },
+    { "title": "Reference", "pages": [
+      { "file": "settings.md", "title": "Settings" },
+      { "file": "troubleshooting.md", "title": "Troubleshooting" } ] }
+  ]
+}

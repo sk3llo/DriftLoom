@@ -98,7 +98,7 @@ struct SectionStrip<Value: Hashable>: View {
 }
 
 private enum HomeSheet: String, Identifiable {
-    case settings, about, link, downloads, groups, tabs
+    case settings, about, link, downloads, groups, tabs, guide
     var id: String { rawValue }
 }
 
@@ -238,6 +238,7 @@ struct HomeView: View {
                                     drawerButton(String(localized: "Search"), id: "Search", symbol: "magnifyingglass") { onSearch() }
                                     drawerButton(String(localized: "Open a link"), id: "Open a link", symbol: "link") { sheet = .link }
                                     drawerButton(String(localized: "Downloads"), id: "Downloads", symbol: "arrow.down.circle") { sheet = .downloads }
+                                    drawerButton(String(localized: "User guide"), id: "User guide", symbol: "book") { sheet = .guide }
                                     drawerButton(String(localized: "Settings"), id: "Settings", symbol: "gearshape") { sheet = .settings }
                                     drawerButton(String(localized: "About"), id: "About", symbol: "info.circle") { sheet = .about }
                                 }
@@ -278,7 +279,12 @@ struct HomeView: View {
         }
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
         // --settings-smoke: open Settings at launch, for device screenshots.
-        .task { if ProcessInfo.processInfo.arguments.contains("--settings-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .settings } }
+        .task {
+            let arguments = ProcessInfo.processInfo.arguments
+            if arguments.contains("--settings-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .settings }
+            // --guide-smoke [page.md]: open the user guide, optionally at a page.
+            if arguments.contains("--guide-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .guide }
+        }
 #endif
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomManageGroups)) { _ in sheet = .groups }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in menuVisible = false; sheet = .downloads }
@@ -299,6 +305,11 @@ struct HomeView: View {
             case .groups: SubscriptionGroupsView()
             case .settings: SettingsView()
             case .about: AboutView()
+            case .guide:
+                AppNavigation {
+                    UserGuideView()
+                        .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { sheet = nil }.accessibilityIdentifier("closeSheet") } }
+                }
             case .tabs:
                 AppNavigation {
                     HomeTabsSettings()

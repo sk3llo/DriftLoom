@@ -118,6 +118,10 @@ struct SettingsView: View {
                 Section("Your data") {
                     NavigationLink("Backup and import") { LibraryTransferView() }.accessibilityIdentifier("openBackup")
                 }
+                Section("Help") {
+                    NavigationLink { UserGuideView() } label: { Label("User guide", systemImage: "book") }
+                        .accessibilityIdentifier("openUserGuide")
+                }
                 Section("About") {
                     Text("DriftLoom · iOS 15 and later")
                     Text("Independent NewPipe fork · GPL-3.0-or-later").font(.footnote).foregroundStyle(.secondary)
