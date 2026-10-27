@@ -31,21 +31,27 @@ struct SearchView: View {
     var body: some View {
         AppNavigation {
             VStack(spacing: 0) {
+                // The same red toolbar as home, with the query typed straight into it, as in NewPipe.
                 HStack(spacing: 8) {
-                    Button(action: onClose) { Image(systemName: "arrow.left").frame(width: 40, height: 44) }
+                    Button(action: onClose) { Image(systemName: "arrow.left").font(.title3).frame(width: 40, height: 52) }
                         .accessibilityLabel("Back to home").accessibilityIdentifier("closeSearch")
-                    TextField(service == .youTube ? "Search YouTube" : "Search SoundCloud", text: $query)
+                    TextField(service == .youTube ? "Search YouTube" : "Search SoundCloud", text: $query,
+                              prompt: Text(service == .youTube ? "Search YouTube" : "Search SoundCloud").foregroundColor(.white.opacity(0.7)))
+                        .font(.title3).foregroundColor(.white).tint(.white)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .submitLabel(.search).focused($focused).onSubmit(submit)
                         .accessibilityIdentifier("searchQuery")
                     if !query.isEmpty {
-                        Button { query = ""; focused = true } label: { Image(systemName: "xmark").frame(width: 40, height: 44) }
+                        Button { query = ""; focused = true } label: { Image(systemName: "xmark").font(.title3).frame(width: 40, height: 52) }
                             .accessibilityLabel("Clear search")
                     }
-                    Button(action: submit) { Image(systemName: "magnifyingglass").frame(width: 40, height: 44) }
+                    Button(action: submit) { Image(systemName: "magnifyingglass").font(.title3).frame(width: 40, height: 52) }
                         .accessibilityLabel("Search").accessibilityIdentifier("submitSearch")
                         .disabled(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }.padding(.horizontal, 8)
+                }
+                .padding(.horizontal, 4).foregroundColor(.white)
+                .background(AppStyle.bar.ignoresSafeArea(edges: .top))
+                .padding(.bottom, 8)
                 Picker("Service", selection: $service) {
                     ForEach(SearchService.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }.pickerStyle(.segmented).padding(.horizontal, 12).padding(.bottom, 6).accessibilityIdentifier("searchService")

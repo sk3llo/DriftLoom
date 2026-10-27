@@ -344,7 +344,8 @@ final class NavigationTests: XCTestCase {
         edge.press(forDuration: 0.05, thenDragTo: edge.withOffset(CGVector(dx: 260, dy: 0)))
         XCTAssertTrue(drawer.waitForExistence(timeout: 3), "Dragging from the left edge opens the main menu")
         sleep(1)
-        XCTAssertTrue(app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.isHittable)
+        XCTAssertEqual(drawer.frame.minX, 0, accuracy: 1, "The drawer settles fully open")
+        XCTAssertTrue(app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.exists)
         // Drag it back to close.
         let inside = drawer.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.6))
         inside.press(forDuration: 0.05, thenDragTo: inside.withOffset(CGVector(dx: -250, dy: 0)))

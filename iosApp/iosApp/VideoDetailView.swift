@@ -141,7 +141,7 @@ struct VideoDetailView: View {
                             }
                         }
                         IconButton("Stop playback", systemImage: "stop") { queue.stop(); onCollapse() }
-                    } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).frame(width: 44, height: 44) }.accessibilityLabel("Playback options").accessibilityIdentifier("playbackOptions")
+                    } label: { Image(systemName: "ellipsis").rotationEffect(.degrees(90)).font(.title3).foregroundColor(.white).frame(width: 44, height: 52) }.accessibilityLabel("Playback options").accessibilityIdentifier("playbackOptions")
     }
 
     @ViewBuilder private var playbackStatus: some View {
@@ -185,14 +185,17 @@ struct VideoDetailView: View {
             }
     }
     private var header: some View {
+        // The same red toolbar as home and search.
         HStack {
-            Button(action: onCollapse) { Image(systemName: "chevron.down").frame(width: 44, height: 44) }
+            Button(action: onCollapse) { Image(systemName: "chevron.down").font(.title3).frame(width: 44, height: 52) }
                 .accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
-            Spacer()
-            Text(playback.currentItemMetadata?.isSoundCloud == true ? "SoundCloud" : "YouTube").font(.headline)
-            Spacer()
+            Text(playback.currentItemMetadata?.isSoundCloud == true ? "SoundCloud" : "YouTube").font(.title3.weight(.semibold))
+                .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 6)
+                .accessibilityAddTraits(.isHeader)
             playbackOptions
-        }.padding(.horizontal, 6).background(Color(.systemBackground))
+        }
+        .padding(.horizontal, 4).foregroundColor(.white)
+        .background(AppStyle.bar.ignoresSafeArea(edges: .top))
         .contentShape(Rectangle()).gesture(minimizeDrag)
     }
     @ViewBuilder private var playerArea: some View {
