@@ -252,6 +252,7 @@ struct BrowseResults: View {
                 VStack(spacing: 16) {
                     EmptyStateView("Couldn't load this page", systemImage: "wifi.exclamationmark", message: error)
                     Button("Try again", action: retry).buttonStyle(.bordered)
+                    ReportProblemButton { ProblemReport(area: "Browsing", error: error, context: ProblemReport.describe(store.route)) }
                 }.padding()
             } else if store.hasLoaded && store.items.isEmpty {
                 EmptyStateView("No results", systemImage: "magnifyingglass", message: "This section has no available items. Try another filter or tab.")

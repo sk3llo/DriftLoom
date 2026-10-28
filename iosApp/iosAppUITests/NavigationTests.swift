@@ -761,6 +761,26 @@ final class NavigationTests: XCTestCase {
         wait(for: [closed], timeout: 10)
     }
 
+    func testReportAProblemOpensAPrefilledGitHubIssue() {
+        let app = application(extraArguments: ["--settings-smoke"])
+        let report = app.buttons["reportProblem"]
+        for _ in 0..<8 where !(report.exists && report.isHittable) { app.swipeUp() }
+        XCTAssertTrue(report.waitForExistence(timeout: 10), "Settings has Report a problem")
+        report.tap()
+        XCTAssertTrue(app.staticTexts["Report a problem"].waitForExistence(timeout: 5), "It explains before anything opens")
+        app.buttons["Copy details"].tap()
+        XCTAssertTrue(app.alerts["Details copied"].waitForExistence(timeout: 5))
+        app.alerts.buttons.firstMatch.tap()
+        report.tap()
+        XCTAssertTrue(app.buttons["Open GitHub"].waitForExistence(timeout: 5)); app.buttons["Open GitHub"].tap()
+        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 15), "The issue opens in the browser")
+        let address = safari.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'URL' OR identifier == 'TabBarItemTitle'")).firstMatch
+        XCTAssertTrue(address.waitForExistence(timeout: 15))
+        XCTAssertTrue(((address.value as? String) ?? address.label).contains("github.com"), "Opened GitHub (\(address.value ?? address.label))")
+        app.activate()
+    }
+
     func testContentRegionAndLanguageAreSearchable() {
         let app = application(extraArguments: ["--settings-smoke"])
         let region = app.buttons["contentRegion"]

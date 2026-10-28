@@ -23,3 +23,12 @@ Change **Settings → YouTube content → Content region**. See [Language and re
 ## The app is in the wrong language
 
 See [Language and region](languages-and-regions.md).
+
+## Report a problem
+
+When a video won't play, a page or the comments won't load, or a download fails, tap **Report** next to the error. For anything else, use **Settings → Help → Report a problem** (also in **About**).
+
+- **Open GitHub** opens a new issue on DriftLoom's GitHub page with the error, what was open (the video, page or search), the app version, the iOS version, the device model and the content region. Add what you were doing, then submit it. Nothing is sent before you submit, and the issue is public, so remove anything you'd rather not share.
+- **Copy details** copies the same text, for when you don't have a GitHub account; paste it into an email instead.
+
+Your library, history and subscriptions are never included.

@@ -130,6 +130,7 @@ struct SettingsView: View {
                 Section("Help") {
                     NavigationLink { UserGuideView() } label: { Label("User guide", systemImage: "book") }
                         .accessibilityIdentifier("openUserGuide")
+                    ReportProblemButton("Report a problem") { ProblemReport(area: "General") }
                 }
                 Section("About") {
                     Text("DriftLoom · iOS 15 and later")

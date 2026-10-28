@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import DriftLoomPlayback
 import SwiftUI
 
 /// Keep app information available without linking a higher-minimum-OS UI framework.
@@ -19,6 +20,7 @@ struct AboutView: View {
                 Section("Project and credits") {
                     NavigationLink { UserGuideView() } label: { Label("User guide", systemImage: "book") }
                         .accessibilityIdentifier("aboutUserGuide")
+                    ReportProblemButton("Report a problem") { ProblemReport(area: "General") }
                     Link("DriftLoom source code", destination: URL(string: "https://github.com/sk3llo/DriftLoom")!)
                     Link("Based on NewPipe", destination: URL(string: "https://github.com/TeamNewPipe/NewPipe")!)
                     Text("An independent fork of NewPipe, licensed under GPL-3.0-or-later. Thanks to the NewPipe contributors.")

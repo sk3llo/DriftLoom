@@ -350,7 +350,11 @@ public final class BrowseStore: ObservableObject {
 
     public init(client: any Browsing = YouTubeBrowsingClient()) { self.client = client }
 
+    /// The page last asked for, so an error can say which one failed.
+    @Published public private(set) var route: BrowseRoute?
+
     public func load(_ route: BrowseRoute) async {
+        self.route = route
         generation = UUID()
         let token = generation
         title = ""

@@ -65,6 +65,118 @@
         }
       }
     },
+    "Report": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reportar"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повідомити"
+          }
+        }
+      }
+    },
+    "Report a problem": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reportar um problema"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повідомити про проблему"
+          }
+        }
+      }
+    },
+    "Open GitHub": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir o GitHub"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити GitHub"
+          }
+        }
+      }
+    },
+    "Copy details": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar detalhes"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопіювати дані"
+          }
+        }
+      }
+    },
+    "A new issue opens on GitHub with the error, the app version and your device model. Nothing is sent until you submit it there, and the issue is public.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre-se um novo relatório no GitHub com o erro, a versão da app e o modelo do dispositivo. Nada é enviado até o publicar lá, e o relatório é público."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На GitHub відкриється нове звернення з помилкою, версією застосунку й моделлю пристрою. Нічого не надсилається, доки ви не опублікуєте його там, і звернення буде публічним."
+          }
+        }
+      }
+    },
+    "Details copied": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalhes copiados"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дані скопійовано"
+          }
+        }
+      }
+    },
+    "Paste them into an email or a GitHub issue.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cole-os num email ou num relatório do GitHub."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставте їх у лист або звернення на GitHub."
+          }
+        }
+      }
+    },
     "%@ (auto-generated)": {
       "localizations": {
         "pt": {

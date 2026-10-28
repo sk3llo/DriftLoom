@@ -148,7 +148,12 @@ struct VideoDetailView: View {
         }
         if case let .failed(message) = playback.phase {
             Text(message).font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("playbackError")
-            Button("Try again", action: playback.retry)
+            HStack(spacing: 20) {
+                Button("Try again", action: playback.retry)
+                ReportProblemButton {
+                    ProblemReport(area: "Playback", error: message, context: playback.videoID.map { [.init("Video", ProblemReport.videoLink($0))] } ?? [])
+                }
+            }
         } else if playback.phase == .resolving || playback.phase == .loading {
             ProgressView(playback.phase == .resolving ? "Opening video…" : "Buffering…").font(.caption)
         }
@@ -261,7 +266,7 @@ struct VideoDetailView: View {
                 if related.canLoadMore { LoadMoreFooter(store: related) }
             }.padding(12)
         case .comments:
-            CommentsPanel(store: discussion)
+            CommentsPanel(store: discussion, videoID: playback.videoID)
         case .description:
             if !playback.chapters.isEmpty { chapterList }
             Text(discussion.details?.description.isEmpty == false ? discussion.details!.description : playback.video?.description.isEmpty == false ? playback.video!.description : String(localized: "No description is available."))
@@ -370,6 +375,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 private struct CommentsPanel: View {
     @ObservedObject var store: DiscussionStore
+    let videoID: String?
     var body: some View {
         LazyVStack(alignment: .leading, spacing: 18) {
             if !store.sortOptions.isEmpty {
@@ -387,7 +393,12 @@ private struct CommentsPanel: View {
             }
             if let error = store.error {
                 Text(error).font(.footnote).foregroundStyle(.secondary)
-                Button("Try comments again") { Task { await store.loadMore() } }
+                HStack(spacing: 20) {
+                    Button("Try comments again") { Task { await store.loadMore() } }
+                    ReportProblemButton {
+                        ProblemReport(area: "Comments", error: error, context: videoID.map { [.init("Video", ProblemReport.videoLink($0))] } ?? [])
+                    }
+                }
             }
             if store.loading { ProgressView("Loading comments…") }
             if store.details != nil, !store.loading, !store.canLoadMore, store.comments.isEmpty {

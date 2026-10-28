@@ -93,6 +93,11 @@ struct DownloadsView: View {
                     } else {
                         Text(record.error ?? String(localized: "Cancelled")).font(.footnote).foregroundStyle(.secondary)
                         Button("Retry download") { manager.retry(record.id) }
+                        if let error = record.error {
+                            ReportProblemButton {
+                                ProblemReport(area: "Download", error: error, context: [.init("Video", ProblemReport.videoLink(record.item.contentID))])
+                            }.buttonStyle(.borderless)
+                        }
                     }
                 }.padding(.vertical, 4)
                 .swipeActions { Button("Delete", role: .destructive) { deleting = record } }
