@@ -23,8 +23,8 @@ When a video's description lists chapters, small gaps in the seek bar mark them,
 ## Gestures
 
 - **Double-tap** the left or right half of the video to go back or forward 10 seconds.
-- **Swipe up or down** on the left third of the video to change the screen brightness, and on the right third to change the volume.
-- **Drag the video down** (from its middle) or the bar above it to shrink the player into the small bar at the bottom. Tap that bar to open the player again; its **×** stops playback.
+- In full screen, **swipe up or down** on the left third of the video to change the screen brightness, and on the right third to change the volume.
+- **Drag the video down** (from anywhere on it) or the bar above it to shrink the player into the small bar at the bottom. Tap that bar to open the player again; its **×** stops playback.
 
 ## Full screen
 

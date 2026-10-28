@@ -25,6 +25,7 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
     var videoGravity: AVLayerVideoGravity = .resizeAspect
     /// Fullscreen opened by turning the phone sideways closes again when it's turned upright.
     private var openedByRotation = false
+    private let levelSwipes = LevelSwipes()
 
     func attach(_ layer: AVPlayerLayer) {
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
@@ -74,6 +75,7 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
                                          host.view.topAnchor.constraint(equalTo: content.topAnchor), host.view.bottomAnchor.constraint(equalTo: content.bottomAnchor)])
         }
         controller.addChild(host); host.didMove(toParent: controller)
+        levelSwipes.install(on: controller.view)
         fullscreen = controller
         presenter.present(controller, animated: true)
     }
@@ -202,36 +204,14 @@ struct InlinePlayerControls: View {
     /// A short message after toggling a mode (resize, audio only), as NewPipe shows.
     @State private var toast: String?
     @State private var toastTask: Task<Void, Never>?
-    @State private var size: CGSize = .zero
-    private enum Adjustment { case brightness, volume }
-    /// The swipe in progress, and the level indicator, which stays up a moment after the swipe ends.
-    @State private var adjusting: Adjustment?
-    @State private var shownLevel: Adjustment?
-    @State private var startLevel = 0.0
-    @State private var level = 0.0
-    @State private var levelTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
             Color.black.opacity(visible ? 0.35 : 0).accessibilityHidden(true).allowsHitTesting(false)
             // Single tap shows or hides the controls; double tap on either half skips 10 seconds, as on YouTube.
+            // A drag anywhere on the video minimizes the player; brightness and volume swipes are full screen only.
             HStack(spacing: 0) { tapZone(-10); tapZone(10) }.accessibilityHidden(true)
-                // Vertical swipes on the left third change brightness, on the right third volume, as in NewPipe.
-                .simultaneousGesture(adjustDrag)
             HiddenVolumeView().frame(width: 1, height: 1).opacity(0.01).allowsHitTesting(false).accessibilityHidden(true)
-            if let shownLevel {
-                HStack(spacing: 10) {
-                    Image(systemName: shownLevel == .brightness ? "sun.max.fill" : level == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                        .frame(width: 24)
-                    ProgressView(value: level).tint(.white).frame(width: 96)
-                }
-                .foregroundColor(.white).padding(.horizontal, 14).padding(.vertical, 8)
-                .background(Color.black.opacity(0.6)).clipShape(Capsule())
-                .frame(maxHeight: .infinity, alignment: .top).padding(.top, 14)
-                .allowsHitTesting(false)
-                .accessibilityElement().accessibilityIdentifier("gestureLevel")
-                .accessibilityLabel(shownLevel == .brightness ? "Brightness" : "Volume").accessibilityValue("\(Int((level * 100).rounded()))%")
-            }
             if let toast {
                 Text(toast).font(.subheadline.weight(.semibold)).foregroundColor(.white)
                     .padding(.horizontal, 14).padding(.vertical, 7).background(Color.black.opacity(0.6)).clipShape(Capsule())
@@ -304,9 +284,6 @@ struct InlinePlayerControls: View {
             }
             .opacity(visible ? 1 : 0).allowsHitTesting(visible)
         }
-        .background(GeometryReader { proxy in
-            Color.clear.onAppear { size = proxy.size }.onChange(of: proxy.size) { size = $0 }
-        })
         .animation(.easeInOut(duration: 0.2), value: visible)
         // Attached to the always-present container so auto-hiding the controls can't dismiss it.
         .confirmationDialog("Playback speed", isPresented: $choosingSpeed, titleVisibility: .visible) {
@@ -413,30 +390,6 @@ struct InlinePlayerControls: View {
         toastTask?.cancel()
         toastTask = Task { try? await Task.sleep(nanoseconds: 2_000_000_000); if !Task.isCancelled { toast = nil } }
     }
-    /// Brightness on the left third, volume on the right third; the middle is left to dragging the player down.
-    private var adjustDrag: some Gesture {
-        DragGesture(minimumDistance: 10)
-            .onChanged { value in
-                if adjusting == nil {
-                    guard abs(value.translation.height) > abs(value.translation.width), size.width > 0 else { return }
-                    if value.startLocation.x < size.width / 3 {
-                        adjusting = .brightness; startLevel = Double(UIScreen.main.brightness)
-                    } else if value.startLocation.x > size.width * 2 / 3 {
-                        adjusting = .volume; startLevel = Double(AVAudioSession.sharedInstance().outputVolume)
-                    } else { return }
-                    levelTask?.cancel()
-                    shownLevel = adjusting
-                }
-                // Dragging the full height of the player covers the whole range.
-                level = min(1, max(0, startLevel - Double(value.translation.height / max(160, size.height))))
-                if adjusting == .brightness { UIScreen.main.brightness = CGFloat(level) } else { HiddenVolumeView.setVolume(Float(level)) }
-            }
-            .onEnded { _ in
-                guard adjusting != nil else { return }
-                adjusting = nil
-                levelTask = Task { try? await Task.sleep(nanoseconds: 2_000_000_000); if !Task.isCancelled { shownLevel = nil } }
-            }
-    }
     private func tapZone(_ seconds: Int) -> some View {
         Color.clear.contentShape(Rectangle())
             .onTapGesture(count: 2) {
@@ -465,6 +418,82 @@ struct InlinePlayerControls: View {
 
 extension VideoResize {
     var gravity: AVLayerVideoGravity { self == .fit ? .resizeAspect : self == .zoom ? .resizeAspectFill : .resize }
+}
+
+/// Full screen only, as in NewPipe: vertical swipes on the left third change brightness, on the right third volume.
+/// In portrait the video is left to dragging the player down into the mini-player.
+@MainActor
+final class LevelSwipes: NSObject, UIGestureRecognizerDelegate {
+    private enum Adjustment { case brightness, volume }
+    private var adjusting: Adjustment?
+    private var startLevel = 0.0
+    private weak var indicator: UIView?
+    private var hideTask: Task<Void, Never>?
+
+    func install(on view: UIView) {
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
+        pan.delegate = self
+        view.addGestureRecognizer(pan)
+    }
+
+    func gestureRecognizerShouldBegin(_ gesture: UIGestureRecognizer) -> Bool {
+        guard let pan = gesture as? UIPanGestureRecognizer, let view = pan.view else { return false }
+        let velocity = pan.velocity(in: view), start = pan.location(in: view)
+        let x = start.x - pan.translation(in: view).x
+        guard abs(velocity.y) > abs(velocity.x) else { return false }
+        return x < view.bounds.width / 3 || x > view.bounds.width * 2 / 3
+    }
+    /// AVKit's own gestures (swipe down to close, taps) wait until a side swipe has been ruled out.
+    func gestureRecognizer(_ gesture: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer) -> Bool { other.view != nil && other !== gesture }
+
+    @objc private func panned(_ pan: UIPanGestureRecognizer) {
+        guard let view = pan.view else { return }
+        switch pan.state {
+        case .began:
+            let x = pan.location(in: view).x - pan.translation(in: view).x
+            adjusting = x < view.bounds.width / 2 ? .brightness : .volume
+            startLevel = adjusting == .brightness ? Double(UIScreen.main.brightness) : Double(AVAudioSession.sharedInstance().outputVolume)
+            hideTask?.cancel()
+        case .changed:
+            guard let adjusting else { return }
+            // Dragging most of the screen height covers the whole range.
+            let level = min(1, max(0, startLevel - Double(pan.translation(in: view).y / max(160, view.bounds.height * 0.8))))
+            if adjusting == .brightness { UIScreen.main.brightness = CGFloat(level) } else { HiddenVolumeView.setVolume(Float(level)) }
+            show(adjusting, level: level, in: view)
+        default:
+            guard adjusting != nil else { return }
+            adjusting = nil
+            hideTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                if !Task.isCancelled { self?.indicator?.removeFromSuperview() }
+            }
+        }
+    }
+
+    private func show(_ adjustment: Adjustment, level: Double, in view: UIView) {
+        let capsule = indicator ?? {
+            let capsule = UIView(); capsule.backgroundColor = UIColor.black.withAlphaComponent(0.6); capsule.layer.cornerRadius = 18
+            capsule.isUserInteractionEnabled = false; capsule.translatesAutoresizingMaskIntoConstraints = false
+            let icon = UIImageView(); icon.tintColor = .white; icon.contentMode = .scaleAspectFit; icon.tag = 1
+            let bar = UIProgressView(progressViewStyle: .bar); bar.progressTintColor = .white; bar.trackTintColor = UIColor.white.withAlphaComponent(0.3); bar.tag = 2
+            let row = UIStackView(arrangedSubviews: [icon, bar]); row.spacing = 10; row.alignment = .center; row.translatesAutoresizingMaskIntoConstraints = false
+            capsule.addSubview(row); view.addSubview(capsule)
+            NSLayoutConstraint.activate([
+                icon.widthAnchor.constraint(equalToConstant: 24), icon.heightAnchor.constraint(equalToConstant: 20), bar.widthAnchor.constraint(equalToConstant: 120),
+                row.leadingAnchor.constraint(equalTo: capsule.leadingAnchor, constant: 14), row.trailingAnchor.constraint(equalTo: capsule.trailingAnchor, constant: -14),
+                row.topAnchor.constraint(equalTo: capsule.topAnchor, constant: 8), row.bottomAnchor.constraint(equalTo: capsule.bottomAnchor, constant: -8),
+                capsule.centerXAnchor.constraint(equalTo: view.centerXAnchor), capsule.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
+            ])
+            capsule.isAccessibilityElement = true; capsule.accessibilityIdentifier = "gestureLevel"
+            indicator = capsule
+            return capsule
+        }()
+        view.bringSubviewToFront(capsule)
+        (capsule.viewWithTag(1) as? UIImageView)?.image = UIImage(systemName: adjustment == .brightness ? "sun.max.fill" : level == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
+        (capsule.viewWithTag(2) as? UIProgressView)?.progress = Float(level)
+        capsule.accessibilityLabel = adjustment == .brightness ? NSLocalizedString("Brightness", comment: "") : NSLocalizedString("Volume", comment: "")
+        capsule.accessibilityValue = "\(Int((level * 100).rounded()))%"
+    }
 }
 
 /// An off-screen system volume view: setting its slider changes the volume without the system HUD,

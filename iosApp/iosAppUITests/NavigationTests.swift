@@ -663,7 +663,6 @@ final class NavigationTests: XCTestCase {
         let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
         XCTAssertTrue(player.waitForExistence(timeout: 30))
         // A short drag springs back.
-        // The middle third drags the player; the sides are brightness and volume swipes.
         let start = player.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
         start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 60)))
         sleep(1)
@@ -676,13 +675,20 @@ final class NavigationTests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["videoPlayer"].firstMatch.exists)
         mini.tap()
         XCTAssertTrue(app.descendants(matching: .any)["videoPlayer"].firstMatch.waitForExistence(timeout: 5), "Tapping the bar opens the player again")
+        // In portrait the sides of the video drag the player too; brightness and volume are full screen only.
+        let side = player.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.3))
+        side.press(forDuration: 0.05, thenDragTo: side.withOffset(CGVector(dx: 0, dy: 420)))
+        XCTAssertTrue(mini.waitForExistence(timeout: 5), "Dragging down from the side minimizes as well")
+        XCTAssertFalse(app.descendants(matching: .any)["gestureLevel"].firstMatch.exists, "No brightness change in portrait")
+        mini.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["videoPlayer"].firstMatch.waitForExistence(timeout: 5))
         // The header is a handle too.
         let header = app.buttons["minimizePlayer"].coordinate(withNormalizedOffset: CGVector(dx: 3, dy: 0.5))
         header.press(forDuration: 0.05, thenDragTo: header.withOffset(CGVector(dx: 0, dy: 420)))
         XCTAssertTrue(mini.waitForExistence(timeout: 5), "Dragging the header down minimizes too")
     }
 
-    func testAudioOnlyResizeAndBrightnessVolumeSwipes() {
+    func testAudioOnlyResizeAndFullScreenBrightnessVolumeSwipes() {
         let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
         let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
         XCTAssertTrue(player.waitForExistence(timeout: 30))
@@ -701,17 +707,6 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["audioArtwork"].firstMatch.waitForExistence(timeout: 30), "Audio only shows the video's thumbnail")
         showControls()
         XCTAssertEqual(app.buttons["audioOnly"].value as? String, "On")
-        // A swipe on the left third is brightness, on the right third volume; neither minimizes the player.
-        let left = player.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: 0.75))
-        left.press(forDuration: 0.05, thenDragTo: left.withOffset(CGVector(dx: 0, dy: -80)))
-        let level = app.descendants(matching: .any)["gestureLevel"].firstMatch
-        XCTAssertTrue(level.waitForExistence(timeout: 1), "The swipe shows the brightness level")
-        XCTAssertEqual(level.label, "Brightness")
-        XCTAssertTrue(player.exists && !app.buttons["expandMiniPlayer"].exists, "Side swipes don't minimize")
-        let right = player.coordinate(withNormalizedOffset: CGVector(dx: 0.88, dy: 0.25))
-        right.press(forDuration: 0.05, thenDragTo: right.withOffset(CGVector(dx: 0, dy: 90)))
-        XCTAssertTrue(level.waitForExistence(timeout: 1)); XCTAssertEqual(level.label, "Volume")
-        XCTAssertTrue(player.exists && !app.buttons["expandMiniPlayer"].exists, "Side swipes don't minimize")
         // Audio only back off; resize back to fit for other tests.
         showControls()
         app.buttons["audioOnly"].tap()
@@ -728,6 +723,27 @@ final class NavigationTests: XCTestCase {
         }
         tapControl("resizeMode"); tapControl("resizeMode")
         XCTAssertEqual(app.buttons["resizeMode"].value as? String, "Fit")
+
+        // In full screen a swipe on the left third is brightness, on the right third volume.
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let close = app.buttons.matching(NSPredicate(format: "label IN {'Close', 'Done', 'Dismiss'}")).firstMatch
+        if !close.waitForExistence(timeout: 10) { app.windows.firstMatch.tap() }
+        XCTAssertTrue(close.waitForExistence(timeout: 10), "Landscape opens the full-screen player")
+        let window = app.windows.firstMatch
+        let left = window.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: 0.7))
+        left.press(forDuration: 0.05, thenDragTo: left.withOffset(CGVector(dx: 0, dy: -100)))
+        let level = app.descendants(matching: .any)["gestureLevel"].firstMatch
+        XCTAssertTrue(level.waitForExistence(timeout: 1), "The swipe shows the brightness level")
+        XCTAssertEqual(level.label, "Brightness")
+        let right = window.coordinate(withNormalizedOffset: CGVector(dx: 0.88, dy: 0.3))
+        right.press(forDuration: 0.05, thenDragTo: right.withOffset(CGVector(dx: 0, dy: 100)))
+        XCTAssertTrue(level.waitForExistence(timeout: 1)); XCTAssertEqual(level.label, "Volume")
+        // AVKit hides its controls on its own; a tap brings Close back if the player is still full screen.
+        if !close.exists { window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
+        XCTAssertTrue(close.waitForExistence(timeout: 3), "Side swipes keep full screen open")
+        XCUIDevice.shared.orientation = .portrait
+        let closed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: close)
+        wait(for: [closed], timeout: 10)
     }
 
     func testLanguageRowOpensDriftLoomInTheSettingsApp() {
