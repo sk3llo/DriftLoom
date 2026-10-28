@@ -15,7 +15,7 @@ Live, Trending music and the others are on Home by default; add the rest from th
 
 ## See more
 
-Scroll to the end of **Live** or **Podcasts** and tap **Load more**. DriftLoom then goes through each section of the page in turn (for Live: live now, recent streams, upcoming, news, gaming and sports), adding the videos not already listed. Gaming, Trending music and Movie trailers show YouTube's whole list at once, so they have no Load more.
+Keep scrolling **Live** or **Podcasts**: more videos load on their own when you reach the end. DriftLoom goes through each section of the page in turn (for Live: live now, recent streams, upcoming, news, gaming and sports), adding the videos not already listed. Gaming, Trending music and Movie trailers show YouTube's whole list at once, so nothing more loads there.
 
 ## Change the country
 
