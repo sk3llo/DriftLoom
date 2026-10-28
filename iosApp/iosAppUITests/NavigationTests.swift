@@ -359,6 +359,28 @@ final class NavigationTests: XCTestCase {
         wait(for: [expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: drawer)], timeout: 3)
     }
 
+    func testLiveKioskLoadsMoreFromItsShelves() {
+        let app = application()
+        XCTAssertTrue(app.buttons["tabBar-section:Live"].waitForExistence(timeout: 10)); app.buttons["tabBar-section:Live"].tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browseVideo-'")).firstMatch.waitForExistence(timeout: 45))
+        // The kiosk page itself has no continuation; Load more opens each shelf's full list in turn.
+        let more = app.buttons["loadMore"]
+        func scrollToMore() { for _ in 0..<40 where !(more.exists && more.isHittable) { app.swipeUp(velocity: .fast) } }
+        scrollToMore()
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "Live offers more than its first page")
+        var shown = loadMoreCount(more)
+        for _ in 0..<2 {
+            more.tap()
+            let grew = expectation(for: NSPredicate { _, _ in !more.exists || self.loadMoreCount(more) > shown }, evaluatedWith: more)
+            wait(for: [grew], timeout: 30)
+            scrollToMore()
+            XCTAssertTrue(more.waitForExistence(timeout: 5), "Still more to load")
+            XCTAssertGreaterThan(loadMoreCount(more), shown, "Load more adds new videos")
+            shown = loadMoreCount(more)
+        }
+    }
+    private func loadMoreCount(_ button: XCUIElement) -> Int { Int((button.value as? String ?? "").split(separator: " ").first ?? "") ?? 0 }
+
     func testKioskFromDrawerLoadsYouTubeLiveAndStaysOnHome() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

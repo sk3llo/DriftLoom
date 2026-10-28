@@ -15,15 +15,27 @@ public protocol FeedLoading: Sendable {
 
 public actor YouTubeFeedClient: FeedLoading {
     private let session: URLSession
-    public init() {
+    private let dates: FeedDates
+    public init(dates: FeedDates = .shared) {
         let config = URLSessionConfiguration.ephemeral
         config.httpCookieStorage = nil; config.urlCache = nil; config.timeoutIntervalForRequest = 20
         session = URLSession(configuration: config)
+        self.dates = dates
     }
     public func videos(channelID: String) async throws -> [FeedVideo] {
-        do { return try await rssVideos(channelID: channelID) } catch {
-            // YouTube's RSS feeds sometimes fail for every channel (404); the Videos tab still lists recent uploads.
-            guard !SoundCloudID.isSoundCloud(channelID), channelID.hasPrefix("UC") else { throw error }
+        if SoundCloudID.isSoundCloud(channelID) { return try await rssVideos(channelID: channelID) }
+        do {
+            let videos = try await rssVideos(channelID: channelID)
+            await dates.record(exact: videos)
+            return videos
+        } catch {
+            guard channelID.hasPrefix("UC") else { throw error }
+            // YouTube's channel RSS feeds sometimes fail for every channel (404). The uploads playlist's feed
+            // still has exact times; failing that, the Videos tab lists recent uploads with their ages.
+            if let videos = try? await rssVideos(channelID: channelID, uploadsPlaylist: true), !videos.isEmpty {
+                await dates.record(exact: videos)
+                return videos
+            }
             let uploads = try await channelPageVideos(channelID: channelID)
             guard !uploads.isEmpty else { throw error }
             return uploads
@@ -42,25 +54,48 @@ public actor YouTubeFeedClient: FeedLoading {
         try Task.checkCancellation()
         guard let http = response as? HTTPURLResponse, http.statusCode == 200, http.url?.host == "www.youtube.com", data.count <= 8_000_000,
               let html = String(data: data, encoding: .utf8) else { throw BrowseError.unavailable(L("This channel's feed could not be loaded.")) }
-        return try Self.uploads(fromChannelPage: html, channelID: channelID, now: now)
+        let estimates = try Self.uploads(fromChannelPage: html, channelID: channelID, now: now)
+        var resolved: [(video: FeedVideo, exact: Bool)] = []
+        for estimate in estimates {
+            let known = await dates.resolve(estimate.video.item.contentID, estimate: estimate.video.published, precision: estimate.precision)
+            resolved.append((FeedVideo(item: estimate.video.item, published: known.date), known.exact))
+        }
+        return Self.keepingPageOrder(resolved)
     }
 
-    static func uploads(fromChannelPage html: String, channelID: String, now: Date) throws -> [FeedVideo] {
+    /// The Videos tab's uploads with dates estimated from their ages, and how far off each estimate can be.
+    static func uploads(fromChannelPage html: String, channelID: String, now: Date) throws -> [(video: FeedVideo, precision: TimeInterval)] {
         let page = BrowseParser.channelUploads(try BrowseParser.initialData(in: html))
         var seen = Set<String>()
-        return page.uploads.compactMap { upload -> FeedVideo? in
-            guard let date = RelativeTime.date(upload.age, now: now), seen.insert(upload.item.contentID).inserted else { return nil }
+        return page.uploads.compactMap { upload -> (FeedVideo, TimeInterval)? in
+            guard let estimate = RelativeTime.estimate(upload.age, now: now), seen.insert(upload.item.contentID).inserted else { return nil }
             let item = upload.item
-            return FeedVideo(item: BrowseItem(contentID: item.contentID, kind: .video, title: item.title, subtitle: page.channel,
-                                              thumbnail: item.thumbnail, duration: item.duration, channelID: channelID), published: date)
+            return (FeedVideo(item: BrowseItem(contentID: item.contentID, kind: .video, title: item.title, subtitle: page.channel,
+                                               thumbnail: item.thumbnail, duration: item.duration, channelID: channelID), published: estimate.date),
+                    estimate.precision)
         }
     }
 
-    private func rssVideos(channelID: String) async throws -> [FeedVideo] {
+    /// The Videos tab lists newest first, so an estimate never puts an upload ahead of the one listed above it.
+    static func keepingPageOrder(_ videos: [(video: FeedVideo, exact: Bool)]) -> [FeedVideo] {
+        var result: [FeedVideo] = []
+        for (video, exact) in videos {
+            if !exact, let above = result.last?.published, video.published >= above {
+                result.append(FeedVideo(item: video.item, published: above.addingTimeInterval(-1)))
+            } else {
+                result.append(video)
+            }
+        }
+        return result
+    }
+
+    private func rssVideos(channelID: String, uploadsPlaylist: Bool = false) async throws -> [FeedVideo] {
         if SoundCloudID.userNumber(channelID) != nil { return try await SoundCloudClient.shared.feed(channelID) }
         guard channelID.range(of: "^UC[A-Za-z0-9_-]{22}$", options: .regularExpression) != nil else { throw BrowseError.invalidInput }
         var url = URLComponents(string: "https://www.youtube.com/feeds/videos.xml")!
-        url.queryItems = [URLQueryItem(name: "channel_id", value: channelID)]
+        // A channel's uploads playlist is its ID with UU in place of UC.
+        url.queryItems = [uploadsPlaylist ? URLQueryItem(name: "playlist_id", value: "UU" + channelID.dropFirst(2))
+                                          : URLQueryItem(name: "channel_id", value: channelID)]
         let (data, response) = try await session.data(from: url.url!)
         try Task.checkCancellation()
         guard let response = response as? HTTPURLResponse, response.statusCode == 200,
@@ -74,7 +109,9 @@ public actor YouTubeFeedClient: FeedLoading {
 /// Relative times as YouTube's English pages write them: "13 min ago", "1h ago", "2 days ago", "Streamed 3w ago".
 enum RelativeTime {
     private static let pattern = try! NSRegularExpression(pattern: #"(\d+)\s*(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|wks?|w|months?|mos?|years?|yrs?|y)\b\s*ago"#, options: .caseInsensitive)
-    static func date(_ text: String, now: Date = Date()) -> Date? {
+    static func date(_ text: String, now: Date = Date()) -> Date? { estimate(text, now: now)?.date }
+    /// The date, and the size of the unit it was given in: "13 min ago" is good to a minute, "2d ago" to a day.
+    static func estimate(_ text: String, now: Date = Date()) -> (date: Date, precision: TimeInterval)? {
         let text = text.replacingOccurrences(of: "\u{00A0}", with: " ")
         guard let match = pattern.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
               let numberRange = Range(match.range(at: 1), in: text), let unitRange = Range(match.range(at: 2), in: text),
@@ -90,7 +127,49 @@ enum RelativeTime {
         case let u where u.hasPrefix("w"): seconds = 7 * 86400
         default: seconds = 365 * 86400
         }
-        return now.addingTimeInterval(-count * seconds)
+        return (now.addingTimeInterval(-count * seconds), seconds)
+    }
+}
+
+/// Upload dates remembered across checks. An exact RSS time always wins; an age read from the Videos tab keeps
+/// its most precise sighting ("13 min ago" beats a later "1h ago"), so dates don't drift on every refresh.
+public actor FeedDates {
+    struct Entry: Codable, Equatable { var date: Date; var precision: TimeInterval }
+    private var entries: [String: Entry]
+    private let file: URL?
+    private let limit: Int
+
+    public static let shared = FeedDates(file: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+        .appendingPathComponent("feed-dates.json"))
+
+    init(file: URL?, limit: Int = 4000) {
+        self.file = file; self.limit = limit
+        entries = file.flatMap { try? Data(contentsOf: $0) }.flatMap { try? JSONDecoder().decode([String: Entry].self, from: $0) } ?? [:]
+    }
+
+    func record(exact videos: [FeedVideo]) {
+        var changed = false
+        for video in videos where entries[video.item.contentID] != Entry(date: video.published, precision: 0) {
+            entries[video.item.contentID] = Entry(date: video.published, precision: 0); changed = true
+        }
+        if changed { save() }
+    }
+
+    /// `id` is the YouTube video ID.
+    func resolve(_ id: String, estimate: Date, precision: TimeInterval) -> (date: Date, exact: Bool) {
+        if let known = entries[id], known.precision <= precision { return (known.date, known.precision == 0) }
+        entries[id] = Entry(date: estimate, precision: precision)
+        save()
+        return (estimate, false)
+    }
+
+    private func save() {
+        if entries.count > limit {
+            for (id, _) in entries.sorted(by: { $0.value.date < $1.value.date }).prefix(entries.count - limit) { entries[id] = nil }
+        }
+        guard let file, let data = try? JSONEncoder().encode(entries) else { return }
+        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? data.write(to: file, options: .atomic)
     }
 }
 

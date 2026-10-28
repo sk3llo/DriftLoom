@@ -86,6 +86,31 @@ enum BrowseParser {
         return BrowsePage(title: title, items: items, next: next, header: header)
     }
 
+    /// The "Show more" lists of a kiosk page's shelves, in page order.
+    static func shelfLinks(_ root: Object) -> [BrowseShelf] {
+        var shelves: [BrowseShelf] = []
+        func visit(_ value: Any) {
+            if let values = value as? [Any] { values.forEach(visit); return }
+            guard let object = value as? Object else { return }
+            for key in ["richShelfRenderer", "shelfRenderer"] {
+                if let shelf = object[key] as? Object, let browse = (shelf["endpoint"] as? Object)?["browseEndpoint"] as? Object,
+                   let id = browse["browseId"] as? String {
+                    let link = BrowseShelf(browseID: id, params: browse["params"] as? String)
+                    if !shelves.contains(link) { shelves.append(link) }
+                    return
+                }
+            }
+            for key in object.keys.sorted() where key != "header" && key != "topbar" { visit(object[key]!) }
+        }
+        visit(root["contents"] ?? [:])
+        return shelves
+    }
+
+    static func visitorData(_ root: Object) -> String? {
+        ((root["responseContext"] as? Object)?["visitorData"] as? String)
+            ?? (((root["responseContext"] as? Object)?["webResponseContextExtensionData"] as? Object)?["ytConfigData"] as? Object)?["visitorData"] as? String
+    }
+
     /// A channel's Videos tab as uploads with their relative times ("3h ago"), for when its RSS feed fails.
     static func channelUploads(_ root: Object) -> (channel: String, uploads: [(item: BrowseItem, age: String)]) {
         let channel = ((root["metadata"] as? Object)?["channelMetadataRenderer"] as? Object)?["title"] as? String ?? ""

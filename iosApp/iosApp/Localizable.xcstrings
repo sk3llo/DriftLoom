@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%lld shown": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld mostrados"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показано: %lld"
+          }
+        }
+      }
+    },
     "%@ (auto-generated)": {
       "localizations": {
         "pt": {

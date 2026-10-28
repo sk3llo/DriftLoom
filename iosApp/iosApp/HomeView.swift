@@ -284,6 +284,8 @@ struct HomeView: View {
             if arguments.contains("--settings-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .settings }
             // --guide-smoke [page.md]: open the user guide, optionally at a page.
             if arguments.contains("--guide-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); sheet = .guide }
+            // --kiosk-more-smoke: open Live, whose list then loads more (see KioskView).
+            if arguments.contains("--kiosk-more-smoke") { selectedPinned = nil; selectedLocal = nil; selection = .live }
             // --feed-smoke: open What's new, for device screenshots.
             if arguments.contains("--feed-smoke") { try? await Task.sleep(nanoseconds: 1_500_000_000); NotificationCenter.default.post(name: .driftLoomOpenFeed, object: nil) }
         }
@@ -347,7 +349,18 @@ private struct KioskView: View {
             Text("YouTube · " + kiosk.title + " · " + preferences.contentLocale.country).font(.caption).foregroundStyle(.secondary).padding(8)
                 .accessibilityIdentifier("kioskSource")
             BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(.kiosk(kiosk)) } })
-        }.task(id: preferences.contentLocale) { await store.load(.kiosk(kiosk)) }
+        }.task(id: preferences.contentLocale) {
+            await store.load(.kiosk(kiosk))
+#if DEBUG || DRIFTLOOM_DEVICE_TESTING
+            // --kiosk-more-smoke: load more three times and log the counts, for device checks.
+            if ProcessInfo.processInfo.arguments.contains("--kiosk-more-smoke") {
+                var counts = [store.items.count]
+                for _ in 0..<3 where store.canLoadMore { await store.loadMore(); counts.append(store.items.count) }
+                let grew = counts.count == 4 && zip(counts, counts.dropFirst()).allSatisfy { $0 < $1 }
+                NSLog("DriftLoomKioskMoreSmoke: %@ %@ counts=%@", grew ? "PASS" : "FAIL", kiosk.rawValue, counts.map(String.init).joined(separator: ","))
+            }
+#endif
+        }
     }
 }
 

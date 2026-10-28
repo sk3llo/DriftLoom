@@ -272,6 +272,7 @@ struct BrowseResults: View {
                                 Spacer()
                             }.padding(.vertical, 10)
                         }.disabled(store.isLoadingMore)
+                            .accessibilityIdentifier("loadMore").accessibilityValue(Text("\(store.items.count) shown"))
                     }
                 }.listStyle(.plain).dismissKeyboardOnScroll()
             }

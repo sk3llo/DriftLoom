@@ -13,6 +13,10 @@ DriftLoom brings YouTube's own curated pages to your home tabs:
 
 Live, Trending music and the others are on Home by default; add the rest from the menu or from [Customize tabs](home-and-menu.md).
 
+## See more
+
+Scroll to the end of **Live** or **Podcasts** and tap **Load more**. DriftLoom then goes through each section of the page in turn (for Live: live now, recent streams, upcoming, news, gaming and sports), adding the videos not already listed. Gaming, Trending music and Movie trailers show YouTube's whole list at once, so they have no Load more.
+
 ## Change the country
 
-These pages follow **Settings → YouTube content → Content region** (and *Content language*). The line at the top of the page names the region it shows, for example *YouTube · Live · UA*. See [Language and region](languages-and-regions.md).
+These pages follow **Settings → YouTube content → Content region** (and *Content language*). The line at the top of the page names the region it shows, for example *YouTube · Live · UA*. See [Language and region](languages-and-regions.md). YouTube doesn't offer its Podcasts page in some languages, such as Ukrainian; DriftLoom then shows that region's podcasts with YouTube's section names in English.

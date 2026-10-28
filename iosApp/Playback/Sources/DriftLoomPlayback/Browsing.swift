@@ -100,11 +100,28 @@ public struct BrowseCursor: Equatable, Sendable {
     public let isSearch: Bool
     public let isRelated: Bool
     public let locale: ContentLocale
-    public init(token: String, clientVersion: String, isSearch: Bool, isRelated: Bool = false, locale: ContentLocale = .current()) {
+    /// Kiosk shelves still to expand once the current list runs out; an empty token opens the first of them.
+    public let shelves: [BrowseShelf]
+    /// YouTube's visitor ID from the first page; continuations of expanded shelves come back empty without it.
+    public let visitorData: String?
+    public init(token: String, clientVersion: String, isSearch: Bool, isRelated: Bool = false, locale: ContentLocale = .current(),
+                shelves: [BrowseShelf] = [], visitorData: String? = nil) {
         self.locale = locale
         self.token = token; self.clientVersion = clientVersion
         self.isSearch = isSearch; self.isRelated = isRelated
+        self.shelves = shelves; self.visitorData = visitorData
     }
+}
+
+/// A kiosk shelf's "Show more" list, such as Live's "Live Now" or "Upcoming Live Streams".
+public struct BrowseShelf: Equatable, Sendable {
+    public let browseID: String
+    public let params: String?
+}
+
+extension BrowseCursor {
+    /// Paging through a kiosk's shelves rather than one list's continuation.
+    var isKioskPaging: Bool { token.isEmpty || !shelves.isEmpty || visitorData != nil }
 }
 
 public struct BrowsePage: Sendable {
@@ -226,15 +243,37 @@ public actor YouTubeBrowsingClient: Browsing {
             title = "Playlist"; isSearch = false
         }
         components.queryItems = query
-        let data = try await fetch(URLRequest(url: components.url!), locale: locale)
+        let data: Data
+        do {
+            data = try await fetch(URLRequest(url: components.url!), locale: locale)
+        } catch where route == .kiosk(.podcasts) && locale.language != "en" {
+            // YouTube's podcasts page is 404 in some interface languages (Ukrainian, Russian, Japanese); the
+            // same country's page in English still lists its podcasts, titled as published.
+            locale = ContentLocale(language: "en", country: locale.country)
+            components.queryItems = [URLQueryItem(name: "hl", value: "en"), URLQueryItem(name: "gl", value: locale.country)]
+            data = try await fetch(URLRequest(url: components.url!), locale: locale)
+        }
         guard let html = String(data: data, encoding: .utf8) else { throw BrowseError.unsupportedResponse }
         let root = try BrowseParser.initialData(in: html)
         let version = BrowseParser.clientVersion(in: html)
-        return try BrowseParser.page(root, fallbackTitle: title, clientVersion: version, isSearch: isSearch, isRelated: isRelated, isMix: isMix, locale: locale)
+        let page = try BrowseParser.page(root, fallbackTitle: title, clientVersion: version, isSearch: isSearch, isRelated: isRelated, isMix: isMix, locale: locale)
+        // Kiosk pages are shelves of a dozen items with no continuation; paging goes on through each shelf's full list.
+        if case .kiosk = route, page.next == nil, let version {
+            let shelves = BrowseParser.shelfLinks(root)
+            if !shelves.isEmpty {
+                return BrowsePage(title: page.title, items: page.items,
+                                  next: BrowseCursor(token: "", clientVersion: version, isSearch: false, locale: locale,
+                                                     shelves: shelves, visitorData: BrowseParser.visitorData(root)),
+                                  header: page.header)
+            }
+        }
+        return page
     }
 
     public func nextPage(_ cursor: BrowseCursor) async throws -> BrowsePage {
         if cursor.clientVersion == SoundCloudClient.paginationMarker { return try await SoundCloudClient.shared.nextPage(cursor) }
+        let shelf = cursor.token.isEmpty ? cursor.shelves.first : nil
+        if cursor.token.isEmpty, shelf == nil { throw BrowseError.invalidInput }
         let endpoint = cursor.isRelated ? "next" : cursor.isSearch ? "search" : "browse"
         var request = URLRequest(url: URL(string: "https://www.youtube.com/youtubei/v1/\(endpoint)?prettyPrint=false")!)
         request.httpMethod = "POST"
@@ -242,17 +281,32 @@ public actor YouTubeBrowsingClient: Browsing {
         request.setValue("https://www.youtube.com", forHTTPHeaderField: "Origin")
         request.setValue("1", forHTTPHeaderField: "X-Youtube-Client-Name")
         request.setValue(cursor.clientVersion, forHTTPHeaderField: "X-Youtube-Client-Version")
-        request.httpBody = try JSONSerialization.data(withJSONObject: [
-            "context": ["client": ["clientName": "WEB", "clientVersion": cursor.clientVersion,
-                                     "hl": cursor.locale.language, "gl": cursor.locale.country]],
-            "continuation": cursor.token
-        ])
+        var client: [String: Any] = ["clientName": "WEB", "clientVersion": cursor.clientVersion, "hl": cursor.locale.language, "gl": cursor.locale.country]
+        if let visitor = cursor.visitorData {
+            client["visitorData"] = visitor
+            request.setValue(visitor, forHTTPHeaderField: "X-Goog-Visitor-Id")
+        }
+        var body: [String: Any] = ["context": ["client": client]]
+        if let shelf {
+            body["browseId"] = shelf.browseID
+            if let params = shelf.params { body["params"] = params }
+        } else {
+            body["continuation"] = cursor.token
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let data = try await fetch(request, locale: cursor.locale)
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw BrowseError.unsupportedResponse
         }
-        return try BrowseParser.page(root, fallbackTitle: "", clientVersion: cursor.clientVersion,
-                                     isSearch: cursor.isSearch, isRelated: cursor.isRelated, locale: cursor.locale)
+        let page = try BrowseParser.page(root, fallbackTitle: "", clientVersion: cursor.clientVersion,
+                                         isSearch: cursor.isSearch, isRelated: cursor.isRelated, locale: cursor.locale)
+        guard cursor.isKioskPaging else { return page }
+        // Carry the remaining shelves and the visitor ID along: this shelf's next page first, then the next shelf.
+        let remaining = shelf == nil ? cursor.shelves : Array(cursor.shelves.dropFirst())
+        let visitor = cursor.visitorData ?? BrowseParser.visitorData(root)
+        let next = page.next.map { BrowseCursor(token: $0.token, clientVersion: $0.clientVersion, isSearch: false, locale: cursor.locale, shelves: remaining, visitorData: visitor) }
+            ?? (remaining.isEmpty ? nil : BrowseCursor(token: "", clientVersion: cursor.clientVersion, isSearch: false, locale: cursor.locale, shelves: remaining, visitorData: visitor))
+        return BrowsePage(title: page.title, items: page.items, next: next, header: page.header)
     }
 
     private func fetch(_ original: URLRequest, locale: ContentLocale) async throws -> Data {
@@ -322,10 +376,18 @@ public final class BrowseStore: ObservableObject {
         let token = generation
         isLoadingMore = true; paginationError = nil
         do {
-            let page = try await client.nextPage(cursor)
+            var page = try await client.nextPage(cursor)
             try Task.checkCancellation()
             guard generation == token else { return }
-            append(page)
+            var added = append(page)
+            // An expanded kiosk shelf starts with the items already shown; fetch on until a useful number are new.
+            var extra = 0
+            while added < 10, extra < 5, let next = page.next, next != cursor {
+                page = try await client.nextPage(next)
+                try Task.checkCancellation()
+                guard generation == token else { return }
+                added += append(page); extra += 1
+            }
             // Repeated tokens cannot send the user into an endless pagination loop.
             if self.cursor == cursor { self.cursor = nil; canLoadMore = false }
         } catch {
@@ -334,10 +396,13 @@ public final class BrowseStore: ObservableObject {
         if generation == token { isLoadingMore = false }
     }
 
-    private func append(_ page: BrowsePage) {
+    /// Adds the page's new items and returns how many there were.
+    @discardableResult private func append(_ page: BrowsePage) -> Int {
         var ids = Set(items.map(\.id))
-        items.append(contentsOf: page.items.filter { ids.insert($0.id).inserted })
+        let new = page.items.filter { ids.insert($0.id).inserted }
+        items.append(contentsOf: new)
         cursor = page.next
         canLoadMore = cursor != nil
+        return new.count
     }
 }
