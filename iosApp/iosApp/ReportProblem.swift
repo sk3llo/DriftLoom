@@ -36,6 +36,10 @@ extension ProblemReport {
         }
     }
 
+    func copyToPasteboard() {
+        UIPasteboard.general.string = title + "\n\n" + body(environment: ProblemReport.environment)
+    }
+
     static func videoLink(_ id: String) -> String { SoundCloudID.isSoundCloud(id) ? id : "https://youtu.be/\(id)" }
 }
 
@@ -57,11 +61,7 @@ struct ReportProblemButton: View {
             .accessibilityIdentifier("reportProblem")
             .confirmationDialog("Report a problem", isPresented: $asking, titleVisibility: .visible) {
                 Button("Open GitHub") { openURL(report().issueURL(environment: ProblemReport.environment)) }
-                Button("Copy details") {
-                    let report = report()
-                    UIPasteboard.general.string = report.title + "\n\n" + report.body(environment: ProblemReport.environment)
-                    copied = true
-                }
+                Button("Copy details") { report().copyToPasteboard(); copied = true }
             } message: {
                 Text("A new issue opens on GitHub with the error, the app version and your device model. Nothing is sent until you submit it there, and the issue is public.")
             }

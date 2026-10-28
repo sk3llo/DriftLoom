@@ -12,17 +12,20 @@ public struct ProblemReport: Equatable, Sendable {
     public let error: String?
     /// What was open when it failed, such as ("Video", "https://youtu.be/…"); shown in the issue's details table.
     public let context: [Detail]
-    public struct Detail: Equatable, Sendable {
+    public struct Detail: Codable, Equatable, Sendable {
         public let name: String, value: String
         public init(_ name: String, _ value: String) { self.name = name; self.value = value }
     }
 
-    public init(area: String, error: String? = nil, context: [Detail] = []) {
-        self.area = area; self.error = error; self.context = context
+    /// For the title when the error text is long or multi-line, such as a crash's stack.
+    public let headline: String?
+
+    public init(area: String, error: String? = nil, context: [Detail] = [], headline: String? = nil) {
+        self.area = area; self.error = error; self.context = context; self.headline = headline
     }
 
     public var title: String {
-        let summary = error.map { $0.replacingOccurrences(of: "\n", with: " ") }.map { $0.count > 80 ? $0.prefix(77) + "…" : $0 }
+        let summary = (headline ?? error).map { $0.replacingOccurrences(of: "\n", with: " ") }.map { $0.count > 80 ? $0.prefix(77) + "…" : $0 }
         return "[iOS] \(area)" + (summary.map { ": \($0)" } ?? "")
     }
 

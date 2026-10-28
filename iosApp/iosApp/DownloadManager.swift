@@ -393,6 +393,7 @@ final class DownloadAppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         DownloadNotifier.shared.install()
         FeedRefresher.shared.register()
+        CrashReportCollector.shared.start()
         if #available(iOS 16.1, *) { DownloadActivityController.shared.start() }
         return true
     }

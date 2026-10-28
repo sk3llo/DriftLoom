@@ -31,4 +31,8 @@ When a video won't play, a page or the comments won't load, or a download fails,
 - **Open GitHub** opens a new issue on DriftLoom's GitHub page with the error, what was open (the video, page or search), the app version, the iOS version, the device model and the content region. Add what you were doing, then submit it. Nothing is sent before you submit, and the issue is public, so remove anything you'd rather not share.
 - **Copy details** copies the same text, for when you don't have a GitHub account; paste it into an email instead.
 
+### After a crash
+
+If DriftLoom quits while you're using it, the next time you open it asks whether to report it, with the same **Report on GitHub** and **Copy details** choices, or **Don't report**. It asks once per crash. If you share analytics with app developers (**Settings → Privacy → Analytics & Improvements → Share With App Developers**), iOS also hands DriftLoom the technical crash details, and long freezes, to include in the report.
+
 Your library, history and subscriptions are never included.

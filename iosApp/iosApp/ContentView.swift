@@ -84,6 +84,7 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomExpandPlayer)) { _ in expanded = true }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in expanded = false; closeSearch() }
         .onOpenURL { url in openLink(url) }
+        .modifier(CrashReportPrompt(inbox: .shared))
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenLink)) { if let url = $0.object as? URL { openLink(url) } }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenFeed)) { _ in expanded = false; closeSearch(); linkedPage = nil }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomPlayVideo)) { note in
@@ -146,6 +147,7 @@ struct ContentView: View {
             await runAutoplaySmokeCheck(queue)
             await runBackgroundSmokeCheck(playback)
             await runDownloadSmokeCheck(playback)
+            runDiagnosticSmoke()
             await runKioskSmokeCheck()
             await runSoundCloudSmokeCheck()
             await FeedRefresher.shared.runSmokeCheck()

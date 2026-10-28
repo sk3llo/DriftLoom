@@ -761,6 +761,45 @@ final class NavigationTests: XCTestCase {
         wait(for: [closed], timeout: 10)
     }
 
+    func testCrashFromLastLaunchIsOfferedOnceForReporting() {
+        let app = application(extraArguments: ["--diagnostic-smoke"])
+        let alert = app.alerts["DriftLoom quit unexpectedly"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 15), "A crash iOS reported is offered on launch")
+        XCTAssertTrue(alert.buttons["Report on GitHub"].exists && alert.buttons["Copy details"].exists)
+        alert.buttons["Don't report"].tap()
+        // Dismissed reports never come back.
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "--diagnostic-smoke" }
+        app.launch()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        sleep(3)
+        XCTAssertFalse(app.alerts.firstMatch.exists, "Nothing is offered again")
+        // A new one goes to GitHub.
+        app.terminate()
+        app.launchArguments.append("--diagnostic-smoke")
+        app.launch()
+        XCTAssertTrue(alert.waitForExistence(timeout: 15))
+        alert.buttons["Report on GitHub"].tap()
+        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 15), "The crash report opens as a GitHub issue")
+        app.activate()
+    }
+
+    func testEndingWhileOnScreenIsOfferedAsAnUnexpectedQuit() {
+        let app = application(extraArguments: ["--exit-check-smoke"])
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        // Going to the background first is a normal exit.
+        XCUIDevice.shared.press(.home); sleep(2)
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); sleep(3)
+        XCTAssertFalse(app.alerts["DriftLoom quit unexpectedly"].exists, "Leaving normally isn't a crash")
+        // Ended while on screen, as a crash would.
+        app.terminate(); app.launch()
+        let alert = app.alerts["DriftLoom quit unexpectedly"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 15), "Ending while on screen is offered for reporting")
+        alert.buttons["Don't report"].tap()
+    }
+
     func testReportAProblemOpensAPrefilledGitHubIssue() {
         let app = application(extraArguments: ["--settings-smoke"])
         let report = app.buttons["reportProblem"]

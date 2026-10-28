@@ -177,6 +177,86 @@
         }
       }
     },
+    "DriftLoom quit unexpectedly": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O DriftLoom fechou inesperadamente"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DriftLoom несподівано закрився"
+          }
+        }
+      }
+    },
+    "DriftLoom stopped responding": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O DriftLoom deixou de responder"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DriftLoom перестав відповідати"
+          }
+        }
+      }
+    },
+    "Report on GitHub": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reportar no GitHub"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повідомити на GitHub"
+          }
+        }
+      }
+    },
+    "Don't report": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não reportar"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не повідомляти"
+          }
+        }
+      }
+    },
+    "This happened %@. Reporting it as a GitHub issue helps get it fixed. You'll see the report before anything is sent, and it holds only the technical details, not your library.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Isto aconteceu %@. Reportá-lo como relatório no GitHub ajuda a corrigi-lo. Verá o relatório antes de algo ser enviado, e contém apenas detalhes técnicos, não a sua biblioteca."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Це сталося %@. Звернення на GitHub допоможе це виправити. Ви побачите звіт, перш ніж щось буде надіслано, і в ньому лише технічні дані, без вашої бібліотеки."
+          }
+        }
+      }
+    },
     "%@ (auto-generated)": {
       "localizations": {
         "pt": {
