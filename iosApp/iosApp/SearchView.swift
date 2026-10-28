@@ -263,20 +263,37 @@ struct BrowseResults: View {
                             .listRowSeparator(.hidden)
                     }
                     if let message = store.paginationError { Text(message).font(.footnote).foregroundStyle(.secondary) }
-                    if store.canLoadMore {
-                        Button { Task { await store.loadMore() } } label: {
-                            HStack {
-                                Spacer()
-                                if store.isLoadingMore { ProgressView() }
-                                else { Text(store.paginationError == nil ? "Load more" : "Try loading more again") }
-                                Spacer()
-                            }.padding(.vertical, 10)
-                        }.disabled(store.isLoadingMore)
-                            .accessibilityIdentifier("loadMore").accessibilityValue(Text("\(store.items.count) shown"))
-                    }
+                    if store.canLoadMore { LoadMoreFooter(store: store) }
                 }.listStyle(.plain).dismissKeyboardOnScroll()
             }
         }
+    }
+}
+
+/// The end of a list: more videos load on their own as it scrolls into view, and keep loading while it
+/// stays in view. After an error it waits for a tap, so a failing page isn't requested over and over.
+struct LoadMoreFooter: View {
+    @ObservedObject var store: BrowseStore
+    @State private var visible = false
+    var body: some View {
+        Group {
+            if store.paginationError != nil {
+                Button { Task { await store.loadMore() } } label: {
+                    Text("Try loading more again").frame(maxWidth: .infinity).padding(.vertical, 10)
+                }
+            } else {
+                ProgressView().frame(maxWidth: .infinity).padding(.vertical, 10)
+            }
+        }
+        .accessibilityElement(children: .combine).accessibilityIdentifier("loadMore")
+        .accessibilityValue(Text("\(store.items.count) shown"))
+        .onAppear { visible = true; load() }
+        .onDisappear { visible = false }
+        .onChange(of: store.isLoadingMore) { loading in if !loading { load() } }
+    }
+    private func load() {
+        guard visible, store.canLoadMore, !store.isLoadingMore, store.paginationError == nil else { return }
+        Task { await store.loadMore() }
     }
 }
 

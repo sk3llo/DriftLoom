@@ -258,9 +258,7 @@ struct VideoDetailView: View {
                 }
                 ForEach(related.items) { item in BrowseResultRow(item: item, onPlay: onPlay) }
                 if let error = related.paginationError { Text(error).font(.footnote).foregroundStyle(.secondary) }
-                if related.canLoadMore {
-                    Button(related.isLoadingMore ? "Loading…" : "Load more") { Task { await related.loadMore() } }.disabled(related.isLoadingMore)
-                }
+                if related.canLoadMore { LoadMoreFooter(store: related) }
             }.padding(12)
         case .comments:
             CommentsPanel(store: discussion)

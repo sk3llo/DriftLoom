@@ -359,25 +359,18 @@ final class NavigationTests: XCTestCase {
         wait(for: [expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: drawer)], timeout: 3)
     }
 
-    func testLiveKioskLoadsMoreFromItsShelves() {
+    func testLiveKioskLoadsMoreOnItsOwnAtTheBottom() {
         let app = application()
         XCTAssertTrue(app.buttons["tabBar-section:Live"].waitForExistence(timeout: 10)); app.buttons["tabBar-section:Live"].tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browseVideo-'")).firstMatch.waitForExistence(timeout: 45))
-        // The kiosk page itself has no continuation; Load more opens each shelf's full list in turn.
-        let more = app.buttons["loadMore"]
-        func scrollToMore() { for _ in 0..<40 where !(more.exists && more.isHittable) { app.swipeUp(velocity: .fast) } }
-        scrollToMore()
-        XCTAssertTrue(more.waitForExistence(timeout: 5), "Live offers more than its first page")
-        var shown = loadMoreCount(more)
-        for _ in 0..<2 {
-            more.tap()
-            let grew = expectation(for: NSPredicate { _, _ in !more.exists || self.loadMoreCount(more) > shown }, evaluatedWith: more)
-            wait(for: [grew], timeout: 30)
-            scrollToMore()
-            XCTAssertTrue(more.waitForExistence(timeout: 5), "Still more to load")
-            XCTAssertGreaterThan(loadMoreCount(more), shown, "Load more adds new videos")
-            shown = loadMoreCount(more)
-        }
+        XCTAssertFalse(app.buttons["Load more"].exists, "There is no Load more button")
+        // The kiosk page itself has no continuation; scrolling to the end opens each shelf's full list in turn, with no tap.
+        let source = app.staticTexts["kioskSource"]
+        let first = loadMoreCount(source)
+        XCTAssertGreaterThan(first, 20)
+        for _ in 0..<30 { app.swipeUp(velocity: .fast) }
+        let grew = expectation(for: NSPredicate { _, _ in self.loadMoreCount(source) > first + 30 }, evaluatedWith: source)
+        wait(for: [grew], timeout: 30)
     }
     private func loadMoreCount(_ button: XCUIElement) -> Int { Int((button.value as? String ?? "").split(separator: " ").first ?? "") ?? 0 }
 

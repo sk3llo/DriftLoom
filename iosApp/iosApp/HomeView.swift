@@ -347,7 +347,7 @@ private struct KioskView: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("YouTube · " + kiosk.title + " · " + preferences.contentLocale.country).font(.caption).foregroundStyle(.secondary).padding(8)
-                .accessibilityIdentifier("kioskSource")
+                .accessibilityIdentifier("kioskSource").accessibilityValue(Text("\(store.items.count) shown"))
             BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(.kiosk(kiosk)) } })
         }.task(id: preferences.contentLocale) {
             await store.load(.kiosk(kiosk))
