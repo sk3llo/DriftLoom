@@ -15,7 +15,7 @@ If there is no *Language* row in the Settings app, first add a second language t
 
 **Settings → YouTube content** has a **Content language** and a **Content region**. They decide which country's Live, Gaming, Podcasts and trending pages you see, and the language of titles and dates where YouTube offers a choice.
 
-For example, to see Ukrainian live streams, set **Content region** to *Ukraine* and **Content language** to *Ukrainian*. The Live tab reloads straight away; the line at its top shows the region in use. YouTube mixes in international streams, so even then not every stream will be Ukrainian.
+For example, to see Ukrainian live streams, set **Content region** to *Ukraine* and **Content language** to *Ukrainian*. Tap the row, type a few letters in the search field at the top (in English or in the app's language, for example *ukr*) and tap the result. The Live tab reloads straight away; the line at its top shows the region in use. YouTube mixes in international streams, so even then not every stream will be Ukrainian.
 
 ## Searching in other languages
 

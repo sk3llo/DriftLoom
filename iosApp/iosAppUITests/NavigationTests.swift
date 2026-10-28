@@ -761,6 +761,37 @@ final class NavigationTests: XCTestCase {
         wait(for: [closed], timeout: 10)
     }
 
+    func testContentRegionAndLanguageAreSearchable() {
+        let app = application(extraArguments: ["--settings-smoke"])
+        let region = app.buttons["contentRegion"]
+        for _ in 0..<4 where !(region.exists && region.isHittable) { app.swipeUp() }
+        XCTAssertTrue(region.waitForExistence(timeout: 10))
+        region.tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5), "The region list has a search field")
+        search.tap(); search.typeText("ukr")
+        let ukraine = app.buttons["localeChoice-UA"]
+        XCTAssertTrue(ukraine.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["localeChoice-PT"].exists, "Search narrows the list")
+        ukraine.tap()
+        XCTAssertTrue(region.waitForExistence(timeout: 5), "Choosing returns to Settings")
+        XCTAssertTrue(region.label.contains("Ukraine"), "The row shows the new region (\(region.label))")
+        // The current choice is listed first; a code like "pt" finds the language too.
+        let language = app.buttons["contentLanguage"]
+        language.tap()
+        XCTAssertTrue(app.staticTexts["English"].waitForExistence(timeout: 5) || app.buttons["localeChoice-en"].exists)
+        app.searchFields.firstMatch.tap(); app.searchFields.firstMatch.typeText("pt")
+        XCTAssertTrue(app.buttons["localeChoice-pt"].waitForExistence(timeout: 5), "A language can be found by its code")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        // Back to Portugal for the other tests.
+        XCTAssertTrue(region.waitForExistence(timeout: 5)); region.tap()
+        app.searchFields.firstMatch.tap(); app.searchFields.firstMatch.typeText("Portugal")
+        XCTAssertTrue(app.buttons["localeChoice-PT"].waitForExistence(timeout: 5)); app.buttons["localeChoice-PT"].tap()
+        XCTAssertTrue(region.waitForExistence(timeout: 5))
+        XCTAssertTrue(region.label.contains("Portugal"))
+    }
+
     func testLanguageRowOpensDriftLoomInTheSettingsApp() {
         let app = application()
         XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()

@@ -8,6 +8,9 @@ struct SettingsView: View {
     @EnvironmentObject private var library: LibraryStore
     @State private var clearTarget: String?
     @State private var notificationsDenied = false
+    /// The language or region list that is open, so a launch flag can open it too.
+    @State private var openChoice: String?
+    @State private var choiceSearch = ""
     private func resolutionPicker(_ title: LocalizedStringKey, mobile: Bool) -> some View {
         Picker(title, selection: Binding(get: { mobile ? preferences.mobileMaximumHeight : preferences.wifiMaximumHeight },
                                          set: { preferences.setMaximumHeight($0, mobile: mobile) })) {
@@ -53,16 +56,22 @@ struct SettingsView: View {
                 Section("YouTube content") {
                     Toggle("Show search suggestions", isOn: Binding(get: { preferences.usesSearchSuggestions }, set: preferences.setUsesSearchSuggestions))
 
-                    Picker("Content language", selection: Binding(get: { preferences.contentLocale.language }, set: {
-                        preferences.setContentLocale(language: $0, country: preferences.contentLocale.country)
-                    })) {
-                        ForEach(Locale.isoLanguageCodes.sorted(), id: \.self) { code in Text(Locale.current.localizedString(forLanguageCode: code) ?? code).tag(code) }
-                    }
-                    Picker("Content region", selection: Binding(get: { preferences.contentLocale.country }, set: {
-                        preferences.setContentLocale(language: preferences.contentLocale.language, country: $0)
-                    })) {
-                        ForEach(Locale.isoRegionCodes.sorted(), id: \.self) { code in Text(Locale.current.localizedString(forRegionCode: code) ?? code).tag(code) }
-                    }
+                    NavigationLink(tag: "language", selection: $openChoice) {
+                        LocaleChoiceList(title: "Content language", prompt: "Search languages", choices: LocaleChoiceList.languages,
+                                         selected: preferences.contentLocale.language) {
+                            preferences.setContentLocale(language: $0, country: preferences.contentLocale.country)
+                        }
+                    } label: {
+                        LabeledValue("Content language", value: LocaleChoiceList.name(of: preferences.contentLocale.language, in: LocaleChoiceList.languages))
+                    }.accessibilityIdentifier("contentLanguage")
+                    NavigationLink(tag: "region", selection: $openChoice) {
+                        LocaleChoiceList(title: "Content region", prompt: "Search countries", choices: LocaleChoiceList.regions,
+                                         selected: preferences.contentLocale.country, search: choiceSearch) {
+                            preferences.setContentLocale(language: preferences.contentLocale.language, country: $0)
+                        }
+                    } label: {
+                        LabeledValue("Content region", value: LocaleChoiceList.name(of: preferences.contentLocale.country, in: LocaleChoiceList.regions))
+                    }.accessibilityIdentifier("contentRegion")
                     Text("Used for new YouTube browsing requests. App interface translations are separate.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("History") {
@@ -130,8 +139,13 @@ struct SettingsView: View {
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
             // --settings-smoke language: then use the Language row, as a tap would.
+            // --settings-smoke region [search]: open the Content region list, optionally searched.
             .task {
                 let arguments = ProcessInfo.processInfo.arguments
+                if let flag = arguments.firstIndex(of: "--settings-smoke"), arguments.indices.contains(flag + 1), arguments[flag + 1] == "region" {
+                    if arguments.indices.contains(flag + 2), !arguments[flag + 2].hasPrefix("--") { choiceSearch = arguments[flag + 2] }
+                    try? await Task.sleep(nanoseconds: 1_000_000_000); openChoice = "region"
+                }
                 guard let flag = arguments.firstIndex(of: "--settings-smoke"), arguments.indices.contains(flag + 1), arguments[flag + 1] == "language" else { return }
                 NSLog("DriftLoomSettingsSmoke: language row shows %@", interfaceLanguage)
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
@@ -206,5 +220,82 @@ struct HomeTabsSettings: View {
         case let .local(id):
             Label(playlists.playlists.first { $0.id == id }?.name ?? String(localized: "Playlist"), systemImage: "music.note.list").accessibilityIdentifier("homeTab-local")
         }
+    }
+}
+
+/// A setting's name with its current value on the right, as Picker rows show it.
+private struct LabeledValue: View {
+    let title: LocalizedStringKey
+    let value: String
+    init(_ title: LocalizedStringKey, value: String) { self.title = title; self.value = value }
+    var body: some View {
+        HStack { Text(title); Spacer(); Text(value).foregroundStyle(.secondary) }
+    }
+}
+
+/// Hundreds of languages or regions, named in the interface language, with search. The names are worked out
+/// once and sorted by name, not on every redraw like a Picker's, so long scrolls stay smooth on older iPhones.
+struct LocaleChoiceList: View {
+    /// `english` lets "ukr" find Україна whatever the interface language.
+    struct Choice: Identifiable, Equatable { let id: String; let name: String; let english: String }
+    let title: LocalizedStringKey
+    let prompt: LocalizedStringKey
+    let choices: [Choice]
+    let selected: String
+    let onSelect: (String) -> Void
+    @State private var search: String
+    @Environment(\.dismiss) private var dismiss
+
+    init(title: LocalizedStringKey, prompt: LocalizedStringKey, choices: [Choice], selected: String, search: String = "", onSelect: @escaping (String) -> Void) {
+        self.title = title; self.prompt = prompt; self.choices = choices; self.selected = selected; self.onSelect = onSelect
+        _search = State(initialValue: search)
+    }
+
+    /// Two-letter ISO 639-1 codes: what YouTube's hl accepts, without hundreds of historical languages.
+    static let languages: [Choice] = sorted(Locale.isoLanguageCodes.filter { $0.count == 2 }) { $0.localizedString(forLanguageCode: $1) }
+    static let regions: [Choice] = sorted(Locale.isoRegionCodes.filter { $0.count == 2 }) { $0.localizedString(forRegionCode: $1) }
+    private static func sorted(_ codes: [String], name: (Locale, String) -> String?) -> [Choice] {
+        let english = Locale(identifier: "en")
+        return codes.map { Choice(id: $0, name: name(.current, $0) ?? $0, english: name(english, $0) ?? $0) }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+    static func name(of code: String, in choices: [Choice]) -> String { choices.first { $0.id == code }?.name ?? code }
+
+    private var matches: [Choice] {
+        let query = search.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return choices }
+        return choices.filter {
+            $0.name.localizedStandardContains(query) || $0.english.localizedStandardContains(query) || $0.id.caseInsensitiveCompare(query) == .orderedSame
+        }
+    }
+
+    var body: some View {
+        let matches = matches
+        List {
+            if search.isEmpty, let current = choices.first(where: { $0.id == selected }) {
+                Section("Selected") { row(current) }
+            }
+            Section {
+                ForEach(matches) { row($0) }
+                if matches.isEmpty { Text("No matches").foregroundStyle(.secondary) }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(prompt))
+        .disableAutocorrection(true)
+        .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func row(_ choice: Choice) -> some View {
+        Button { onSelect(choice.id); dismiss() } label: {
+            HStack {
+                Text(choice.name).foregroundColor(.primary)
+                Spacer()
+                if choice.id == selected { Image(systemName: "checkmark").foregroundColor(AppStyle.accent).accessibilityHidden(true) }
+            }.contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(choice.id == selected ? .isSelected : [])
+        .accessibilityIdentifier("localeChoice-" + choice.id)
     }
 }
