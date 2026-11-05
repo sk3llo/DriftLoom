@@ -4,7 +4,7 @@ labels: [enhancement]
 body:
   - type: markdown
     attributes:
-      value: Thanks for the idea. :hugs:
+      value: "Thanks for the idea. :hugs:"
 
   - type: checkboxes
     id: checklist
