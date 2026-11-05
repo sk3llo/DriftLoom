@@ -56,6 +56,20 @@ configure<ApplicationExtension> {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing comes from the environment (CI secrets or a local shell); without it,
+    // assembleRelease builds an unsigned APK as before. Never commit the keystore or its password.
+    val releaseKeystore = System.getenv("DRIFTLOOM_KEYSTORE_FILE")?.takeIf { it.isNotBlank() }
+    if (releaseKeystore != null) {
+        signingConfigs.create("release") {
+            storeFile = file(releaseKeystore)
+            storePassword = System.getenv("DRIFTLOOM_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("DRIFTLOOM_KEY_ALIAS")
+            keyPassword = System.getenv("DRIFTLOOM_KEY_PASSWORD") ?: System.getenv("DRIFTLOOM_KEYSTORE_PASSWORD")
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+    }
+
     buildTypes {
         debug {
             isDebuggable = true
@@ -74,6 +88,9 @@ configure<ApplicationExtension> {
             System.getProperty("packageSuffix")?.let { suffix ->
                 applicationIdSuffix = suffix
                 resValue("string", "app_name", "DriftLoom $suffix")
+            }
+            if (releaseKeystore != null) {
+                signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = true
             isShrinkResources = true

@@ -27,7 +27,8 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = DRIFTLOOM_APPLICATION_ID_NEW
-            packageVersion = DRIFTLOOM_VERSION_NAME
+            // Desktop installers (MSI, DMG) need MAJOR.MINOR.BUILD, so "1.0" becomes "1.0.0".
+            packageVersion = DRIFTLOOM_VERSION_NAME.split(".").plus(listOf("0", "0")).take(3).joinToString(".")
         }
     }
 }

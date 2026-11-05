@@ -28,12 +28,13 @@ The [user guide](docs/user-guide/README.md) covers everything, and is also built
 
 ## Install
 
-**iOS 15 or later** (iPhone 6s and newer, iPad). DriftLoom isn't on the App Store: Apple doesn't allow apps
-that download YouTube videos. Build it from source with Xcode (see below) and your own Apple ID. Ready-made
-builds, when available, are on the [Releases](https://github.com/sk3llo/DriftLoom/releases) page.
+**iPhone and iPad, iOS 15 or later.** DriftLoom isn't on the App Store: Apple doesn't allow apps that download
+YouTube videos. Download `DriftLoom-<version>.ipa` from [Releases](https://github.com/sk3llo/DriftLoom/releases)
+and install it with AltStore, SideStore or Sideloadly. With a free Apple ID the app has to be refreshed every 7 days.
+**[Step-by-step install guide](docs/install-ios.md).**
 
-**Android 6.0 or later.** APKs, when available, are on the [Releases](https://github.com/sk3llo/DriftLoom/releases)
-page. DriftLoom installs alongside NewPipe; it can't update NewPipe or be updated by it.
+**Android 6.0 or later.** Download `DriftLoom-<version>.apk` from [Releases](https://github.com/sk3llo/DriftLoom/releases)
+and open it to install. DriftLoom installs alongside NewPipe; it can't update NewPipe or be updated by it.
 
 ## Build
 

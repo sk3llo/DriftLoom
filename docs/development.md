@@ -1,5 +1,29 @@
 # Development notes
 
+## Releasing
+
+Versions: Android `DRIFTLOOM_VERSION_NAME`/`DRIFTLOOM_VERSION_CODE` in `buildSrc/src/main/kotlin/ProjectConfig.kt`,
+iOS `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` in `iosApp/Configuration/Config.xcconfig`. Raise both version
+codes/build numbers with every release.
+
+1. Bump the versions, commit, and push to `main`.
+2. Tag the commit `v<version>` (for example `v1.0`) and push the tag. The **Release** workflow builds the signed
+   APK and the unsigned IPA, with SHA-256 files, and attaches them to a draft GitHub release.
+3. Check the draft, write the notes, and publish it.
+
+Running the workflow by hand (Actions → Release → Run workflow) builds the same files as artifacts without a release.
+
+- **IPA:** `scripts/build-ios-ipa.sh [output-dir]` builds it locally the same way: Release configuration, no test
+  flags (the script fails if any are compiled in), unsigned so AltStore/SideStore/Sideloadly can sign it.
+  Users install it as described in [install-ios.md](install-ios.md).
+- **APK signing:** the release keystore is in the repository's Actions secrets `DRIFTLOOM_KEYSTORE_BASE64`,
+  `DRIFTLOOM_KEYSTORE_PASSWORD` and `DRIFTLOOM_KEY_ALIAS`. The workflow fails if the APK isn't signed with the
+  certificate whose SHA-256 is pinned in `release.yml`. To sign locally, set `DRIFTLOOM_KEYSTORE_FILE`,
+  `DRIFTLOOM_KEYSTORE_PASSWORD` and `DRIFTLOOM_KEY_ALIAS` before `./gradlew :app:assembleRelease`; without them
+  the release APK is unsigned. Losing the keystore means existing installs can't be updated, so keep the
+  maintainer's offline backup safe.
+
+
 How to build and test DriftLoom, and a running record of what has been implemented and verified.
 For using the app, see the [user guide](user-guide/README.md).
 
@@ -13,8 +37,8 @@ Use JDK 21 and an Android SDK with the compile SDK specified in
 ./gradlew :app:assembleRelease --no-configuration-cache
 ```
 
-Release builds use optimization and resource shrinking. Signing keys must be supplied
-locally and must never be committed. The release application ID is `org.schabi.driftloom`.
+Release builds use optimization and resource shrinking. Signing keys are supplied through
+environment variables (see Releasing) and must never be committed. The release application ID is `org.schabi.driftloom`.
 Upstream automatic updates require the upstream signing certificate and are unavailable
 for locally signed DriftLoom builds.
 
