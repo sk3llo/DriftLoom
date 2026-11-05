@@ -1,11 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: ❓ Question
-    url: https://github.com/sk3llo/DriftLoom/discussions/new?category=questions
-    about: Ask about anything DriftLoom-related
-  - name: 💬 Matrix
-    url: https://matrix.to/#/#newpipe:matrix.newpipe-ev.de
-    about: Chat with us via Matrix for quick Q/A
-  - name: 💬 IRC
-    url: https://web.libera.chat/#newpipe
-    about: Chat with us via IRC for quick Q/A
+  - name: 📖 User guide
+    url: https://github.com/sk3llo/DriftLoom/blob/main/docs/user-guide/README.md
+    about: How to use DriftLoom, with answers to common questions
+  - name: 🛠️ Troubleshooting
+    url: https://github.com/sk3llo/DriftLoom/blob/main/docs/user-guide/troubleshooting.md
+    about: Videos that won't play, empty feeds, failed downloads and more

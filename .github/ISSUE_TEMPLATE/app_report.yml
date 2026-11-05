@@ -1,0 +1,34 @@
+name: Report from the app
+description: Opened by DriftLoom's "Report a problem" button. The error and details are filled in for you.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. The app filled in the error and the details below.
+        Everything here is public once you submit it, so remove anything you don't want to share.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What were you doing, and what did you expect? Steps to reproduce help a lot.
+      placeholder: |
+        1. Opened a video from Subscriptions
+        2. Tapped Download
+        3. It failed straight away
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error
+      description: The message or crash report the app showed.
+      render: text
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: App version, device and settings, filled in by the app.

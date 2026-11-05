@@ -29,30 +29,47 @@ public struct ProblemReport: Equatable, Sendable {
         return "[iOS] \(area)" + (summary.map { ": \($0)" } ?? "")
     }
 
-    /// The issue text. `environment` is the app, device and settings, in table order.
+    /// The issue text, for copying. `environment` is the app, device and settings, in table order.
     public func body(environment: [Detail], errorLimit: Int = 2000) -> String {
         var lines = ["### What happened", "", "<!-- What were you doing, and what did you expect? Steps to reproduce help a lot. -->", ""]
-        if let error, !error.isEmpty {
-            let text = error.count > errorLimit ? error.prefix(errorLimit) + "…" : Substring(error)
-            lines += ["### Error", "", "```", String(text).replacingOccurrences(of: "```", with: "'''"), "```", ""]
+        if let text = errorText(limit: errorLimit) {
+            lines += ["### Error", "", "```", text.replacingOccurrences(of: "```", with: "'''"), "```", ""]
         }
-        lines += ["### Details", "", "| | |", "|---|---|", "| Area | \(cell(area)) |"]
-        lines += (context + environment).map { "| \(cell($0.name)) | \(cell($0.value)) |" }
-        lines += ["", "<sub>Sent from DriftLoom's Report button. Everything above is public once submitted; remove anything you don't want to share.</sub>"]
+        lines += ["### Details", "", details(environment: environment)]
         return lines.joined(separator: "\n")
     }
+
+    /// The details table: area, context, then `environment`.
+    public func details(environment: [Detail]) -> String {
+        var lines = ["| | |", "|---|---|", "| Area | \(cell(area)) |"]
+        lines += (context + environment).map { "| \(cell($0.name)) | \(cell($0.value)) |" }
+        lines += ["", "<sub>Sent from DriftLoom's Report button.</sub>"]
+        return lines.joined(separator: "\n")
+    }
+
+    /// The repository's "Report from the app" issue form (.github/ISSUE_TEMPLATE/app_report.yml), with its
+    /// fields filled in by id. The repository allows only template issues, so a plain `body=` link would lose the text.
+    public static let issueTemplate = "app_report.yml"
 
     public func issueURL(environment: [Detail]) -> URL {
         var limit = 2000
         while true {
             var components = URLComponents(url: Self.repository.appendingPathComponent("issues/new"), resolvingAgainstBaseURL: false)!
-            components.queryItems = [URLQueryItem(name: "title", value: title), URLQueryItem(name: "body", value: body(environment: environment, errorLimit: limit))]
+            var items = [URLQueryItem(name: "template", value: Self.issueTemplate), URLQueryItem(name: "title", value: title)]
+            if let text = errorText(limit: limit) { items.append(URLQueryItem(name: "error", value: text)) }
+            items.append(URLQueryItem(name: "details", value: details(environment: environment)))
+            components.queryItems = items
             // URLComponents leaves "+" and "&"-free text as is; encode "+" so GitHub doesn't read it as a space.
             components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
             let url = components.url!
             if url.absoluteString.count <= Self.maximumURLLength || limit <= 100 { return url }
             limit /= 2
         }
+    }
+
+    private func errorText(limit: Int) -> String? {
+        guard let error, !error.isEmpty else { return nil }
+        return error.count > limit ? String(error.prefix(limit)) + "…" : error
     }
 
     private func cell(_ text: String) -> String {

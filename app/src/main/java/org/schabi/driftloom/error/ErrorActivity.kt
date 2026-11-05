@@ -6,12 +6,12 @@
 package org.schabi.driftloom.error
 
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
@@ -57,9 +57,6 @@ class ErrorActivity : AppCompatActivity() {
             return "$name $osBase ${Build.VERSION.RELEASE} - ${Build.VERSION.SDK_INT}"
         }
 
-    private val errorEmailSubject: String
-        get() = "$ERROR_EMAIL_SUBJECT ${getString(R.string.app_name)} ${BuildConfig.VERSION_NAME}"
-
     // /////////////////////////////////////////////////////////////////////
     // Activity lifecycle
     // /////////////////////////////////////////////////////////////////////
@@ -87,9 +84,8 @@ class ErrorActivity : AppCompatActivity() {
         // print current time, as zoned ISO8601 timestamp
         currentTimeStamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
-        binding.errorReportEmailButton.setOnClickListener { _ ->
-            openPrivacyPolicyDialog(this, "EMAIL")
-        }
+        // DriftLoom has no crash-report mailbox; reports go to GitHub issues.
+        binding.errorReportEmailButton.visibility = View.GONE
 
         binding.errorReportCopyButton.setOnClickListener { _ ->
             ShareUtils.copyToClipboard(this, buildMarkdown())
@@ -143,15 +139,8 @@ class ErrorActivity : AppCompatActivity() {
                 ShareUtils.openUrlInApp(context, context.getString(R.string.privacy_policy_url))
             }
             .setPositiveButton(R.string.accept) { _, _ ->
-                if (action == "EMAIL") { // send on email
-                    val intent = Intent(Intent.ACTION_SENDTO)
-                        .setData("mailto:".toUri()) // only email apps should handle this
-                        .putExtra(Intent.EXTRA_EMAIL, arrayOf(ERROR_EMAIL_ADDRESS))
-                        .putExtra(Intent.EXTRA_SUBJECT, errorEmailSubject)
-                        .putExtra(Intent.EXTRA_TEXT, buildJson())
-                    ShareUtils.openIntentInApp(context, intent)
-                } else if (action == "GITHUB") { // open the DriftLoom issue page on GitHub
-                    ShareUtils.openUrlInApp(this, ERROR_GITHUB_ISSUE_URL)
+                if (action == "GITHUB") { // a new issue on GitHub, prefilled with this report
+                    ShareUtils.openUrlInApp(this, buildIssueUrl())
                 }
             }
             .setNegativeButton(R.string.decline, null)
@@ -260,6 +249,46 @@ class ErrorActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * The repository's "Report from the app" issue form (.github/ISSUE_TEMPLATE/app_report.yml), with its
+     * fields filled in by id. The repository only accepts template issues, so a plain `body=` link would
+     * lose the text. Long crash logs are shortened to keep the link within what browsers and GitHub accept.
+     */
+    private fun buildIssueUrl(): String {
+        val message = errorInfo.getMessage(this).toString().replace('\n', ' ')
+        val summary = if (message.length > 80) message.take(77) + "…" else message
+        val title = "[Android] ${errorInfo.userAction.message}" +
+            if (summary.isNotBlank()) ": $summary" else ""
+        val details = listOf(
+            "Area" to errorInfo.userAction.message,
+            "Request" to errorInfo.request,
+            "Service" to errorInfo.getServiceName(),
+            "App" to "${BuildConfig.VERSION_NAME} ($packageName)",
+            "OS" to osString,
+            "App language" to appLanguage,
+            "Content language" to contentLanguageString,
+            "Content country" to contentCountryString,
+            "Time" to currentTimeStamp
+        ).joinToString("\n", "| | |\n|---|---|\n") { (name, value) ->
+            "| $name | ${value.replace("|", "\\|").replace('\n', ' ')} |"
+        } + "\n\n<sub>Sent from DriftLoom's error screen.</sub>"
+        val comment = binding.errorCommentBox.text.toString()
+        val log = errorInfo.stackTraces.joinToString("\n\n")
+        var limit = 4000
+        while (true) {
+            val error = if (log.length > limit) log.take(limit) + "…" else log
+            val url = ERROR_GITHUB_ISSUE_URL.toUri().buildUpon()
+                .appendQueryParameter("template", "app_report.yml")
+                .appendQueryParameter("title", title)
+                .apply { if (comment.isNotBlank()) appendQueryParameter("what-happened", comment) }
+                .appendQueryParameter("error", error)
+                .appendQueryParameter("details", details)
+                .build().toString()
+            if (url.length <= MAX_ISSUE_URL_LENGTH || limit <= 100) return url
+            limit /= 2
+        }
+    }
+
     private fun addGuruMeditation() {
         // just an easter egg
         var text = binding.errorSorryView.text.toString()
@@ -274,9 +303,7 @@ class ErrorActivity : AppCompatActivity() {
         // BUNDLE TAGS
         const val ERROR_INFO = "error_info"
 
-        private const val ERROR_EMAIL_ADDRESS = "crashreport@driftloom.schabi.org"
-        private const val ERROR_EMAIL_SUBJECT = "Exception in "
-
-        private const val ERROR_GITHUB_ISSUE_URL = "https://github.com/sk3llo/DriftLoom/issues"
+        private const val ERROR_GITHUB_ISSUE_URL = "https://github.com/sk3llo/DriftLoom/issues/new"
+        private const val MAX_ISSUE_URL_LENGTH = 7000
     }
 }

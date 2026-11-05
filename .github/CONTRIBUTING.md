@@ -1,97 +1,72 @@
-### Please do **not** open pull requests for *new features* now, as we are planning to rewrite large chunks of the code. Only bugfix PRs will be accepted. More details will be announced soon!
-
 DriftLoom contribution guidelines
-===============================
+=================================
 
-## AI policy
+DriftLoom is a fork of [NewPipe](https://github.com/TeamNewPipe/NewPipe) with a native iOS app alongside the
+Android one. Please report DriftLoom problems here, not to Team NewPipe.
 
-* Using generative AI to develop new features or making larger code changes is generally prohibited. Please refrain from contributions which are heavily depending on AI generated source code because they are usually lacking a fundamental understanding of the overall project structure and thus come with poor quality. However, you are allowed to use gen. AI if you
-  * are aware of the project structure,
-  * ensure that the generated code follows the project structure,
-  * fully understand the generated code, and
-  * review the generated code completely.
-* Using AI to find the root cause of bugs and generating small fixes might be acceptable. However, gen. AI often does not fix the underlying problem but is trying to fix the symptoms. If you are using AI to fix bugs, ensure that the root cause is tackled.
-* The use of AI to generate documentation is allowed. We ask you to thoroughly check the quality of generated documentation – wrong, misleading or uninformative documentation is useless and wastes the reader's time. Ensure that reasoning is documented.
-* Using generative AI to write or fill in PR or issue templates is prohibited. Those texts are often lengthy and miss critical information.
-* PRs and issues that do not follow this AI policy can be closed without further explanation.
+## Reporting problems
 
+* **From the app** is easiest. On iOS, use **Settings → Help → Report a problem**, the Report button on an error,
+  or the prompt after a crash. On Android, use **Report on GitHub** on the error screen. These open a new issue
+  with the error, version and device filled in; nothing is sent until you submit it on GitHub.
+* **Already reported?** Search the [open and closed issues](https://github.com/sk3llo/DriftLoom/issues?q=is%3Aissue) first.
+* **One problem per issue**, in English, with steps to reproduce.
+* **Still happening?** Check the latest [release](https://github.com/sk3llo/DriftLoom/releases/latest).
 
-## Crash reporting
+YouTube changes often and sometimes blocks networks ("confirm you're not a bot"). DriftLoom doesn't try to get
+around those checks; see [Troubleshooting](../docs/user-guide/troubleshooting.md).
 
-Report crashes through the **automated crash report system** of DriftLoom.
-This way all the data needed for debugging is included in your bug report for GitHub.
-You'll see *exactly* what is sent, be able to add **your comments**, and then send it.
+## AI-assisted contributions
 
-## Issue reporting/feature requests
+You may use AI tools, but you are responsible for what you submit:
 
-* **Already reported**? Browse the [existing issues](https://github.com/sk3llo/DriftLoom/issues) to make sure your issue/feature hasn't been reported/requested.
-* **Already fixed**? Check whether your issue/feature is already fixed/implemented.
-* **Still relevant**? Check if the issue still exists in the latest release/beta version.
-* **Can you fix it**? If you are an Android/Java developer, you are always welcome to fix an issue or implement a feature yourself. PRs welcome! See [Code contribution](#code-contribution) for more info.
-* **Is it in English**? Issues in other languages will be ignored unless someone translates them.
-* **Is it one issue**? Multiple issues require multiple reports, that can be linked to track their statuses.
-* **The template**: Fill it out, everyone wins. Your issue has a chance of getting fixed.
+* Understand and review every line, and make sure it fits the project's structure.
+* Fix the root cause, not the symptom.
+* Test the change on a device or simulator and say how in the PR.
+* Write issue and PR descriptions yourself, or check every claim in them.
 
+Reports opened by the app's Report button are fine as they are; just add what you were doing.
 
 ## Translation
 
-* DriftLoom is translated via [Weblate](https://hosted.weblate.org/projects/newpipe/strings/). Log in there with your GitHub account, or register.
-* Add the language you want to translate if it is not there already: see [How to add a new language](https://github.com/sk3llo/DriftLoom/wiki/How-to-add-a-new-language-to-NewPipe) in the wiki.
-* DriftLoom uses the [PrettyTime](https://github.com/ocpsoft/prettytime) library to display localized versions of dates and times. It needs to be translated, too. Read [these instructions to add a new language](https://www.ocpsoft.org/prettytime/#section-14) and [this issue](https://github.com/sk3llo/DriftLoom/issues/9134) for more info.
+* **iOS:** strings live in Xcode string catalogs (`Localizable.xcstrings`) in `iosApp/iosApp`, `iosApp/DriftLoomShare`
+  and the two package targets in `iosApp/Playback`. English, Ukrainian and Portuguese are complete; to add a
+  language, open the catalogs in Xcode, add the language and translate every entry, including plural forms.
+* **Android:** strings are in `app/src/main/res/values-*/strings.xml`, inherited from NewPipe's translations.
+* Keep the user guide (`docs/user-guide`) in step if you change what a screen says.
 
 ## Code contribution
 
-### Guidelines
+### Before starting
 
-* Stick to DriftLoom's *style conventions* of [checkStyle](https://github.com/checkstyle/checkstyle) and [ktlint](https://github.com/pinterest/ktlint). They run each time you build the project.
-* Stick to [F-Droid contribution guidelines](https://f-droid.org/wiki/page/Inclusion_Policy).
-* In particular **do not bring non-free software** (e.g. binary blobs) into the project. Make sure you do not introduce any closed-source library from Google.
+* Comment on the issue you want to work on, or open one describing the change, so we can agree on the approach first.
+* Keep a PR to **one** fix or feature.
+* **No non-free software**: no binary blobs or closed-source libraries (such as Google Play Services). The
+  project follows the [F-Droid inclusion policy](https://f-droid.org/docs/Inclusion_Policy/).
 
-### Before starting development
+### Pull requests
 
-* If you want to help out with an existing bug report or feature request, **leave a comment** on that issue saying you want to try your hand at it.
-* If there is no existing issue for what you want to work on, **open a new one**  describing the changes you are planning to introduce. This gives the team and the community a chance to give **feedback** before you spend time on something that is already in development, should be done differently, or should be avoided completely.
-* Please show **intention to maintain your features** and code after you contribute a PR. Unmaintained code is a hassle for core developers. If you do not intend to maintain features you plan to contribute, please rethink your submission, or clearly state that in the PR description.
-* Create PRs that cover only **one specific issue/solution/bug**. Do not create PRs that are huge monoliths and could have been split into multiple independent contributions.
-* DriftLoom uses [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) to fetch data from services. If you need to change something there, you must test your changes in DriftLoom. Telling DriftLoom to use your extractor version can be accomplished by editing the `app/build.gradle` file: the comments under the "DriftLoom libraries" section of `dependencies` will help you out.
+* Work on a branch with a meaningful name and open the PR against `main`.
+* **Test before submitting.** Untested code is not merged. For iOS changes, run the package tests and the UI tests
+  you touched (see the [development notes](../docs/development.md)); for Android, build and run the app.
+* Keep the PR up to date with `main` and look into CI failures yourself.
+* Respond to review comments.
 
-### Creating a Pull Request (PR)
+## Building
 
-* Make changes on a **separate branch** with a meaningful name, not on the _master_ branch or the _dev_ branch. This is commonly known as *feature branch workflow*. You may then send your changes as a pull request (PR) on GitHub against the `dev` branch.
-* Please **test** (compile and run) your code before submitting changes! Ideally, provide test feedback in the PR description. Untested code will **not** be merged!
-* Respond if someone requests changes or otherwise raises issues about your PRs.
-* Try to figure out yourself why builds on our CI fail.
-* Make sure your PR is **up-to-date** with the rest of the code. Often, a simple click on "Update branch" will do the job, but if not, you must *rebase* your branch on the `dev` branch manually and resolve the conflicts on your own. You can find help [on the wiki](https://github.com/sk3llo/DriftLoom/wiki/How-to-merge-a-PR). Doing this makes the maintainers' job way easier.
+* **iOS:** Xcode 26.6 or newer. Open `iosApp/iosApp.xcodeproj` and run the `iosApp` scheme. Package tests:
+  `swift test --package-path iosApp/Playback`. Details in [docs/development.md](../docs/development.md).
+* **Android:** [Android Studio](https://developer.android.com/studio/) with JDK 21. Clone
+  `https://github.com/sk3llo/DriftLoom.git` (or your fork), open the folder and run the `app` configuration.
 
-## IDE setup & building the app
+### Style
 
-### Basic setup
-
-DriftLoom is developed using [Android Studio](https://developer.android.com/studio/). Learn more about how to install it and how it works in the [official documentation](https://developer.android.com/studio/intro). In particular, make sure you have accepted Android Studio's SDK licences. Once Android Studio is ready, setting up the DriftLoom project is fairly simple:
-- Clone the DriftLoom repository with `git clone https://github.com/TeamNewPipe/NewPipe.git` (or use the link from your own fork, if you want to open a PR).
-- Open the folder you just cloned with Android Studio.
-- Build and run it just like you would do with any other app, with the green triangle in the top bar.
-
-You may find [SonarLint](https://www.sonarlint.org/intellij)'s **inspections** useful in helping you to write good code and prevent bugs.
-
-### checkStyle setup
-
-The [checkStyle](https://github.com/checkstyle/checkstyle) plugin verifies that Java code abides by the project style. It runs automatically each time you build the project. If you want to view errors directly in the editor, instead of having to skim through the build output, you can install an Android Studio plugin:
-- Go to `File -> Settings -> Plugins`, search for `checkstyle` and install `CheckStyle-IDEA`.
-- Go to `File -> Settings -> Tools -> Checkstyle`.
-- Add DriftLoom's configuration file by clicking the `+` in the right toolbar of the "Configuration File" list.
-- Under the "Use a local Checkstyle file" bullet, click on `Browse` and, enter `checkstyle` folder under the project's root path and pick the file named `checkstyle.xml`.
-- Enable "Store relative to project location" so that moving the directory around does not create issues.
-- Insert a description in the top bar, then click `Next` and then `Finish`.
-- Activate the configuration file you just added by enabling the checkbox on the left.
-- Click `Ok` and you are done.
-
-### ktlint setup
-
-The [ktlint](https://github.com/pinterest/ktlint) plugin does the same job as checkStyle for Kotlin files. Installing the related plugin is as simple as going to `File -> Settings -> Plugins`, searching for `ktlint` and installing `Ktlint (unofficial)`.
+* Swift follows the surrounding code; keep views small and put logic that can be tested in the `DriftLoomPlayback` package.
+* Java is checked by [checkStyle](https://github.com/checkstyle/checkstyle) and Kotlin by
+  [ktlint](https://github.com/pinterest/ktlint) on every build. In Android Studio, the `CheckStyle-IDEA` plugin
+  with `checkstyle/checkstyle.xml` and the `Ktlint (unofficial)` plugin show problems in the editor.
 
 ## Communication
 
-* You can use a Matrix account to join the DriftLoom channel at [#driftloom:matrix.driftloom-ev.de](https://matrix.to/#/#newpipe:matrix.newpipe-ev.de). Some convenient clients, available both for phone and desktop, are listed at that link.
-* Alternatively, the #driftloom channel on Libera Chat (`ircs://irc.libera.chat:6697/driftloom`) can also be joined, as it is bridged to the Matrix room. [Click here for webchat](https://web.libera.chat/#newpipe)!
-* You can post your suggestions, changes, ideas etc. on either GitHub or Matrix (including via IRC).
+Use [GitHub issues](https://github.com/sk3llo/DriftLoom/issues) for bugs and ideas. DriftLoom has no chat room;
+the NewPipe Matrix and IRC channels are for NewPipe only.

@@ -4,8 +4,6 @@ body:
       value: |
         Thanks for taking the time to fill out this form! :hugs:
 
-        Note that you can also ask questions on our [IRC channel](https://web.libera.chat/#newpipe).
-
   - type: checkboxes
     id: checklist
     attributes:
@@ -13,7 +11,7 @@ body:
       options:
         - label: "I made sure that there are *no existing issues or discussions* - [open](https://github.com/sk3llo/DriftLoom/issues) or [closed](https://github.com/sk3llo/DriftLoom/issues?q=is%3Aissue+is%3Aclosed) - which I could contribute my information to."
           required: true
-        - label: "I have read the [FAQ](https://newpipe.net/FAQ/) and my question isn't listed."
+        - label: "I have read the [user guide](https://github.com/sk3llo/DriftLoom/blob/main/docs/user-guide/README.md) and my question isn't answered there."
           required: true
         - label: "I have taken the time to fill in all the required details. I understand that the question will be dismissed otherwise."
           required: true

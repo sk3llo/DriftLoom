@@ -816,7 +816,13 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 15), "The issue opens in the browser")
         let address = safari.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'URL' OR identifier == 'TabBarItemTitle'")).firstMatch
         XCTAssertTrue(address.waitForExistence(timeout: 15))
-        XCTAssertTrue(((address.value as? String) ?? address.label).contains("github.com"), "Opened GitHub (\(address.value ?? address.label))")
+        // Safari fills the address in once the page starts loading; GitHub may redirect to sign-in first.
+        let onGitHub = NSPredicate { element, _ in
+            guard let element = element as? XCUIElement else { return false }
+            return ((element.value as? String) ?? element.label).contains("github.com")
+        }
+        let opened = XCTWaiter.wait(for: [expectation(for: onGitHub, evaluatedWith: address)], timeout: 20) == .completed
+        XCTAssertTrue(opened, "Opened GitHub (\(address.value ?? address.label))")
         app.activate()
     }
 

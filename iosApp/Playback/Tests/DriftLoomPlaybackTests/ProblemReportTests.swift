@@ -13,19 +13,21 @@ final class ProblemReportTests: XCTestCase {
         XCTAssertEqual(url.path, "/sk3llo/DriftLoom/issues/new")
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         XCTAssertEqual(items.first { $0.name == "title" }?.value, "[iOS] Playback: The video can't be played (403). Try again.")
-        let body = try XCTUnwrap(items.first { $0.name == "body" }?.value)
-        XCTAssertTrue(body.contains("```\nThe video can't be played (403).\nTry again.\n```"))
-        XCTAssertTrue(body.contains("| Video | https://youtu.be/dQw4w9WgXcQ |"))
-        XCTAssertTrue(body.contains("| Device | iPhone9,3 |"))
-        XCTAssertTrue(body.contains("### What happened"))
+        // The repository only takes template issues, so the text goes into the form's fields by id, not `body`.
+        XCTAssertEqual(items.first { $0.name == "template" }?.value, "app_report.yml")
+        XCTAssertNil(items.first { $0.name == "body" })
+        XCTAssertEqual(items.first { $0.name == "error" }?.value, "The video can't be played (403).\nTry again.")
+        let details = try XCTUnwrap(items.first { $0.name == "details" }?.value)
+        XCTAssertTrue(details.contains("| Video | https://youtu.be/dQw4w9WgXcQ |"))
+        XCTAssertTrue(details.contains("| Device | iPhone9,3 |"))
     }
 
     func testPlusSignsAndPipesSurvive() throws {
         let report = ProblemReport(area: "Search", error: "C++ | tutorials", context: [.init("Query", "a|b")])
         let url = report.issueURL(environment: [])
         XCTAssertTrue(url.absoluteString.contains("C%2B%2B"), "A + would read as a space on GitHub")
-        let body = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "body" }?.value)
-        XCTAssertTrue(body.contains("| Query | a\\|b |"), "Pipes don't break the table")
+        let details = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "details" }?.value)
+        XCTAssertTrue(details.contains("| Query | a\\|b |"), "Pipes don't break the table")
     }
 
     func testLongErrorsAreShortenedToFitALink() {
@@ -38,6 +40,9 @@ final class ProblemReportTests: XCTestCase {
     func testGeneralReportHasNoErrorSection() {
         let body = ProblemReport(area: "General").body(environment: environment)
         XCTAssertFalse(body.contains("### Error"))
+        XCTAssertTrue(body.contains("### What happened") && body.contains("| Area | General |"))
+        let items = URLComponents(url: ProblemReport(area: "General").issueURL(environment: environment), resolvingAgainstBaseURL: false)?.queryItems ?? []
+        XCTAssertNil(items.first { $0.name == "error" })
         XCTAssertEqual(ProblemReport(area: "General").title, "[iOS] General")
     }
 }

@@ -25,12 +25,13 @@
 <!-- Delete this if it doesn't apply to your PR. -->
 - 
 
-#### APK testing
-<!-- Use a new, meaningfully named branch. The name is used as a suffix for the app ID to allow installing and testing multiple versions of DriftLoom, e.g. "commentfix", if your PR implements a bugfix for comments. (No names like "patch-0" and "feature-1".)  -->
-<!-- Remove the following line if you directly link the APK created by the CI pipeline. Directly linking is preferred if you need to let users test.-->
-The APK can be found by going to the "Checks" tab below the title. On the left pane, click on "CI", scroll down to "artifacts" and click "app" to download the zip file which contains the debug APK of this PR. You can find more info and a video demonstration [on this wiki page](https://github.com/sk3llo/DriftLoom/wiki/Download-APK-for-PR).
+#### Testing
+<!-- How did you test it? Device or simulator, OS version, and which tests you ran. -->
+- 
+
+<!-- Android: the CI run's "app" artifact under the Checks tab contains a debug APK of this PR. -->
 
 #### Due diligence
 - [ ] I read the [contribution guidelines](https://github.com/sk3llo/DriftLoom/blob/HEAD/.github/CONTRIBUTING.md).
-- [ ] The proposed changes follow the [AI policy](https://github.com/sk3llo/DriftLoom/blob/HEAD/.github/CONTRIBUTING.md#ai-policy).
-- [ ] I tested the changes using an emulator or a physical device.
+- [ ] The changes follow the [AI-assisted contributions](https://github.com/sk3llo/DriftLoom/blob/HEAD/.github/CONTRIBUTING.md#ai-assisted-contributions) rules.
+- [ ] I tested the changes on a simulator, emulator or physical device.
