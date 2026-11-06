@@ -1,15 +1,18 @@
 # Development notes
 
+How to build and test DriftLoom, and a running record of what has been implemented and verified.
+For using the app, see the [user guide](user-guide/README.md).
+
 ## Releasing
 
 Versions: Android `DRIFTLOOM_VERSION_NAME`/`DRIFTLOOM_VERSION_CODE` in `buildSrc/src/main/kotlin/ProjectConfig.kt`,
 iOS `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` in `iosApp/Configuration/Config.xcconfig`. Raise both version
 codes/build numbers with every release.
 
-1. Bump the versions, commit, and push to `main`.
+1. Bump the versions, add `docs/release-notes/<version>.md` (the notes shown on the release), commit, and push to `main`.
 2. Tag the commit `v<version>` (for example `v1.0`) and push the tag. The **Release** workflow builds the signed
    APK and the unsigned IPA, with SHA-256 files, and attaches them to a draft GitHub release.
-3. Check the draft, write the notes, and publish it.
+3. Check the draft and publish it.
 
 Running the workflow by hand (Actions → Release → Run workflow) builds the same files as artifacts without a release.
 
@@ -23,9 +26,6 @@ Running the workflow by hand (Actions → Release → Run workflow) builds the s
   the release APK is unsigned. Losing the keystore means existing installs can't be updated, so keep the
   maintainer's offline backup safe.
 
-
-How to build and test DriftLoom, and a running record of what has been implemented and verified.
-For using the app, see the [user guide](user-guide/README.md).
 
 ## Build Android
 

@@ -98,6 +98,9 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           ls -l dist
+          # Notes come from docs/release-notes/<version>.md at the tagged commit.
+          gh api "repos/$GITHUB_REPOSITORY/contents/docs/release-notes/${TAG#v}.md?ref=$TAG" \
+            -H "Accept: application/vnd.github.raw" > notes.md \
+            || echo "Install guide: https://github.com/$GITHUB_REPOSITORY/blob/main/docs/install-ios.md. Check downloads against the .sha256 files." > notes.md
           gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
-            --title "DriftLoom ${TAG#v}" \
-            --notes "iPhone and iPad: install DriftLoom-*.ipa with AltStore or SideStore, see docs/install-ios.md. Android: install DriftLoom-*.apk. Check downloads against the .sha256 files."
+            --title "DriftLoom ${TAG#v}" --notes-file notes.md
