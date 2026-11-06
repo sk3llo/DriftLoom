@@ -214,10 +214,11 @@ struct HomeView: View {
                             .accessibilityLabel("Close main menu")
                         VStack(alignment: .leading, spacing: 0) {
                             VStack(alignment: .leading, spacing: 10) {
-                                Label("DriftLoom", systemImage: "play.rectangle.fill").font(.title2.weight(.bold))
+                                Label { Text("DriftLoom") } icon: { Image("BrandMark").resizable().scaledToFit().frame(width: 28, height: 28) }
+                                    .font(.title2.weight(.bold))
                                 Text("YouTube · SoundCloud").font(.subheadline)
                             }
-                            .foregroundColor(.white).frame(maxWidth: .infinity, alignment: .leading).padding(24).background(AppStyle.accent)
+                            .foregroundColor(.white).frame(maxWidth: .infinity, alignment: .leading).padding(24).background(AppStyle.bar)
                             ScrollView {
                                 VStack(spacing: 0) {
                                     ForEach(HomeSection.allCases) { section in

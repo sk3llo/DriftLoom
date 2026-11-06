@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generates every DriftLoom icon asset from one geometry. Run from the repo root on macOS:
     python3 branding/generate.py
-Rasterizes with qlmanage (WebKit) and resizes with sips, so it needs no extra tools."""
+Rasterizes with qlmanage (WebKit) and resizes with sips. qlmanage draws transparency as white, so shapes that
+need transparent corners are cut out with a separately rendered black-on-white mask, using Pillow."""
 import json, os, shutil, subprocess, tempfile
 
 # Brand colours. The icon background is the app's main colour (toolbar); stripes are the accent.
@@ -58,6 +59,21 @@ def render(svg, out, size, opaque=False, height=None):
         subprocess.run(["sips", "-Z", str(size), png, "--out", out], check=True, capture_output=True)
     else:
         shutil.copy(png, out)
+
+def render_masked(color_svg, mask_svg, out, size):
+    """Renders color_svg and uses mask_svg (black shape on white) as its alpha channel."""
+    from PIL import Image, ImageOps
+    color_png, mask_png = os.path.join(TMP, "color.png"), os.path.join(TMP, "mask.png")
+    render(color_svg, color_png, 1024)
+    render(mask_svg, mask_png, 1024)
+    image = Image.open(color_png).convert("RGB")
+    alpha = ImageOps.invert(Image.open(mask_png).convert("L"))
+    image.putalpha(alpha)
+    image.resize((size, size), Image.LANCZOS).save(out, optimize=True)
+
+def svg_shape(inner):
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<rect width="1024" height="1024" fill="#FFFFFF"/>{inner}</svg>'''
 
 def vector(width_dp, viewport, body, extra_ns=False):
     ns = ' xmlns:aapt="http://schemas.android.com/aapt"' if extra_ns else ""
@@ -122,13 +138,24 @@ for density in ("mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"):
         os.remove(fg)
 # Legacy launcher icons (API 23-25): round, like the previous ones.
 for density, px in (("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192)):
-    render(svg_icon("circle"), f"{RES}/mipmap-{density}/ic_launcher.png", px)
+    render_masked(svg_icon("square"), svg_shape('<circle cx="512" cy="512" r="512" fill="#000000"/>'),
+                  f"{RES}/mipmap-{density}/ic_launcher.png", px)
 
 # --- iOS -------------------------------------------------------------------------------------
 contents = json.load(open(f"{IOS}/Contents.json"))
 for name in sorted({i["filename"] for i in contents["images"] if "filename" in i}):
     px = int(name.rsplit("-", 1)[1].split(".")[0])
     render(svg_icon("square"), f"{IOS}/{name}", px, opaque=True)
+
+# The white mark used in the iOS menu header (template image, 28pt).
+MARK_SHAPE = f'<defs><clipPath id="tri"><path d="{TRIANGLE}"/></clipPath></defs><g transform="translate(-8,0)"><path clip-path="url(#tri)" fill="#000000" d="{stripe_path(5, 124, 84)}"/></g>'
+MARK = os.path.join(ROOT, "iosApp/iosApp/Assets.xcassets/BrandMark.imageset")
+os.makedirs(MARK, exist_ok=True)
+for scale in (1, 2, 3):
+    render_masked(svg_shape(""), svg_shape(MARK_SHAPE).replace('fill="#FFFFFF"/>', 'fill="#FFFFFF"/>', 1),
+                  f"{MARK}/brand-mark@{scale}x.png", 28 * scale)
+write(f"{MARK}/Contents.json", json.dumps({"images": [{"filename": f"brand-mark@{s}x.png", "idiom": "universal", "scale": f"{s}x"} for s in (1, 2, 3)],
+    "info": {"author": "xcode", "version": 1}, "properties": {"template-rendering-intent": "template"}}, indent=2) + "\n")
 
 # --- F-Droid / store artwork ---------------------------------------------------------------
 render(svg_icon("square"), f"{FASTLANE}/icon.png", 512, opaque=True)
