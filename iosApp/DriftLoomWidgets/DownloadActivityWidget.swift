@@ -11,7 +11,8 @@ struct DriftLoomWidgets: WidgetBundle {
 
 /// Download progress on the lock screen and in the Dynamic Island.
 struct DownloadActivityWidget: Widget {
-    private static let accent = Color(red: 205 / 255, green: 32 / 255, blue: 31 / 255)
+    /// DriftLoom's accent (the icon's coral); Live Activities sit on a dark background.
+    private static let accent = Color(red: 0xFF / 255, green: 0x8A / 255, blue: 0x5B / 255)
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: DownloadActivityAttributes.self) { context in
             LockScreenView(summary: context.state).padding(16).activityBackgroundTint(Color.black.opacity(0.75)).activitySystemActionForegroundColor(.white)

@@ -3,11 +3,16 @@ import DriftLoomPlayback
 import SwiftUI
 
 enum AppStyle {
-    static let accent = Color(red: 205 / 255, green: 32 / 255, blue: 31 / 255)
-    /// The home toolbar, as in NewPipe: the accent red, deeper in dark mode.
+    /// Buttons, links and progress: the icon's coral stripes, darker in light mode so text stays readable.
+    static let accent = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark ? UIColor(red: 0xFF / 255, green: 0x8A / 255, blue: 0x5B / 255, alpha: 1)
+            : UIColor(red: 0xC2 / 255, green: 0x41 / 255, blue: 0x0C / 255, alpha: 1)
+    })
+    /// The home toolbar: the app icon's violet background, deeper in dark mode. Keep it in step with
+    /// branding/generate.py and the Android `*_youtube_primary_color` resources.
     static let bar = Color(UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 0.55, green: 0.13, blue: 0.12, alpha: 1)
-            : UIColor(red: 205 / 255, green: 32 / 255, blue: 31 / 255, alpha: 1)
+        traits.userInterfaceStyle == .dark ? UIColor(red: 0x1F / 255, green: 0x16 / 255, blue: 0x50 / 255, alpha: 1)
+            : UIColor(red: 0x2E / 255, green: 0x1C / 255, blue: 0x66 / 255, alpha: 1)
     })
 }
 

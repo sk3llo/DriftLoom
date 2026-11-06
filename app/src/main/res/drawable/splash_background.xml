@@ -4,9 +4,9 @@
     <item
         android:drawable="@color/light_youtube_primary_color"/>
 
-    <item>
-        <bitmap
-            android:src="@drawable/ic_driftloom_triangle_white"
-            android:gravity="center_vertical|center_horizontal" />
-    </item>
+    <item
+        android:width="96dp"
+        android:height="96dp"
+        android:gravity="center"
+        android:drawable="@drawable/ic_driftloom_triangle_white" />
 </layer-list>
