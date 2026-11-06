@@ -1,1 +1,0 @@
-Opgelost: Database migratie verholpen waardoor DriftLoom in sommige zeldzame gevallen niet kon starten.

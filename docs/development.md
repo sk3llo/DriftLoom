@@ -16,6 +16,9 @@ codes/build numbers with every release.
 
 Running the workflow by hand (Actions → Release → Run workflow) builds the same files as artifacts without a release.
 
+Stores: [F-Droid](fdroid/README.md) (Android, needs the repository public) and [AltStore PAL](altstore-pal.md)
+(iPhone in the EU, needs Apple notarization). The repository stays private until DriftLoom is live in a store.
+
 - **IPA:** `scripts/build-ios-ipa.sh [output-dir]` builds it locally the same way: Release configuration, no test
   flags (the script fails if any are compiled in), unsigned so AltStore/SideStore/Sideloadly can sign it.
   Users install it as described in [install-ios.md](install-ios.md).
@@ -38,7 +41,7 @@ Use JDK 21 and an Android SDK with the compile SDK specified in
 ```
 
 Release builds use optimization and resource shrinking. Signing keys are supplied through
-environment variables (see Releasing) and must never be committed. The release application ID is `org.schabi.driftloom`.
+environment variables (see Releasing) and must never be committed. The application ID is `net.driftloom.app` (debug builds add `.debug`); the code namespace is still `org.schabi.driftloom`.
 Upstream automatic updates require the upstream signing certificate and are unavailable
 for locally signed DriftLoom builds.
 

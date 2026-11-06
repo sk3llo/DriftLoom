@@ -1,1 +1,0 @@
-Fixed database migration which prevented DriftLoom from starting in some rare cases.

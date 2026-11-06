@@ -1,0 +1,5 @@
+First DriftLoom release, based on NewPipe 0.29.1.
+
+• Own app ID: installs alongside NewPipe
+• Report on an error screen opens a prefilled GitHub issue
+• No donation or email prompts

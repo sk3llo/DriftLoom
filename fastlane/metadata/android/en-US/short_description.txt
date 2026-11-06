@@ -1,1 +1,1 @@
-A free lightweight YouTube frontend for Android.
+Free YouTube and SoundCloud client: no ads, no tracking, no account

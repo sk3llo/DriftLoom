@@ -1,1 +1,0 @@
-Bazı nadir durumlarda DriftLoom'ın başlamasını engelleyen veri tabanı taşıması düzeltildi.

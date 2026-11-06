@@ -1,0 +1,32 @@
+# Draft recipe for https://gitlab.com/fdroid/fdroiddata (metadata/net.driftloom.app.yml).
+# Submit it in a merge request once the repository is public; see docs/fdroid/README.md.
+AntiFeatures:
+  NonFreeNet:
+    en-US: Relies on YouTube, SoundCloud and other proprietary web services.
+Categories:
+  - Multimedia
+  - Internet
+License: GPL-3.0-or-later
+SourceCode: https://github.com/sk3llo/DriftLoom
+IssueTracker: https://github.com/sk3llo/DriftLoom/issues
+Changelog: https://github.com/sk3llo/DriftLoom/releases
+
+AutoName: DriftLoom
+
+RepoType: git
+Repo: https://github.com/sk3llo/DriftLoom.git
+
+Builds:
+  - versionName: '1.0'
+    versionCode: 1
+    commit: v1.0
+    subdir: app
+    gradle:
+      - yes
+    scandelete:
+      - app/src/test/resources/settings
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: '1.0'
+CurrentVersionCode: 1

@@ -39,7 +39,8 @@ configure<ApplicationExtension> {
     namespace = DRIFTLOOM_APPLICATION_ID_OLD
 
     defaultConfig {
-        applicationId = DRIFTLOOM_APPLICATION_ID_OLD
+        // Store ID (F-Droid needs a fork to have its own); the Kotlin/Java namespace stays org.schabi.driftloom.
+        applicationId = DRIFTLOOM_APPLICATION_ID_NEW
         resValue("string", "app_name", "DriftLoom")
         minSdk {
             version = release(DRIFTLOOM_VERSION_SDK_MIN)

@@ -1,1 +1,15 @@
-DriftLoom does not use any Google framework libraries, or the YouTube API. It only parses the website in order to gain the information it needs. Therefore this app can be used on devices without Google Services installed. Also, you don't need a YouTube account to use DriftLoom, and it's FLOSS.
+DriftLoom is a free YouTube and SoundCloud client with no ads, no tracking and no account. It is a fork of NewPipe and works the same way: it reads the public websites directly, without the YouTube API or any Google libraries, so it also runs on devices without Google services.
+
+<b>Features</b>
+• Search YouTube and SoundCloud with filters; browse channels, playlists, trending, live streams and comments
+• Subscribe to channels without an account, sort them into groups and get a combined "What's new" feed, with optional notifications for new videos
+• Background audio, popup player, audio-only mode, chapters, subtitles, playback speed and resolution limits
+• Queues, history, saved videos and local playlists that stay on your device
+• Download videos, audio and subtitles for offline use
+• Import subscriptions from NewPipe or YouTube (Google Takeout); back up and restore your data
+• Opens YouTube and SoundCloud links shared from other apps
+
+<b>Privacy</b>
+DriftLoom has no analytics, no ads and no DriftLoom server. The app talks only to the services you use, and your library stays on your device.
+
+DriftLoom is an independent fork and isn't affiliated with Team NewPipe; please report DriftLoom problems to DriftLoom, not to NewPipe.
