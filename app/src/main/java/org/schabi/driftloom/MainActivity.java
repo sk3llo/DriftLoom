@@ -20,7 +20,6 @@
 
 package org.schabi.driftloom;
 
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -92,11 +91,8 @@ import org.schabi.driftloom.util.SerializedCache;
 import org.schabi.driftloom.util.ServiceHelper;
 import org.schabi.driftloom.util.StateSaver;
 import org.schabi.driftloom.util.ThemeHelper;
-import org.schabi.driftloom.util.external_communication.ShareUtils;
 import org.schabi.driftloom.views.FocusOverlayView;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -190,10 +186,6 @@ public class MainActivity extends AppCompatActivity {
             // if this is enabled by the user.
             NotificationWorker.initialize(this);
         }
-        if (!DEBUG) {
-            showKeepAndroidDialog();
-        }
-
         MigrationManager.showUserInfoIfPresent(this);
     }
 
@@ -947,53 +939,6 @@ public class MainActivity extends AppCompatActivity {
         final int sheetState = bottomSheetBehavior.getState();
         return sheetState == BottomSheetBehavior.STATE_HIDDEN
                 || sheetState == BottomSheetBehavior.STATE_COLLAPSED;
-    }
-
-    private void showKeepAndroidDialog() {
-        final var prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        final var lastCheckKey = getString(R.string.kao_last_checked_key);
-        final var lastCheck = Instant.ofEpochMilli(prefs.getLong(lastCheckKey, 0));
-        final var now = Instant.now();
-
-        if (lastCheck.plus(30, ChronoUnit.DAYS).isBefore(now)) {
-            final String detailsUrl = getKeepAndroidOpenDetailsUrl();
-            final var solutionUrl = "https://github.com/woheller69/FreeDroidWarn#solutions";
-
-            final var dialog = new AlertDialog.Builder(this)
-                    .setTitle("Keep Android Open")
-                    .setCancelable(false)
-                    .setMessage(R.string.kao_dialog_warning)
-                    .setPositiveButton(android.R.string.ok, (d, w) -> prefs.edit()
-                            .putLong(lastCheckKey, now.toEpochMilli())
-                            .apply())
-                    .setNeutralButton(R.string.kao_solution, null)
-                    .setNegativeButton(R.string.kao_dialog_more_info, null)
-                    .show();
-
-            // If we use setNeutralButton/setNegativeButton, dialog will close after pressing the
-            // buttons, but we want it to close only when positive button is pressed
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                    .setOnClickListener(v -> ShareUtils.openUrlInBrowser(this, detailsUrl));
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-                    .setOnClickListener(v -> ShareUtils.openUrlInBrowser(this, solutionUrl));
-        }
-    }
-
-    @NonNull
-    private static String getKeepAndroidOpenDetailsUrl() {
-        final var supportedLanguages = List.of("fr", "de", "ca", "es", "id", "it", "pl",
-                "pt", "cs", "sk", "fa", "ar", "tr", "el", "th", "ru", "uk", "ko", "zh", "ja");
-        final String kaoBaseUrl = "https://keepandroidopen.org/";
-        final var locale = Localization.getAppLocale();
-        if (supportedLanguages.contains(locale.getLanguage())) {
-            if ("zh".equals(locale.getLanguage())) {
-                return kaoBaseUrl + ("TW".equals(locale.getCountry()) ? "zh-TW" : "zh-CN");
-            } else {
-                return kaoBaseUrl + locale.getLanguage();
-            }
-        } else {
-            return kaoBaseUrl;
-        }
     }
 
 }
