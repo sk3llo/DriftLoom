@@ -4,8 +4,9 @@ AntiFeatures:
   NonFreeNet:
     en-US: Relies on YouTube, SoundCloud and other proprietary web services.
 Categories:
-  - Multimedia
   - Internet
+  - Multimedia
+  - Online Media Player
 License: GPL-3.0-or-later
 SourceCode: https://github.com/sk3llo/DriftLoom
 IssueTracker: https://github.com/sk3llo/DriftLoom/issues
@@ -23,8 +24,14 @@ Builds:
     subdir: app
     gradle:
       - yes
-    scandelete:
-      - app/src/test/resources/settings
+    rm:
+      - doc
+      - app/src/test
+
+# Reproducible: F-Droid's build of v1.0 matches the GitHub release APK once our signature is copied on, so
+# F-Droid publishes the APK signed with the DriftLoom key and both install sources update each other.
+Binaries: https://github.com/sk3llo/DriftLoom/releases/download/v%v/DriftLoom-%v.apk
+AllowedAPKSigningKeys: 3959fc6b7a604ce8ea5ccf1f88ecc554507a1f3e706e0df9f625d70d378617ad
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
