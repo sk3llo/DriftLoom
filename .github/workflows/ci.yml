@@ -82,6 +82,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # The emulator's userdata partition needs about 7.4 GB, and ubuntu-latest sometimes has only about 7 GB free.
+      # Removing toolchains this job doesn't use (.NET, GHC, CodeQL, Boost, Swift) frees well over 10 GB.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift
+          df -h /
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
