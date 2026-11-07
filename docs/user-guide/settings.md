@@ -1,6 +1,6 @@
 # Settings
 
-Open **Settings** from the menu or the three dots on Home.
+Tap **Settings** in the tab bar.
 
 ![Settings](images/settings.jpg)
 
@@ -8,7 +8,7 @@ Open **Settings** from the menu or the three dots on Home.
 
 - **Theme**: System, Light or Dark.
 - **Language**: the app's language; opens DriftLoom in the iPhone's Settings app. See [Language and region](languages-and-regions.md).
-- **Home tabs**: which tabs Home shows, and their order. See [Home, tabs and the menu](home-and-menu.md).
+- **Home tabs**: which tabs Home shows, and their order. See [Home and the tab bar](home-and-menu.md).
 
 ## YouTube content
 

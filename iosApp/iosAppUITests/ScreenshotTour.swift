@@ -32,24 +32,39 @@ final class ScreenshotTour: XCTestCase {
         if target.waitForExistence(timeout: timeout) { target.tap() } else { XCTFail("Missing \(id)") }
     }
     /// The visible one of several elements sharing an identifier (the home tab strip stays behind the player).
-    private func tapVisible(_ id: String) {
-        _ = app.buttons[id].firstMatch.waitForExistence(timeout: 10)
-        if let target = app.buttons.matching(identifier: id).allElementsBoundByIndex.first(where: { $0.isHittable }) { target.tap() }
-        else { XCTFail("No visible \(id)") }
-    }
     private func closeSheet() {
         let close = app.buttons["closeSheet"].firstMatch
         if close.waitForExistence(timeout: 3) { close.tap() } else { app.swipeDown(velocity: .fast) }
         sleep(1)
     }
-    /// Taps the status bar area, outside menus and action sheets.
-    private func dismissOverlay() { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.02)).tap(); sleep(1) }
+    /// Closes a menu with a tap on the navigation bar's title, which does nothing on its own.
+    private func dismissOverlay() { app.navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); sleep(1) }
     private func back() { app.navigationBars.buttons.element(boundBy: 0).tap(); sleep(1) }
-    private func drawer(_ id: String) {
-        tap("mainMenu")
-        let target = element(id)
-        if target.waitForExistence(timeout: 5), !target.isHittable { element("navigationDrawer").swipeUp() }
-        tap(id)
+    private func tab(_ title: String) { app.tabBars.buttons[title].firstMatch.tap(); sleep(1) }
+    /// Opens the Home title menu and picks a tab from it.
+    private func homeTab(_ title: String) {
+        openHomeMenu()
+        let item = app.buttons[title].firstMatch
+        if item.waitForExistence(timeout: 5) { item.tap() } else { XCTFail("Missing home tab \(title)") }
+        sleep(1)
+    }
+    private func openHomeMenu() {
+        app.navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        if !app.buttons["Customize tabs"].waitForExistence(timeout: 5) { XCTFail("The home menu didn't open") }
+        sleep(1)
+    }
+    /// Picks an item in an open menu, which also closes it.
+    private func pick(_ title: String) {
+        let item = app.buttons[title].firstMatch
+        if item.waitForExistence(timeout: 5) { item.tap() } else { XCTFail("Missing \(title)") }
+        sleep(1)
+    }
+    /// Taps segment `index` of the visible segmented control with this identifier.
+    private func segment(_ id: String, _ index: Int) {
+        _ = app.segmentedControls[id].firstMatch.waitForExistence(timeout: 10)
+        if let control = app.segmentedControls.matching(identifier: id).allElementsBoundByIndex.first(where: { $0.isHittable }) {
+            control.buttons.element(boundBy: index).tap()
+        } else { XCTFail("No visible \(id)") }
     }
     private func scrollShots(_ name: String, pages: Int) {
         shot(name)
@@ -57,41 +72,45 @@ final class ScreenshotTour: XCTestCase {
     }
 
     func testTour() {
+        app.launchArguments += ["--library-smoke-section", "Home"]
         app.launch()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 15))
-        sleep(3); shot("home-live")
-        tap("mainMenu"); shot("drawer"); element("navigationDrawer").swipeUp(); shot("drawer-2")
-        tap("drawer-section-Subscriptions"); shot("subscriptions")
-        tap("subscriptionGroupFilter"); shot("group-filter"); app.buttons["selectGroup-all"].firstMatch.tap()
-        tap("manageSubscriptionGroups"); shot("groups"); tap("createSubscriptionGroup"); shot("group-editor")
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 15))
+        sleep(4); shot("home-live")
+        openHomeMenu(); shot("home-menu")
+        pick("Trending music"); sleep(4); shot("trending")
+
+        tab("Subscriptions"); sleep(2); shot("feed")
+        tap("feedFilters"); shot("feed-filters"); pick("All recent uploads")
+        app.segmentedControls.buttons["Channels"].firstMatch.tap(); sleep(1); shot("subscriptions")
+        tap("subscriptionGroupFilter"); shot("group-filter")
+        app.buttons["Manage subscription groups"].firstMatch.tap(); sleep(1); shot("groups"); tap("createSubscriptionGroup"); shot("group-editor")
         tap("cancelGroupEdit"); tap("closeSubscriptionGroups")
-        drawer("drawer-section-What's new"); sleep(2); shot("feed")
-        tap("feedFilters"); shot("feed-filters"); dismissOverlay()
-        drawer("drawer-section-Bookmarked"); shot("bookmarks")
+
+        tab("Library"); shot("library")
+        tap("library-bookmarks"); shot("bookmarks")
         let saved = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "itemActions-")).firstMatch
         if saved.waitForExistence(timeout: 3) { saved.tap(); shot("item-actions"); dismissOverlay() }
-        let create = app.buttons["createPlaylist"].firstMatch
+        let create = app.buttons["newPlaylist"].firstMatch
         if create.waitForExistence(timeout: 3), create.isHittable { create.tap(); shot("new-playlist"); closeSheet() }
-        drawer("drawer-section-History"); shot("history")
-        drawer("drawer-section-Trending music"); sleep(4); shot("trending")
+        back()
+        tap("library-history"); shot("history"); back()
+        tap("library-downloads"); shot("downloads"); tap("openDownloadSettings"); sleep(2); shot("download-settings"); back(); back()
 
-        tap("openSearch"); shot("search-empty")
-        let query = app.textFields["searchQuery"]
+        tab("Search"); shot("search-empty")
+        let query = app.searchFields.firstMatch
         if query.waitForExistence(timeout: 5) { query.tap(); query.typeText("lofi"); sleep(2); shot("search-suggestions"); query.typeText("\n") }
         sleep(6); shot("search-results")
-        tap("searchFilters"); shot("search-filters"); dismissOverlay()
-        tap("searchService"); app.segmentedControls.buttons.element(boundBy: 1).tap(); sleep(1); shot("search-soundcloud")
-        tap("closeSearch")
+        tap("searchFilters"); shot("search-filters"); pick("Reset filters")
+        segment("searchService", 1); sleep(4); shot("search-soundcloud")
 
-        drawer("drawer-Open a link"); shot("open-link"); closeSheet()
-        drawer("drawer-Downloads"); shot("downloads"); tap("openDownloadSettings"); sleep(2); shot("download-settings"); back(); closeSheet()
-        drawer("drawer-About"); shot("about"); closeSheet()
-        drawer("drawer-Settings"); scrollShots("settings", pages: 4)
+        tab("Home"); tap("openLink"); shot("open-link"); closeSheet()
+        tab("Settings"); scrollShots("settings", pages: 4)
         app.swipeDown(); app.swipeDown(); app.swipeDown(); app.swipeDown()
         tap("openHomeTabs"); scrollShots("home-tabs", pages: 2); back()
         for _ in 0..<4 where !element("openBackup").isHittable { app.swipeUp() }
         tap("openBackup"); scrollShots("backup", pages: 3); back()
-        closeSheet()
+        for _ in 0..<4 where !element("openAbout").isHittable { app.swipeUp() }
+        tap("openAbout"); shot("about"); back()
 
         // The player with a live video: controls, options, tabs and sheets.
         app.terminate()
@@ -101,9 +120,9 @@ final class ScreenshotTour: XCTestCase {
         sleep(6); shot("player")
         tap("playbackSpeed"); shot("speed"); dismissOverlay()
         tap("playbackOptions"); shot("player-options"); dismissOverlay()
-        tapVisible("sectionTab-1"); sleep(6); shot("comments")
-        tapVisible("sectionTab-2"); shot("description")
-        tapVisible("sectionTab-3"); shot("queue")
+        segment("sectionPicker", 1); sleep(6); shot("comments")
+        segment("sectionPicker", 2); shot("description")
+        segment("sectionPicker", 3); shot("queue")
         tap("detailDownload"); sleep(8); shot("download-sheet"); closeSheet()
         tap("minimizePlayer"); sleep(1); shot("mini-player")
 

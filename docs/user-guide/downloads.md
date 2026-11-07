@@ -6,11 +6,11 @@ In the player, tap **Download** in the row of buttons under the title. Pick a fo
 
 ![Choosing a download](images/download-sheet.jpg)
 
-Downloads continue in the background. Their progress shows in a strip above the bottom of the screen, as notifications, and (on iOS 16.1 and later) on the Lock Screen and in the Dynamic Island.
+Downloads continue in the background. Their progress shows in a strip above the tab bar, as notifications, and (on iOS 16.1 and later) on the Lock Screen and in the Dynamic Island.
 
 ## Your downloads
 
-Open **Downloads** from the menu. From there you can **Play offline**, **Cancel download**, **Retry download** after a problem, or swipe left to **Delete** a download from the iPhone.
+Open **Library → Downloads**, or tap the progress strip. From there you can **Play offline**, **Cancel download**, **Retry download** after a problem, or swipe left to **Delete** a download from the iPhone.
 
 ![Downloads and storage](images/download-settings.jpg)
 

@@ -1,6 +1,6 @@
 # Live, gaming and charts
 
-DriftLoom brings YouTube's own curated pages to your home tabs:
+DriftLoom brings YouTube's own curated pages to Home:
 
 - **Live**: live streams right now.
 - **Gaming**: gaming videos and streams.
@@ -11,7 +11,7 @@ DriftLoom brings YouTube's own curated pages to your home tabs:
 
 ![Trending music](images/trending.jpg)
 
-Live, Trending music and the others are on Home by default; add the rest from the menu or from [Customize tabs](home-and-menu.md).
+Live, Trending music and the others are on Home by default; add the rest with [Customize tabs](home-and-menu.md) in the Home title menu.
 
 ## See more
 

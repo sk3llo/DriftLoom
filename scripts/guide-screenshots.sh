@@ -21,15 +21,17 @@ python3 - "$WORK/tour/en" docs/user-guide/images <<'PY'
 import sys
 from PIL import Image
 tour, out = sys.argv[1:]
-# guide image -> tour screenshot (see iosApp/iosAppUITests/ScreenshotTour.swift for the order)
-shots = {"home": "01-home-live", "drawer": "02-drawer", "subscriptions": "04-subscriptions",
-         "bookmarks": "10-bookmarks", "item-actions": "11-item-actions", "trending": "13-trending",
-         "search-suggestions": "15-search-suggestions", "search-results": "16-search-results",
-         "open-link": "19-open-link", "download-settings": "21-download-settings", "settings": "23-settings",
-         "home-tabs": "27-home-tabs", "backup": "29-backup", "player": "32-player",
-         "download-sheet": "38-download-sheet", "player-scrub": "40-player-scrub"}
+# guide image -> tour screenshot name (iosApp/iosAppUITests/ScreenshotTour.swift numbers them in tour order)
+import glob
+shots = {"home": "home-live", "home-menu": "home-menu", "subscriptions": "subscriptions", "library": "library",
+         "bookmarks": "bookmarks", "item-actions": "item-actions", "trending": "trending",
+         "search-suggestions": "search-suggestions", "search-results": "search-results",
+         "open-link": "open-link", "download-settings": "download-settings", "settings": "settings",
+         "home-tabs": "home-tabs", "backup": "backup", "player": "player",
+         "download-sheet": "download-sheet", "player-scrub": "player-scrub"}
 for name, shot in shots.items():
-    image = Image.open(f"{tour}/{shot}.png").convert("RGB")
+    path, = glob.glob(f"{tour}/[0-9][0-9]-{shot}.png")
+    image = Image.open(path).convert("RGB")
     image.resize((420, round(420 * image.height / image.width)), Image.LANCZOS).save(f"{out}/{name}.jpg", quality=82, optimize=True)
     print("updated", name)
 PY

@@ -23,7 +23,7 @@ struct PlaybackFormatPicker: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .navigationTitle("Playback format").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") } }
             .task {
                 do { if let id = playback.videoID { choices = try await YouTubeDownloadResolver().choices(videoID: id) } }
                 catch { self.error = error.localizedDescription }

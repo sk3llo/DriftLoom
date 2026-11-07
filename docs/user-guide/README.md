@@ -1,7 +1,7 @@
 # DriftLoom User Guide
 
 How to use DriftLoom on iPhone and iPad: watching, searching, your library, downloads and every setting.
-The same guide is built into the app: **Settings → Help → User guide**, **User guide** in the main menu, or **About → User guide**.
+The same guide is built into the app: **Settings → Help → User guide**, or **Settings → About → User guide**.
 
 _Last updated: October 2026_
 
@@ -12,7 +12,7 @@ _Last updated: October 2026_
 ## Getting started
 
 - [First steps](getting-started.md)
-- [Home, tabs and the menu](home-and-menu.md)
+- [Home and the tab bar](home-and-menu.md)
 - [Language and region](languages-and-regions.md)
 
 ## Finding videos

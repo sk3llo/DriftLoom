@@ -2,7 +2,7 @@
 
 ## Channel pages
 
-Tap a channel's name under a video, or a channel in search results. Its page shows the channel's videos, shorts, live streams and playlists in tabs. **Play all** plays the list, **Enqueue** adds it to your queue, and **SUBSCRIBE** follows the channel.
+Tap a channel's name under a video, or a channel in search results. Its page shows the channel's videos, shorts, live streams and playlists in tabs. **Play all** plays the list, **Enqueue** adds it to your queue, and **Subscribe** follows the channel.
 
 ## The ⋯ menu
 

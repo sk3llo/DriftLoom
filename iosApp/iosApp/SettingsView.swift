@@ -3,7 +3,6 @@ import DriftLoomPlayback
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var library: LibraryStore
     @State private var clearTarget: String?
@@ -128,21 +127,23 @@ struct SettingsView: View {
                     NavigationLink("Backup and import") { LibraryTransferView() }.accessibilityIdentifier("openBackup")
                 }
                 Section("Help") {
-                    NavigationLink { UserGuideView() } label: { Label("User guide", systemImage: "book") }
+                    NavigationLink(tag: "guide", selection: $openChoice) { UserGuideView() } label: { Label("User guide", systemImage: "book") }
                         .accessibilityIdentifier("openUserGuide")
                     ReportProblemButton("Report a problem") { ProblemReport(area: "General") }
                 }
-                Section("About") {
-                    Text("DriftLoom · iOS 15 and later")
-                    Text("Independent NewPipe fork · GPL-3.0-or-later").font(.footnote).foregroundStyle(.secondary)
-                }
+                Section {
+                    NavigationLink { AboutView() } label: { Label("About", systemImage: "info.circle") }
+                        .accessibilityIdentifier("openAbout")
+                } footer: { Text("Independent NewPipe fork · GPL-3.0-or-later") }
             }
-            .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Settings")
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
             // --settings-smoke language: then use the Language row, as a tap would.
             // --settings-smoke region [search]: open the Content region list, optionally searched.
             .task {
                 let arguments = ProcessInfo.processInfo.arguments
+                // --guide-smoke [page.md]: open the user guide, optionally at a page (see UserGuideView).
+                if arguments.contains("--guide-smoke") { try? await Task.sleep(nanoseconds: 1_000_000_000); openChoice = "guide" }
                 if let flag = arguments.firstIndex(of: "--settings-smoke"), arguments.indices.contains(flag + 1), arguments[flag + 1] == "region" {
                     if arguments.indices.contains(flag + 2), !arguments[flag + 2].hasPrefix("--") { choiceSearch = arguments[flag + 2] }
                     try? await Task.sleep(nanoseconds: 1_000_000_000); openChoice = "region"
@@ -153,7 +154,6 @@ struct SettingsView: View {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             }
 #endif
-            .toolbar { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") }
             .confirmationDialog(clearTarget == "watch" ? "Clear watch history?" : "Clear search history?",
                                 isPresented: Binding(get: { clearTarget != nil }, set: { if !$0 { clearTarget = nil } }), titleVisibility: .visible) {
                 Button("Clear history", role: .destructive) {
@@ -171,8 +171,11 @@ struct HomeTabsSettings: View {
     @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
     @EnvironmentObject private var playlists: PlaylistStore
     private var arrangement: [HomeTabKey] {
-        pinnedTabs.arrangement(sections: preferences.homeSections, localPlaylistIDs: Set(playlists.playlists.map(\.id)))
+        pinnedTabs.arrangement(sections: HomeSection.shownOnHome(preferences.homeSections), localPlaylistIDs: Set(playlists.playlists.map(\.id)))
     }
+    /// Subscriptions, What's new, Bookmarked and History have their own tabs; they keep their place in the saved
+    /// section list for backups and the Android app.
+    private var otherSections: [HomeSection] { preferences.homeSections.filter { !$0.isBrowse } }
     var body: some View {
         List {
             Section {
@@ -181,8 +184,8 @@ struct HomeTabsSettings: View {
                         var keys = arrangement
                         keys.move(fromOffsets: offsets, toOffset: destination)
                         pinnedTabs.setOrder(keys)
-                        // Keep the section preference in the same relative order for the drawer and backups.
-                        preferences.setHomeSections(keys.compactMap { if case let .section(section) = $0 { return section }; return nil })
+                        // Keep the section preference in the same relative order for backups and the Android app.
+                        preferences.setHomeSections(keys.compactMap { if case let .section(section) = $0 { return section }; return nil } + otherSections)
                     }
                     .onDelete { offsets in
                         for key in offsets.filter({ arrangement.indices.contains($0) }).map({ arrangement[$0] }) {
@@ -198,12 +201,12 @@ struct HomeTabsSettings: View {
                 Text("Pin channels and online playlists with Add to home in their menu, and local playlists from the playlist's options. Swipe to remove a pinned tab.")
             }
             Section("Show on home") {
-                ForEach(HomeSection.allCases) { section in
-                    Toggle(section.title, isOn: Binding(get: { preferences.homeSections.contains(section) }, set: { enabled in
-                        let current = preferences.homeSections
-                        preferences.setHomeSections(enabled ? current + [section] : current.filter { $0 != section })
+                ForEach(HomeSection.allCases.filter(\.isBrowse)) { section in
+                    Toggle(section.title, isOn: Binding(get: { HomeSection.shownOnHome(preferences.homeSections).contains(section) }, set: { enabled in
+                        let shown = HomeSection.shownOnHome(preferences.homeSections)
+                        preferences.setHomeSections((enabled ? shown + [section] : shown.filter { $0 != section }) + otherSections)
                     }))
-                    .disabled(preferences.homeSections.count == 1 && preferences.homeSections.contains(section))
+                    .disabled(HomeSection.shownOnHome(preferences.homeSections) == [section])
                 }
             }
         }

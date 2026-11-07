@@ -2,7 +2,7 @@
 
 ## Bookmarked
 
-The **Bookmarked** tab has three lists:
+**Library → Bookmarked** has three lists:
 
 - **Local playlists**: playlists you made in DriftLoom. To make one, choose **Add to playlist** in any video's **⋯** menu (or **Playlist** in the player) and then **Create a playlist**.
 - **Bookmarked playlists**: online YouTube or SoundCloud playlists you bookmarked.
@@ -16,6 +16,6 @@ Open a playlist to play it (**Play all**) or add it to the queue (**Enqueue**). 
 
 ## History
 
-The **History** tab lists what you have watched, most recent first. Swipe a video left to remove it, or tap the bin to clear the history.
+**Library → History** lists what you have watched, most recent first. Swipe a video left to remove it, or tap the bin at the top right to clear the history.
 
 To stop recording what you watch or search for, use **Settings → History**.

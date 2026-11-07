@@ -1024,22 +1024,6 @@
         }
       }
     },
-    "Back to home": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voltar ao início"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На головну"
-          }
-        }
-      }
-    },
     "Back up saved videos, subscriptions, watch history, local playlists, bookmarked playlists, and subscription groups. Downloaded media, playback queues, and app settings are excluded.": {
       "localizations": {
         "pt": {
@@ -1345,22 +1329,6 @@
         }
       }
     },
-    "Clear search": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Limpar busca"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Очистити пошук"
-          }
-        }
-      }
-    },
     "Clear search history": {
       "localizations": {
         "pt": {
@@ -1421,22 +1389,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Очистити історію переглядів?"
-          }
-        }
-      }
-    },
-    "Close main menu": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fechar menu principal"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Закрити головне меню"
           }
         }
       }
@@ -2824,22 +2776,6 @@
         }
       }
     },
-    "Main menu": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Menu principal"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Головне меню"
-          }
-        }
-      }
-    },
     "Manage subscription groups": {
       "localizations": {
         "pt": {
@@ -2916,22 +2852,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Більше коментарів"
-          }
-        }
-      }
-    },
-    "More options": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mais opções"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Інші дії"
           }
         }
       }
@@ -4181,38 +4101,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Повторити завантаження"
-          }
-        }
-      }
-    },
-    "SUBSCRIBE": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "INSCREVER-SE"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ПІДПИСАТИСЯ"
-          }
-        }
-      }
-    },
-    "SUBSCRIBED": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "INSCRITO"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ВИ ПІДПИСАНІ"
           }
         }
       }
@@ -5505,9 +5393,6 @@
         }
       }
     },
-    "YouTube · SoundCloud": {
-      "shouldTranslate": false
-    },
     "Your channels will stay subscribed.": {
       "localizations": {
         "pt": {
@@ -5619,6 +5504,134 @@
           "stringUnit": {
             "state": "translated",
             "value": "−10 с"
+          }
+        }
+      }
+    },
+    "Subscriptions": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inscrições"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підписки"
+          }
+        }
+      }
+    },
+    "Bookmarked": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoritos"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закладки"
+          }
+        }
+      }
+    },
+    "What's new": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novidades"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Що нового"
+          }
+        }
+      }
+    },
+    "Trending music": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Músicas em alta"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Популярна музика"
+          }
+        }
+      }
+    },
+    "Show all": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar tudo"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показати всі"
+          }
+        }
+      }
+    },
+    "Recent searches": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesquisas recentes"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нещодавні пошуки"
+          }
+        }
+      }
+    },
+    "Section": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seção"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розділ"
+          }
+        }
+      }
+    },
+    "Subscribed": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inscrito"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ви підписані"
           }
         }
       }

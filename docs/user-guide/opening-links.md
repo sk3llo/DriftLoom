@@ -6,7 +6,7 @@ In Safari, the YouTube app, SoundCloud or any app that shares links, tap **Share
 
 ## Paste a link
 
-Choose **Open a link** in the menu or under the three dots, paste a YouTube or SoundCloud link and tap **Open**. You can also paste a link into the search field.
+Tap the **link** button at the top left of Home, paste a YouTube or SoundCloud link and tap **Open**. You can also paste a link into the search field.
 
 ![Open a link](images/open-link.jpg)
 

@@ -19,6 +19,9 @@ Running the workflow by hand (Actions → Release → Run workflow) builds the s
 Branding: `python3 branding/generate.py` regenerates every icon (iOS AppIcon and menu mark, Android launcher,
 notification and splash, F-Droid icon and banner) from one geometry; the brand colours are listed at its top and must
 match `AppStyle` (iOS) and the `*_youtube_primary_color`/`*_settings_accent_color` resources (Android).
+iOS layout: the iOS app uses iOS's own navigation (a tab bar, system navigation bars with the standard back button,
+`.searchable`, segmented pickers, Done/Cancel in the bar) rather than NewPipe's Android drawer and Material tabs. Keep new
+screens on system components; the violet `AppStyle.bar` is for brand marks, not bar backgrounds.
 `scripts/guide-screenshots.sh` retakes the user-guide screenshots on an iPhone SE simulator. The F-Droid phone
 screenshots (`fastlane/metadata/android/en-US/images/phoneScreenshots`) are taken by hand from a signed release build
 on an emulator with the demo-mode status bar.

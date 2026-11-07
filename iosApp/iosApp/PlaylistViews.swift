@@ -55,7 +55,7 @@ struct BookmarksView: View {
         }
         .toolbar {
             Button { creating = true } label: { Image(systemName: "plus") }
-                .accessibilityLabel("Create playlist").accessibilityIdentifier("createPlaylist").disabled(!playlists.isWritable)
+                .accessibilityLabel("Create playlist").accessibilityIdentifier("newPlaylist").disabled(!playlists.isWritable)
         }
         .sheet(isPresented: $creating) { PlaylistPickerView(item: nil) }
     }
@@ -87,7 +87,7 @@ struct PlaylistPickerView: View {
                 if let error = playlists.lastError { Text(error).font(.footnote).foregroundColor(.red) }
             }
             .navigationTitle(item == nil ? "New playlist" : "Add to playlist").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Cancel") { dismiss() }.accessibilityIdentifier("closeSheet") }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.accessibilityIdentifier("closeSheet") } }
         }
     }
 }
@@ -99,7 +99,7 @@ struct LocalPlaylistView: View {
     @EnvironmentObject private var pinnedTabs: PinnedHomeTabs
     let id: UUID
     let onPlay: (BrowseItem) -> Void
-    /// Shown as a home tab: no navigation bar, so the actions live in the header row.
+    /// Shown as a home tab, whose title menu names it.
     var embedded = false
     @State private var renaming = false
     @State private var deleting = false
@@ -113,7 +113,6 @@ struct LocalPlaylistView: View {
                         Spacer()
                         Button { for entry in playlist.entries { queue.enqueue(entry.item) } } label: { Label("Enqueue", systemImage: "text.badge.plus") }
                             .disabled(playlist.entries.isEmpty)
-                        if embedded { Spacer(); actions.accessibilityLabel("Playlist options") }
                     }.buttonStyle(.borderless)
                     if playlist.entries.isEmpty { Text("Add videos from a result menu or the video detail screen.").font(.footnote).foregroundStyle(.secondary) }
                     ForEach(Array(playlist.entries.enumerated()), id: \.element.id) { index, entry in
@@ -141,7 +140,7 @@ struct LocalPlaylistView: View {
                 .disabled(!pinnedTabs.isWritable)
             Button("Rename") { renaming = true }.disabled(!playlists.isWritable)
             Button("Delete playlist", role: .destructive) { deleting = true }.disabled(!playlists.isWritable)
-        } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }.accessibilityIdentifier("localPlaylistOptions")
+        } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Playlist options").accessibilityIdentifier("localPlaylistOptions")
     }
     private func play(_ playlist: LocalPlaylist, at index: Int) {
         queue.start(playlist.entries.map(\.item), at: index)
@@ -164,7 +163,7 @@ private struct RenamePlaylistView: View {
                 if let error = playlists.lastError { Text(error).font(.footnote).foregroundColor(.red) }
             }
             .navigationTitle("Rename playlist").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Cancel") { dismiss() }.accessibilityIdentifier("closeSheet") }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.accessibilityIdentifier("closeSheet") } }
         }
     }
 }
@@ -175,11 +174,11 @@ private struct PlaylistChrome<Actions: View>: ViewModifier {
     let writable: Bool
     let actions: Actions
     func body(content: Content) -> some View {
-        if embedded { content }
-        else {
-            content.navigationBarHidden(false)
-                .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
-                .toolbar { EditButton().disabled(!writable); actions }
+        if embedded {
+            content.toolbar { ToolbarItemGroup(placement: .navigationBarTrailing) { EditButton().disabled(!writable); actions } }
+        } else {
+            content.navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItemGroup(placement: .navigationBarTrailing) { EditButton().disabled(!writable); actions } }
         }
     }
 }

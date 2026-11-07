@@ -27,14 +27,15 @@ struct LibraryItemActions: View {
 struct LibrarySectionView: View {
     @EnvironmentObject private var library: LibraryStore
     let section: HomeSection
+    /// For subscriptions: the group to show, or nil for all of them.
+    var group: UUID?
     let onPlay: (BrowseItem) -> Void
     @EnvironmentObject private var groups: SubscriptionGroups
-    @State private var selectedGroup: UUID?
     @State private var confirmsClearHistory = false
     private var records: [LibraryRecord] {
         switch section {
         case .subscriptions:
-            let ids = Set(groups.channelIDs(for: selectedGroup, subscribed: library.subscriptions.map { $0.item.contentID }))
+            let ids = Set(groups.channelIDs(for: group, subscribed: library.subscriptions.map { $0.item.contentID }))
             return library.subscriptions.filter { ids.contains($0.item.contentID) }
         case .history: return library.history
         default: return library.saved
@@ -42,15 +43,6 @@ struct LibrarySectionView: View {
     }
     var body: some View {
         VStack(spacing: 0) {
-            if section == .subscriptions { SubscriptionGroupFilter(selection: $selectedGroup) }
-            if section == .history, !records.isEmpty {
-                HStack {
-                    Text("\(records.count) videos").font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Button { confirmsClearHistory = true } label: { Image(systemName: "trash").frame(width: 44, height: 44) }
-                        .accessibilityLabel("Clear history").disabled(!library.isWritable)
-                }.padding(.horizontal, 12)
-            }
             if !library.isWritable {
                 VStack(spacing: 8) {
                     Text("Your saved library is unavailable. Its file has been left untouched.").font(.footnote)
@@ -73,6 +65,16 @@ struct LibrarySectionView: View {
                 }.listStyle(.plain)
             }
         }
+        .toolbar {
+            // ToolbarContentBuilder can't branch on iOS 15, so the item is always there and its content isn't.
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if section == .history {
+                    Button { confirmsClearHistory = true } label: { Image(systemName: "trash") }
+                        .accessibilityLabel("Clear history").accessibilityIdentifier("clearHistory")
+                        .disabled(!library.isWritable || records.isEmpty)
+                }
+            }
+        }
         .confirmationDialog("Clear watch history?", isPresented: $confirmsClearHistory, titleVisibility: .visible) {
             Button("Clear history", role: .destructive, action: library.clearHistory)
             Button("Cancel", role: .cancel) {}
@@ -82,11 +84,11 @@ struct LibrarySectionView: View {
         switch section { case .subscriptions: library.unsubscribe(id); case .history: library.removeHistory(id); default: library.removeSaved(id) }
     }
     private var emptyTitle: LocalizedStringKey {
-        switch section { case .subscriptions: return selectedGroup == nil ? "No subscriptions" : "No channels in this group"; case .history: return "No history"; default: return "No bookmarks" }
+        switch section { case .subscriptions: return group == nil ? "No subscriptions" : "No channels in this group"; case .history: return "No history"; default: return "No bookmarks" }
     }
     private var emptyMessage: LocalizedStringKey {
         switch section {
-        case .subscriptions: return selectedGroup == nil ? "Search for a channel and subscribe to see it here." : "Use Manage subscription groups to add channels to this group."
+        case .subscriptions: return group == nil ? "Search for a channel and subscribe to see it here." : "Use Manage subscription groups to add channels to this group."
         case .history: return library.historyEnabled ? "Videos appear here once playback starts." : "Recording watch history is disabled in Settings."
         default: return "Save videos from their action menu or the video detail screen."
         }

@@ -8,7 +8,7 @@ rebranded and patched, and the iOS app is a native SwiftUI app written to work t
   <img src="docs/user-guide/images/home.jpg" width="200" alt="Home with trending videos">
   <img src="docs/user-guide/images/player.jpg" width="200" alt="Video player with details">
   <img src="docs/user-guide/images/subscriptions.jpg" width="200" alt="Subscriptions">
-  <img src="docs/user-guide/images/drawer.jpg" width="200" alt="Main menu">
+  <img src="docs/user-guide/images/library.jpg" width="200" alt="Library">
 </p>
 
 ## Features

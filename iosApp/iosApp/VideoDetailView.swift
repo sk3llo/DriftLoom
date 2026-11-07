@@ -18,7 +18,7 @@ struct VideoDetailView: View {
     @State private var choosingFormat = false
     @StateObject private var inline = InlinePlayerController()
     @Environment(\.horizontalSizeClass) private var sizeClass
-    /// How far the page follows a downward drag on the header or video before minimizing, as in NewPipe.
+    /// How far the page follows a downward drag on the video before minimizing, as in NewPipe.
     @State private var dragOffset: CGFloat = 0
     private enum DetailTab: CaseIterable {
         case related, comments, description, queue
@@ -38,7 +38,6 @@ struct VideoDetailView: View {
                 // iPad in landscape: the player and its details beside the related list, as on YouTube.
                 if sizeClass == .regular && proxy.size.width > proxy.size.height && proxy.size.width >= 900 {
                     VStack(spacing: 0) {
-                        header
                         HStack(alignment: .top, spacing: 0) {
                             VStack(spacing: 0) {
                                 // The player takes its full 16:9 height before the details scroll below it.
@@ -56,7 +55,6 @@ struct VideoDetailView: View {
                     .accessibilityElement(children: .contain).accessibilityIdentifier("sideBySideDetail")
                 } else {
                     VStack(spacing: 0) {
-                        header
                         playerArea
                         ScrollView {
                             info
@@ -66,8 +64,15 @@ struct VideoDetailView: View {
                     }
                 }
             }
-            .navigationBarHidden(true)
-
+            .navigationTitle(playback.currentItemMetadata?.isSoundCloud == true ? "SoundCloud" : "YouTube")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: onCollapse) { Image(systemName: "chevron.down") }
+                        .accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
+                }
+                ToolbarItem(placement: .navigationBarTrailing) { playbackOptions }
+            }
         }
         .offset(y: dragOffset)
         .id(playback.videoID)
@@ -139,7 +144,7 @@ struct VideoDetailView: View {
                             }
                         }
                         IconButton("Stop playback", systemImage: "stop") { queue.stop(); onCollapse() }
-                    } label: { Image(systemName: "ellipsis.circle").font(.title3).foregroundColor(.white).frame(width: 44, height: 52) }.accessibilityLabel("Playback options").accessibilityIdentifier("playbackOptions")
+                    } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("Playback options").accessibilityIdentifier("playbackOptions")
     }
 
     @ViewBuilder private var playbackStatus: some View {
@@ -164,7 +169,7 @@ struct VideoDetailView: View {
             Label("Stream refreshed", systemImage: "arrow.clockwise").font(.caption).foregroundStyle(.secondary)
         }
     }
-    /// Drag the video or the header down to shrink the player into the mini-player bar.
+    /// Drag the video down to shrink the player into the mini-player bar.
     private var minimizeDrag: some Gesture {
         DragGesture(minimumDistance: 12, coordinateSpace: .global)
             .onChanged { value in
@@ -182,20 +187,6 @@ struct VideoDetailView: View {
                 }
             }
     }
-    private var header: some View {
-        // The same red toolbar as home and search.
-        HStack {
-            Button(action: onCollapse) { Image(systemName: "chevron.down").font(.title3).frame(width: 44, height: 52) }
-                .accessibilityLabel("Minimize player").accessibilityIdentifier("minimizePlayer")
-            Text(playback.currentItemMetadata?.isSoundCloud == true ? "SoundCloud" : "YouTube").font(.title3.weight(.semibold))
-                .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 6)
-                .accessibilityAddTraits(.isHeader)
-            playbackOptions
-        }
-        .padding(.horizontal, 4).foregroundColor(.white)
-        .background(AppStyle.bar.ignoresSafeArea(edges: .top))
-        .contentShape(Rectangle()).gesture(minimizeDrag)
-    }
     @ViewBuilder private var playerArea: some View {
         Group {
             if playback.player.currentItem != nil {
@@ -203,12 +194,14 @@ struct VideoDetailView: View {
                     InlinePlayerSurface(player: playback.player, overlay: overlay, controller: inline, gravity: preferences.videoResize.gravity)
                     InlinePlayerControls(playback: playback, controller: inline, overlay: overlay)
                 }
-                .aspectRatio(16 / 9, contentMode: .fit).background(Color.black)
+                .aspectRatio(16 / 9, contentMode: .fit)
+                // A shape, not a colour: a colour background would extend under the navigation bar and hide its title.
+                .background(Rectangle().fill(Color.black))
                 .simultaneousGesture(minimizeDrag)
                 .accessibilityElement(children: .contain).accessibilityIdentifier("videoPlayer")
             } else {
                 ZStack {
-                    Color.black
+                    Rectangle().fill(Color.black)
                     if case .failed = playback.phase { Image(systemName: "exclamationmark.triangle").foregroundColor(.white) }
                     else { ProgressView().tint(.white) }
                 }.aspectRatio(16 / 9, contentMode: .fit)
@@ -232,10 +225,10 @@ struct VideoDetailView: View {
                                 .font(.subheadline).foregroundStyle(.primary).lineLimit(1)
                         }
                         Spacer()
-                        Button(library.isSubscribed(id) ? "SUBSCRIBED" : "SUBSCRIBE") {
+                        SubscribeButton(subscribed: library.isSubscribed(id)) {
                             library.toggleSubscription(BrowseItem(contentID: id, kind: .channel,
                                                                   title: item.subtitle.isEmpty ? String(localized: "Channel") : item.subtitle))
-                        }.font(.caption.weight(.semibold)).disabled(!library.isWritable)
+                        }.disabled(!library.isWritable)
                     } else { Text(item.isSoundCloud ? "SoundCloud" : "YouTube").font(.caption).foregroundStyle(.secondary) }
                 }
                 HStack(spacing: 0) {

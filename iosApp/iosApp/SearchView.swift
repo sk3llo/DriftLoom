@@ -5,9 +5,6 @@ import SwiftUI
 struct SearchView: View {
     @EnvironmentObject private var preferences: AppPreferences
     let onPlay: (BrowseItem) -> Void
-    var onClose: () -> Void = {}
-    /// Whether search is on screen; it stays mounted underneath home to keep its results.
-    var isActive = true
     @StateObject private var results = BrowseStore()
     @StateObject private var suggestions = SuggestionStore()
     @State private var query = ""
@@ -19,11 +16,12 @@ struct SearchView: View {
     @State private var service = SearchService.youTube
     @State private var soundCloudFilter = SoundCloudSearchFilter.tracks
     @State private var linkError: String?
-    @FocusState private var focused: Bool
     enum SearchService: String, CaseIterable { case youTube = "YouTube", soundCloud = "SoundCloud" }
-    private struct SuggestionInput: Hashable { let query: String; let focused: Bool; let enabled: Bool; let locale: ContentLocale }
+    private struct SuggestionInput: Hashable { let query: String; let enabled: Bool; let locale: ContentLocale }
+    /// Suggestions are for text being typed; the last search's own text shows its results.
+    private var suggesting: Bool { !query.isEmpty && query != submittedQuery }
     private var suggestionInput: SuggestionInput {
-        SuggestionInput(query: query, focused: focused, enabled: preferences.usesSearchSuggestions && service == .youTube, locale: preferences.contentLocale)
+        SuggestionInput(query: query, enabled: preferences.usesSearchSuggestions && service == .youTube && suggesting, locale: preferences.contentLocale)
     }
     private var route: BrowseRoute {
         service == .soundCloud ? .soundCloudSearch(submittedQuery, soundCloudFilter)
@@ -33,56 +31,34 @@ struct SearchView: View {
     var body: some View {
         AppNavigation {
             VStack(spacing: 0) {
-                // The red toolbar as on home, with an iOS search field: a back chevron, then a rounded field with
-                // the magnifying glass, the query and a clear button. The keyboard's Search key submits.
-                HStack(spacing: 4) {
-                    Button(action: onClose) { Image(systemName: "chevron.left").font(.title3.weight(.semibold)).frame(width: 36, height: 52) }
-                        .accessibilityLabel("Back to home").accessibilityIdentifier("closeSearch")
-                    HStack(spacing: 6) {
-                        Image(systemName: "magnifyingglass").foregroundColor(.white.opacity(0.85)).accessibilityHidden(true)
-                        TextField(service == .youTube ? "Search YouTube" : "Search SoundCloud", text: $query,
-                                  prompt: Text(service == .youTube ? "Search YouTube" : "Search SoundCloud").foregroundColor(.white.opacity(0.75)))
-                            .foregroundColor(.white).tint(.white)
-                            .textInputAutocapitalization(.never).autocorrectionDisabled()
-                            .submitLabel(.search).focused($focused).onSubmit(submit)
-                            .accessibilityIdentifier("searchQuery")
-                        if !query.isEmpty {
-                            Button { query = ""; focused = true } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundColor(.white.opacity(0.85)).frame(minWidth: 28, minHeight: 36)
-                            }
-                            .buttonStyle(.plain).accessibilityLabel("Clear search")
-                        }
-                    }
-                    .padding(.leading, 8).padding(.trailing, 4).frame(height: 36)
-                    .background(Color.white.opacity(0.2)).clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .padding(.trailing, 8)
-                }
-                .padding(.leading, 4).foregroundColor(.white)
-                .background(AppStyle.bar.ignoresSafeArea(edges: .top))
-                .padding(.bottom, 8)
                 Picker("Service", selection: $service) {
                     ForEach(SearchService.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.segmented).padding(.horizontal, 12).padding(.bottom, 6).accessibilityIdentifier("searchService")
-                Divider()
-                if let linkError { Text(linkError).font(.footnote).foregroundStyle(.secondary).padding(8) }
+                }.pickerStyle(.segmented).padding(.horizontal, 12).padding(.top, 4).accessibilityIdentifier("searchService")
                 if service == .soundCloud {
                     SectionStrip(values: SoundCloudSearchFilter.allCases, selection: $soundCloudFilter, title: { $0.title })
                 } else {
-                HStack(spacing: 0) {
-                    SectionStrip(values: SearchFilter.allCases, selection: $filter, title: { $0.title })
-                    Menu {
-                        Picker("Sort by", selection: $order) { ForEach(SearchOrder.allCases, id: \.self) { Text($0.title).tag($0) } }
-                        Picker("Upload date", selection: $date) { ForEach(SearchDate.allCases, id: \.self) { Text($0.title).tag($0) } }
-                        if filter == .videos || filter == .all {
-                            Picker("Duration", selection: $duration) { ForEach(SearchDuration.allCases, id: \.self) { Text($0.title).tag($0) } }
+                    // The filters stay beside the type, since the bar's own buttons hide while the search field is active.
+                    HStack(spacing: 0) {
+                        SectionStrip(values: SearchFilter.allCases, selection: $filter, title: { $0.title })
+                        Menu {
+                            Picker("Sort by", selection: $order) { ForEach(SearchOrder.allCases, id: \.self) { Text($0.title).tag($0) } }
+                            Picker("Upload date", selection: $date) { ForEach(SearchDate.allCases, id: \.self) { Text($0.title).tag($0) } }
+                            if filter == .videos || filter == .all {
+                                Picker("Duration", selection: $duration) { ForEach(SearchDuration.allCases, id: \.self) { Text($0.title).tag($0) } }
+                            }
+                            Button("Reset filters") { order = .relevance; date = .any; duration = .any }
+                        } label: {
+                            Image(systemName: order == .relevance && date == .any && duration == .any
+                                  ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                                .font(.title3).frame(width: 40, height: 44)
                         }
-                        Button("Reset filters") { order = .relevance; date = .any; duration = .any }
-                    } label: { Image(systemName: "line.3.horizontal.decrease.circle").frame(width: 44, height: 46) }
-                    .accessibilityLabel("Search filters").accessibilityIdentifier("searchFilters")
+                        .padding(.trailing, 6)
+                        .accessibilityLabel("Search filters").accessibilityIdentifier("searchFilters")
+                    }
                 }
-                }
-                // Suggestions are for text being edited; the last search's own text shows its results.
-                if focused, query != submittedQuery, !suggestions.suggestions.isEmpty {
+                Divider()
+                if let linkError { Text(linkError).font(.footnote).foregroundStyle(.secondary).padding(8) }
+                if suggesting, !suggestions.suggestions.isEmpty {
                     List {
                         Section("Suggestions") {
                             ForEach(suggestions.suggestions, id: \.self) { text in
@@ -98,17 +74,19 @@ struct SearchView: View {
                         EmptyStateView("Search", systemImage: "magnifyingglass", message: "Find videos, channels, tracks and playlists, or paste a YouTube or SoundCloud link.")
                     } else {
                         List {
-                            ForEach(preferences.searchHistory.filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }, id: \.self) { text in
-                                Button { query = text; submit() } label: {
-                                    HStack {
-                                        Image(systemName: "clock").foregroundStyle(.secondary)
-                                        Text(text).foregroundStyle(.primary)
-                                        Spacer()
-                                        Image(systemName: "arrow.up.left").foregroundStyle(.secondary)
-                                    }.padding(.vertical, 6)
+                            Section("Recent searches") {
+                                ForEach(preferences.searchHistory.filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }, id: \.self) { text in
+                                    Button { query = text; submit() } label: {
+                                        HStack {
+                                            Image(systemName: "clock").foregroundStyle(.secondary)
+                                            Text(text).foregroundStyle(.primary)
+                                            Spacer()
+                                            Image(systemName: "arrow.up.left").foregroundStyle(.secondary)
+                                        }.padding(.vertical, 6)
+                                    }
+                                    .swipeActions { Button("Remove", role: .destructive) { preferences.removeSearch(text) } }
+                                    .accessibilityIdentifier("searchHistory-" + text)
                                 }
-                                .swipeActions { Button("Remove", role: .destructive) { preferences.removeSearch(text) } }
-                                .accessibilityIdentifier("searchHistory-" + text)
                             }
                         }.listStyle(.plain)
                     }
@@ -116,17 +94,13 @@ struct SearchView: View {
                     BrowseResults(store: results, onPlay: onPlay, retry: { Task { await results.load(route) } }, videoIdentifierPrefix: "searchVideo")
                 }
             }
-            .navigationBarHidden(true)
-            .onChange(of: isActive) { active in
-                // Leaving search (back, a link, a notification) ends any edit: iOS 15 can keep the field's focus
-                // state after the keyboard is dismissed, which brought the old suggestions back on return.
-                guard !active else { return }
-                focused = false
-                suggestions.clear()
-                if !submittedQuery.isEmpty { query = submittedQuery }
-            }
+            .navigationTitle("Search")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: Text(service == .youTube ? "Search YouTube" : "Search SoundCloud"))
+            .textInputAutocapitalization(.never).disableAutocorrection(true)
+            .onSubmit(of: .search, submit)
             .task(id: suggestionInput) {
-                await suggestions.load(query: query, locale: preferences.contentLocale, enabled: focused && preferences.usesSearchSuggestions && query != submittedQuery)
+                await suggestions.load(query: query, locale: preferences.contentLocale, enabled: suggestionInput.enabled)
             }
             .task(id: route) {
                 guard !submittedQuery.isEmpty else { return }
@@ -149,7 +123,6 @@ struct SearchView: View {
                 // --suggestion-smoke TEXT: type TEXT without searching, so the suggestions can be inspected.
                 if let flag = arguments.firstIndex(of: "--suggestion-smoke"), arguments.indices.contains(flag + 1) {
                     query = arguments[flag + 1]
-                    Task { try? await Task.sleep(nanoseconds: 1_000_000_000); focused = true }
                 }
 #endif
             }
@@ -158,7 +131,7 @@ struct SearchView: View {
     private func submit() {
         let value = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return }
-        focused = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         suggestions.clear()
         linkError = nil
         if value.contains("://"), let video = try? VideoRequest(input: value) {
@@ -196,10 +169,10 @@ struct BrowsePageView: View {
                             Image(systemName: "person.crop.circle.fill").resizable().foregroundStyle(.secondary)
                         }.frame(width: 52, height: 52).clipShape(Circle()).accessibilityHidden(true)
                         Text(channelTitle.isEmpty ? String(localized: "Channel") : channelTitle).font(.headline).frame(maxWidth: .infinity, alignment: .leading)
-                        Button(library.isSubscribed(id) ? "SUBSCRIBED" : "SUBSCRIBE") {
+                        SubscribeButton(subscribed: library.isSubscribed(id)) {
                             library.toggleSubscription(BrowseItem(contentID: id, kind: .channel, title: channelTitle,
                                                                   thumbnail: channelHeader?.thumbnail))
-                        }.font(.caption.weight(.semibold)).disabled(!library.isWritable || !store.hasLoaded)
+                        }.disabled(!library.isWritable || !store.hasLoaded)
                     }
                     if let description = channelHeader?.description, !description.isEmpty {
                         Button { showsDescription.toggle() } label: {
@@ -224,7 +197,7 @@ struct BrowsePageView: View {
             BrowseResults(store: store, onPlay: onPlay, retry: { Task { await store.load(effectiveRoute) } })
         }
         .navigationTitle(store.title.isEmpty ? (channelID.map(SoundCloudID.isSoundCloud) == true ? "SoundCloud" : "YouTube") : store.title)
-        .navigationBarTitleDisplayMode(.inline).navigationBarHidden(false)
+        .navigationBarTitleDisplayMode(.inline)
         .task(id: effectiveRoute) { await store.load(effectiveRoute) }
         .onReceive(store.$header) { header in
             if let header {

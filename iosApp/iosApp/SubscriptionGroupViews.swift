@@ -2,44 +2,6 @@
 import DriftLoomPlayback
 import SwiftUI
 
-struct SubscriptionGroupFilter: View {
-  @EnvironmentObject private var groups: SubscriptionGroups
-  @Binding var selection: UUID?
-  @State private var choosing = false
-  var body: some View {
-    HStack {
-      Button {
-        choosing = true
-      } label: {
-        Label(
-          groups.groups.first { $0.id == selection }?.name ?? String(localized: "All subscriptions"),
-          systemImage: "line.3.horizontal.decrease.circle"
-        )
-        .lineLimit(1).frame(minHeight: 44).contentShape(Rectangle())
-      }.buttonStyle(.plain).accessibilityIdentifier("subscriptionGroupFilter")
-      Spacer()
-      Button {
-        NotificationCenter.default.post(name: .driftLoomManageGroups, object: nil)
-      } label: {
-        Image(systemName: "folder.badge.gearshape").frame(width: 44, height: 44)
-      }
-      .accessibilityLabel("Manage subscription groups").accessibilityIdentifier(
-        "manageSubscriptionGroups")
-    }.padding(.horizontal, 12)
-      .confirmationDialog("Subscription group", isPresented: $choosing, titleVisibility: .visible) {
-        Button("All subscriptions") { selection = nil }.accessibilityIdentifier("selectGroup-all")
-        ForEach(groups.groups) { group in
-          Button(group.name) { selection = group.id }.accessibilityIdentifier(
-            "selectGroup-" + group.id.uuidString)
-        }
-        Button("Cancel", role: .cancel) {}
-      }
-      .onChange(of: groups.groups.map(\.id)) { ids in
-        if let id = selection, !ids.contains(id) { selection = nil }
-      }
-  }
-}
-
 private struct GroupEditorTarget: Identifiable {
   let id = UUID()
   var group: SubscriptionGroup?
@@ -54,50 +16,46 @@ struct SubscriptionGroupsView: View {
   @State private var editMode = EditMode.inactive
   var body: some View {
     AppNavigation {
-      if let editor {
-        SubscriptionGroupEditor(group: editor.group, onClose: { self.editor = nil }).id(editor.id)
-      } else {
-        VStack(spacing: 0) {
-          HStack {
-            Button("Done") { dismiss() }.frame(minWidth: 44, minHeight: 44).accessibilityIdentifier(
-              "closeSubscriptionGroups")
-            Spacer()
-            Text("Subscription groups").font(.headline).accessibilityIdentifier(
-              "subscriptionGroupsTitle")
-            Spacer()
-            EditButton().frame(minWidth: 44, minHeight: 44).disabled(!groups.isWritable)
-          }.padding(.horizontal, 12)
-          List {
-            Section {
-              Button("New subscription group") { editor = GroupEditorTarget() }
-                .disabled(!groups.isWritable).accessibilityIdentifier("createSubscriptionGroup")
-              Text(
-                "Group channels to filter your subscriptions and What's new. Removing a group keeps your subscriptions."
-              )
-              .font(.footnote).foregroundStyle(.secondary)
+        List {
+          Section {
+            Button("New subscription group") { editor = GroupEditorTarget() }
+              .disabled(!groups.isWritable).accessibilityIdentifier("createSubscriptionGroup")
+            Text(
+              "Group channels to filter your subscriptions and What's new. Removing a group keeps your subscriptions."
+            )
+            .font(.footnote).foregroundStyle(.secondary)
+          }
+          Section("Groups") {
+            ForEach(groups.groups) { group in
+              Button {
+                editor = GroupEditorTarget(group: group)
+              } label: {
+                HStack {
+                  Label(group.name, systemImage: "folder").foregroundStyle(.primary)
+                  Spacer()
+                  Text(
+                    "\(groups.channelIDs(for: group.id, subscribed: library.subscriptions.map { $0.item.contentID }).count)"
+                  )
+                  .foregroundStyle(.secondary)
+                }.padding(.vertical, 5)
+              }.accessibilityIdentifier("editGroup-" + group.id.uuidString)
             }
-            Section("Groups") {
-              ForEach(groups.groups) { group in
-                Button {
-                  editor = GroupEditorTarget(group: group)
-                } label: {
-                  HStack {
-                    Label(group.name, systemImage: "folder").foregroundStyle(.primary)
-                    Spacer()
-                    Text(
-                      "\(groups.channelIDs(for: group.id, subscribed: library.subscriptions.map { $0.item.contentID }).count)"
-                    )
-                    .foregroundStyle(.secondary)
-                  }.padding(.vertical, 5)
-                }.accessibilityIdentifier("editGroup-" + group.id.uuidString)
-              }
-              .onDelete { offsets in deleting = offsets.map { groups.groups[$0].id } }
-              .onMove { groups.move(from: $0, to: $1) }
-              .disabled(!groups.isWritable)
-            }
+            .onDelete { offsets in deleting = offsets.map { groups.groups[$0].id } }
+            .onMove { groups.move(from: $0, to: $1) }
+            .disabled(!groups.isWritable)
           }
         }
-        .navigationBarHidden(true)
+        .navigationTitle("Subscription groups").navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          ToolbarItem(placement: .confirmationAction) {
+            Button("Done") { dismiss() }.accessibilityIdentifier("closeSubscriptionGroups")
+          }
+          ToolbarItem(placement: .navigationBarLeading) { EditButton().disabled(!groups.isWritable) }
+        }
+        .sheet(item: $editor) { editor in
+          SubscriptionGroupEditor(group: editor.group, onClose: { self.editor = nil })
+            .environmentObject(groups).environmentObject(library)
+        }
         .environment(\.editMode, $editMode)
         .confirmationDialog(
           "Remove selected groups?",
@@ -112,7 +70,6 @@ struct SubscriptionGroupsView: View {
         } message: {
           Text("Your channels will stay subscribed.")
         }
-      }
     }
   }
 }
@@ -133,23 +90,7 @@ private struct SubscriptionGroupEditor: View {
     _members = State(initialValue: Set(group?.channelIDs ?? []))
   }
   var body: some View {
-    VStack(spacing: 0) {
-      HStack {
-        Button("Cancel") { onClose() }.frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("cancelGroupEdit")
-        Spacer()
-        Text("Edit group").font(.headline)
-        Spacer()
-        Button("Save") {
-          if groups.upsert(id: id, name: name, channelIDs: Array(members)) {
-            onClose()
-          } else {
-            error = groups.error ?? String(localized: "Couldn't save this group.")
-          }
-        }.frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("saveSubscriptionGroup")
-          .disabled(
-            !groups.isWritable || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-              || name.count > 100)
-      }.padding(.horizontal, 12)
+    AppNavigation {
       Form {
         Section("Group name") {
           TextField("Name", text: $name).accessibilityIdentifier("subscriptionGroupName")
@@ -182,7 +123,24 @@ private struct SubscriptionGroupEditor: View {
         }
         if let error { Text(error).font(.footnote).foregroundColor(.red) }
       }
+      .navigationTitle("Edit group").navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Cancel") { onClose() }.accessibilityIdentifier("cancelGroupEdit")
+        }
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Save") {
+            if groups.upsert(id: id, name: name, channelIDs: Array(members)) {
+              onClose()
+            } else {
+              error = groups.error ?? String(localized: "Couldn't save this group.")
+            }
+          }.accessibilityIdentifier("saveSubscriptionGroup")
+            .disabled(
+              !groups.isWritable || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || name.count > 100)
+        }
+      }
     }
-    .navigationBarHidden(true)
   }
 }

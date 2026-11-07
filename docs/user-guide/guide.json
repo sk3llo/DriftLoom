@@ -1,11 +1,11 @@
 {
   "title": "DriftLoom User Guide",
-  "updated": "October 2026",
+  "updated": "November 2026",
   "sections": [
     { "title": "About", "pages": [ { "file": "about.md", "title": "About DriftLoom" } ] },
     { "title": "Getting started", "pages": [
       { "file": "getting-started.md", "title": "First steps" },
-      { "file": "home-and-menu.md", "title": "Home, tabs and the menu" },
+      { "file": "home-and-menu.md", "title": "Home and the tab bar" },
       { "file": "languages-and-regions.md", "title": "Language and region" } ] },
     { "title": "Finding videos", "pages": [
       { "file": "search.md", "title": "Search" },

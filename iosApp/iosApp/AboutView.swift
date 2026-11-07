@@ -2,14 +2,14 @@
 import DriftLoomPlayback
 import SwiftUI
 
-/// Keep app information available without linking a higher-minimum-OS UI framework.
+/// App information, opened from Settings.
 struct AboutView: View {
-    @Environment(\.dismiss) private var dismiss
     var body: some View {
-        AppNavigation {
             List {
                 Section {
-                    Text("DriftLoom").font(.title.weight(.semibold))
+                    Label { Text("DriftLoom").font(.title.weight(.semibold)) } icon: {
+                        Image("BrandMark").resizable().scaledToFit().frame(width: 30, height: 30).foregroundColor(AppStyle.bar)
+                    }
                     Text("A little room to explore.").foregroundStyle(.secondary)
                     Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")")
                     Text("Requires iOS 15 or later.").font(.footnote).foregroundStyle(.secondary)
@@ -33,8 +33,6 @@ struct AboutView: View {
             }
             .navigationTitle("About")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") }
-        }
     }
     private var notices: String {
         Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt")

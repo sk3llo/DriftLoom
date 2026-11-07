@@ -40,7 +40,7 @@ struct DownloadPicker: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .navigationTitle("Download").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.accessibilityIdentifier("closeSheet") } }
             .task {
                 if let catalog = try? await YouTubeSubtitleClient().catalog(videoID: item.contentID) {
                     subtitleTracks = catalog.tracks

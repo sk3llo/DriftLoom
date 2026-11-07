@@ -1,6 +1,6 @@
 # The player
 
-Tap a video to open the player. The video is at the top; below it are the title, the channel, buttons to **Save**, **Share**, add to the **Queue** or a **Playlist** and **Download**, and the tabs **Related**, **Comments**, **Description** and **Queue**.
+Tap a video to open the player. The video is at the top; below it are the title, the channel, buttons to **Save**, **Share**, add to the **Queue** or a **Playlist** and **Download**, and a switch between **Related**, **Comments**, **Description** and **Queue**.
 
 ![The player with its controls showing](images/player.jpg)
 
@@ -32,4 +32,4 @@ Tap the full-screen button at the bottom right of the video, or turn your iPhone
 
 ## Comments
 
-The **Comments** tab shows a video's comments. Use the button at the top of the list to switch between **Top comments** and **Newest first**, and **View replies** under a comment to read its thread.
+**Comments** shows a video's comments. Use the button at the top of the list to switch between **Top comments** and **Newest first**, and **View replies** under a comment to read its thread.

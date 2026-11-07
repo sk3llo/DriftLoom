@@ -18,13 +18,45 @@ final class NavigationTests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
     override func tearDownWithError() throws { XCUIDevice.shared.orientation = .portrait }
 
-    func testDrawerSettingsAndExistingLibraryRemainAccessible() {
+    private func tab(_ app: XCUIApplication, _ title: String) {
+        let button = app.tabBars.buttons[title]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "The \(title) tab")
+        button.tap()
+    }
+    /// Opens a Library page, going back to the Library list first if another page is open.
+    private func libraryPage(_ app: XCUIApplication, _ id: String) {
+        tab(app, "Library")
+        let row = app.buttons[id].firstMatch
+        for _ in 0..<3 where !(row.exists && row.isHittable) { app.navigationBars.buttons.element(boundBy: 0).tap(); sleep(1) }
+        XCTAssertTrue(row.waitForExistence(timeout: 5)); row.tap()
+    }
+    /// The Home title menu, which switches home tabs.
+    private func openHomeMenu(_ app: XCUIApplication) {
+        let bar = app.navigationBars.firstMatch
+        XCTAssertTrue(bar.waitForExistence(timeout: 10))
+        bar.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(app.buttons["Customize tabs"].waitForExistence(timeout: 5), "The title opens the home tab menu")
+    }
+    private func homeTab(_ app: XCUIApplication, _ title: String) {
+        openHomeMenu(app)
+        let item = app.buttons[title].firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 5), "\(title) is in the home tab menu"); item.tap()
+    }
+    /// Taps a segment of the visible segmented control that has it.
+    private func segment(_ app: XCUIApplication, _ title: String) {
+        let button = app.segmentedControls.buttons.matching(NSPredicate(format: "label == %@", title)).allElementsBoundByIndex
+        let target = button.first { $0.isHittable } ?? app.segmentedControls.buttons[title].firstMatch
+        XCTAssertTrue(target.waitForExistence(timeout: 15), "The \(title) segment"); target.tap()
+    }
+    private func subscriptionGroup(_ app: XCUIApplication, _ name: String) {
+        app.buttons["subscriptionGroupFilter"].firstMatch.tap()
+        let item = app.buttons[name].firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 5)); item.tap()
+    }
+
+    func testSettingsTabAndExistingLibraryRemainAccessible() {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
-        app.buttons["mainMenu"].tap()
-        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
-        if !settings.isHittable { app.swipeUp() }
-        XCTAssertTrue(settings.waitForExistence(timeout: 5)); settings.tap()
+        tab(app, "Settings")
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         for _ in 0..<3 where !app.switches["Record watch history"].exists { app.swipeUp() }
         XCTAssertTrue(app.switches["Record watch history"].exists)
@@ -33,12 +65,8 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["Export library backup"].waitForExistence(timeout: 5))
         app.navigationBars.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
-        app.buttons["Done"].tap()
-        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.navigationBars["Settings"])
-        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 5), .completed)
-        app.buttons["mainMenu"].tap()
-        let subscriptions = app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch
-        XCTAssertTrue(subscriptions.waitForExistence(timeout: 5)); subscriptions.tap()
+        tab(app, "Subscriptions")
+        segment(app, "Channels")
         XCTAssertTrue(app.staticTexts["ndls 404"].waitForExistence(timeout: 5))
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Subscriptions"; attachment.lifetime = .keepAlways; add(attachment)
@@ -46,12 +74,10 @@ final class NavigationTests: XCTestCase {
 
     func testSearchPlayerMinimizeAndReturnPreserveResults() {
         let app = application()
-        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 10))
-        app.buttons["openSearch"].tap()
-        let query = app.textFields["searchQuery"]
+        tab(app, "Search")
+        let query = app.searchFields.firstMatch
         XCTAssertTrue(query.waitForExistence(timeout: 5))
-        query.tap(); query.typeText("NDLS404 SENSOJI")
-        app.textFields["searchQuery"].typeText("\n")
+        query.tap(); query.typeText("NDLS404 SENSOJI\n")
         let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch
         let hasResults = result.waitForExistence(timeout: 45)
         if !hasResults { captureDeviceState("search-no-results", app: app) }
@@ -83,17 +109,18 @@ final class NavigationTests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [restored], timeout: 5), .completed)
 #endif
         minimize.tap()
-        app.buttons["Back to home"].tap()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["expandMiniPlayer"].exists)
+        tab(app, "Home")
+        XCTAssertTrue(app.buttons["expandMiniPlayer"].waitForExistence(timeout: 5), "The mini-player stays above the tab bar on other tabs")
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Home with mini player"; screenshot.lifetime = .keepAlways; add(screenshot)
+        tab(app, "Search")
+        XCTAssertTrue(result.waitForExistence(timeout: 5), "Search keeps its results across tabs")
     }
 
     func testKeyboardSearchSubmissionLoadsResults() {
         let app = application()
-        app.buttons["openSearch"].tap()
-        let query = app.textFields["searchQuery"]
+        tab(app, "Search")
+        let query = app.searchFields.firstMatch
         XCTAssertTrue(query.waitForExistence(timeout: 5))
         query.tap(); query.typeText("NDLS404 SENSOJI\n")
         let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch
@@ -105,37 +132,36 @@ final class NavigationTests: XCTestCase {
 
     func testSubscriptionGroupsPersistAndFilterChannels() {
         let app = application()
-        app.buttons["mainMenu"].tap()
-        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["manageSubscriptionGroups"].waitForExistence(timeout: 5))
-        app.buttons["manageSubscriptionGroups"].tap()
-        app.buttons["createSubscriptionGroup"].tap()
+        tab(app, "Subscriptions"); segment(app, "Channels")
+        app.buttons["subscriptionGroupFilter"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Manage subscription groups"].waitForExistence(timeout: 5))
+        app.buttons["Manage subscription groups"].tap()
+        XCTAssertTrue(app.buttons["createSubscriptionGroup"].waitForExistence(timeout: 5)); app.buttons["createSubscriptionGroup"].tap()
         let name = app.textFields["subscriptionGroupName"]
         XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("Music group")
         let member = app.buttons["groupMember-UCUb-HI7Kd-Dr1fBvYjV1IYg"]
         member.tap(); XCTAssertEqual(member.value as? String, "Selected"); app.buttons["saveSubscriptionGroup"].tap()
-        XCTAssertTrue(app.staticTexts["subscriptionGroupsTitle"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Subscription groups"].waitForExistence(timeout: 5))
         app.buttons["closeSubscriptionGroups"].tap()
-        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["Music group"].tap()
+        subscriptionGroup(app, "Music group")
         XCTAssertTrue(app.staticTexts["ndls 404"].waitForExistence(timeout: 5))
         app.terminate(); app.launch()
-        app.buttons["mainMenu"].tap()
-        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
-        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["Music group"].tap()
+        tab(app, "Subscriptions"); segment(app, "Channels")
+        subscriptionGroup(app, "Music group")
         XCTAssertTrue(app.staticTexts["ndls 404"].waitForExistence(timeout: 5))
-        app.buttons["manageSubscriptionGroups"].tap()
+        subscriptionGroup(app, "Manage subscription groups")
         let group = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "editGroup-")).firstMatch
         XCTAssertTrue(group.waitForExistence(timeout: 5)); group.tap()
+        XCTAssertTrue(app.textFields["subscriptionGroupName"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.textFields["subscriptionGroupName"].value as? String, "Music group")
         app.buttons["groupMember-UCUb-HI7Kd-Dr1fBvYjV1IYg"].tap(); app.buttons["saveSubscriptionGroup"].tap()
-        app.buttons["closeSubscriptionGroups"].tap()
+        XCTAssertTrue(app.buttons["closeSubscriptionGroups"].waitForExistence(timeout: 5)); app.buttons["closeSubscriptionGroups"].tap()
         XCTAssertTrue(app.staticTexts["No channels in this group"].waitForExistence(timeout: 5))
-        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["selectGroup-all"].tap()
+        subscriptionGroup(app, "All subscriptions")
         XCTAssertTrue(app.staticTexts["ndls 404"].waitForExistence(timeout: 5))
-        app.buttons["mainMenu"].tap()
-        app.descendants(matching: .any)["drawer-section-What's new"].firstMatch.tap()
+        segment(app, "What's new")
         XCTAssertTrue(app.buttons["feedFilters"].waitForExistence(timeout: 5))
-        app.descendants(matching: .any)["subscriptionGroupFilter"].firstMatch.tap(); app.buttons["Music group"].tap()
+        subscriptionGroup(app, "Music group")
         XCTAssertTrue(app.staticTexts["No channels in this feed"].waitForExistence(timeout: 5))
         app.buttons["feedFilters"].tap()
         XCTAssertTrue(app.buttons["Last 7 days"].waitForExistence(timeout: 5)); app.buttons["Last 7 days"].tap()
@@ -145,8 +171,7 @@ final class NavigationTests: XCTestCase {
         let app = application()
         let video = app.buttons["browseVideo-11-9ZaYiTPE"].firstMatch
         XCTAssertTrue(video.waitForExistence(timeout: 10)); video.tap()
-        let comments = app.buttons["COMMENTS"]
-        XCTAssertTrue(comments.waitForExistence(timeout: 15)); comments.tap()
+        segment(app, "Comments")
         XCTAssertTrue(app.staticTexts["commentText"].firstMatch.waitForExistence(timeout: 45))
     }
 
@@ -188,16 +213,7 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(minimize.waitForExistence(timeout: 10)); minimize.tap()
         captureDeviceState("download-minimized", app: app)
         XCTAssertTrue(app.buttons["expandMiniPlayer"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
-        app.buttons["mainMenu"].tap()
-#if !targetEnvironment(simulator)
-        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: directory.appendingPathComponent("download-drawer.png"))
-        try? app.debugDescription.write(to: directory.appendingPathComponent("download-drawer.txt"), atomically: true, encoding: .utf8)
-#endif
-        let downloads = app.descendants(matching: .any)["drawer-Downloads"].firstMatch
-        if !downloads.isHittable { app.swipeUp() }
-        XCTAssertTrue(downloads.waitForExistence(timeout: 5)); downloads.tap()
+        libraryPage(app, "library-downloads")
 #if targetEnvironment(simulator)
         // Exercise the real chooser and persisted job UI here; HLS offline media is verified on hardware.
         XCTAssertTrue(app.staticTexts["Video · automatic quality (HLS)"].waitForExistence(timeout: 10))
@@ -218,10 +234,7 @@ final class NavigationTests: XCTestCase {
         func openDownloads() {
             // Relaunching with the smoke URL reopens the expanded player over the home screen.
             if app.buttons["minimizePlayer"].waitForExistence(timeout: 5) { app.buttons["minimizePlayer"].tap() }
-            app.buttons["mainMenu"].tap()
-            let downloads = app.descendants(matching: .any)["drawer-Downloads"].firstMatch
-            if !downloads.isHittable { app.swipeUp() }
-            downloads.tap()
+            libraryPage(app, "library-downloads")
         }
         openDownloads()
         XCTAssertTrue(app.staticTexts["Waiting for Wi-Fi…"].waitForExistence(timeout: 10))
@@ -285,43 +298,37 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["localPlaylistOptions"].waitForExistence(timeout: 5)); app.buttons["localPlaylistOptions"].tap()
         app.buttons["Add to home"].tap()
         app.terminate(); app.launch()
-        let tab = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tabBar-local:")).firstMatch
-        XCTAssertTrue(tab.waitForExistence(timeout: 10), "Pinned local playlist must survive relaunch as a home tab")
-        let subscriptions = app.buttons["tabBar-section:Subscriptions"]
-        XCTAssertGreaterThan(tab.frame.minX, subscriptions.frame.minX, "New pins follow the sections by default")
-        app.buttons["mainMenu"].tap()
-        let drawerEntry = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'drawer-local-'")).firstMatch
-        if drawerEntry.exists, !drawerEntry.isHittable { app.swipeUp() }
-        XCTAssertTrue(drawerEntry.waitForExistence(timeout: 5)); drawerEntry.tap()
+        tab(app, "Home")
+        openHomeMenu(app)
+        let entry = app.buttons["Road trip"].firstMatch
+        XCTAssertTrue(entry.waitForExistence(timeout: 5), "Pinned local playlist must survive relaunch as a home tab")
+        XCTAssertGreaterThan(entry.frame.minY, app.buttons["Live"].firstMatch.frame.minY, "New pins follow the sections by default")
+        entry.tap()
         XCTAssertTrue(app.buttons["Play all"].waitForExistence(timeout: 5))
-        XCTAssertTrue(tab.isSelected)
+        XCTAssertTrue(app.navigationBars["Road trip"].exists, "The title names the open tab")
 
-        app.buttons["More options"].tap(); app.buttons["Settings"].tap()
-        app.buttons["Home tabs"].tap()
+        openHomeMenu(app); app.buttons["Customize tabs"].tap()
         let local = app.descendants(matching: .any)["homeTab-local"].firstMatch
         XCTAssertTrue(local.waitForExistence(timeout: 5))
-        let first = app.cells.containing(.any, identifier: "homeTab-section:Subscriptions").buttons["Reorder"].firstMatch
+        let first = app.cells.containing(.any, identifier: "homeTab-section:Live").buttons["Reorder"].firstMatch
         let handle = app.cells.containing(.any, identifier: "homeTab-local").buttons["Reorder"].firstMatch
         XCTAssertTrue(handle.waitForExistence(timeout: 5))
         handle.press(forDuration: 0.6, thenDragTo: first)
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.buttons["Done"].tap()
-        XCTAssertTrue(tab.waitForExistence(timeout: 5))
-        XCTAssertLessThan(tab.frame.minX, subscriptions.frame.minX, "The playlist tab moved ahead of Subscriptions")
+        app.buttons["closeSheet"].tap()
+        openHomeMenu(app)
+        XCTAssertLessThan(app.buttons["Road trip"].firstMatch.frame.minY, app.buttons["Live"].firstMatch.frame.minY, "The playlist moved ahead of Live")
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tabBar-local:")).firstMatch.waitForExistence(timeout: 10))
-        XCTAssertLessThan(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "tabBar-local:")).firstMatch.frame.minX, app.buttons["tabBar-section:Subscriptions"].frame.minX, "The interleaved order survives relaunch")
+        tab(app, "Home"); openHomeMenu(app)
+        XCTAssertLessThan(app.buttons["Road trip"].firstMatch.frame.minY, app.buttons["Live"].firstMatch.frame.minY, "The order survives relaunch")
     }
 
-    func testHomeToolbarShowsTheTabNameAndTabsCanBeCustomized() {
+    func testHomeTitleMenuSwitchesTabsAndTabsCanBeCustomized() {
         let app = application()
-        let live = app.buttons["tabBar-section:Live"]
-        XCTAssertTrue(live.waitForExistence(timeout: 10))
-        XCTAssertEqual(live.label, "Live", "Icon tabs are named for VoiceOver")
-        app.buttons["tabBar-section:History"].tap()
-        XCTAssertEqual(app.staticTexts["homeTitle"].label, "History", "The toolbar names the open tab")
-        XCTAssertTrue(app.buttons["tabBar-section:History"].isSelected)
-        app.buttons["moreOptions"].tap()
+        tab(app, "Home")
+        XCTAssertTrue(app.navigationBars["Live"].waitForExistence(timeout: 10), "Home opens on Live, named in the title")
+        homeTab(app, "Trending music")
+        XCTAssertTrue(app.navigationBars["Trending music"].waitForExistence(timeout: 5), "The title names the open tab")
+        openHomeMenu(app)
         app.buttons["Customize tabs"].tap()
         XCTAssertTrue(app.navigationBars["Home tabs"].waitForExistence(timeout: 5), "Customize opens the home tab settings")
         let gaming = app.switches["Gaming"]
@@ -329,39 +336,14 @@ final class NavigationTests: XCTestCase {
         gaming.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         XCTAssertEqual(gaming.value as? String, "1")
         app.buttons["closeSheet"].tap()
-        XCTAssertTrue(app.buttons["tabBar-section:Gaming"].waitForExistence(timeout: 5), "A tab turned on in Customize appears in the bar")
-    }
-
-    func testDrawerOpensFromTheLeftEdgeAndClosesByDragging() {
-        let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
-        let drawer = app.descendants(matching: .any)["navigationDrawer"].firstMatch
-        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
-        // A short pull springs back; a long one opens the drawer.
-        edge.press(forDuration: 0.05, thenDragTo: edge.withOffset(CGVector(dx: 40, dy: 0)))
-        sleep(1)
-        XCTAssertFalse(drawer.exists, "A short pull from the edge springs back")
-        edge.press(forDuration: 0.05, thenDragTo: edge.withOffset(CGVector(dx: 260, dy: 0)))
-        XCTAssertTrue(drawer.waitForExistence(timeout: 3), "Dragging from the left edge opens the main menu")
-        sleep(1)
-        XCTAssertEqual(drawer.frame.minX, 0, accuracy: 1, "The drawer settles fully open")
-        XCTAssertTrue(app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.exists)
-        // Drag it back to close.
-        let inside = drawer.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.6))
-        inside.press(forDuration: 0.05, thenDragTo: inside.withOffset(CGVector(dx: -250, dy: 0)))
-        let closed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: drawer)
-        wait(for: [closed], timeout: 3)
-        // The dimmed area beside the drawer drags it closed too, and the menu button still works.
-        app.buttons["mainMenu"].tap()
-        XCTAssertTrue(drawer.waitForExistence(timeout: 3))
-        let scrim = app.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
-        scrim.press(forDuration: 0.05, thenDragTo: scrim.withOffset(CGVector(dx: -250, dy: 0)))
-        wait(for: [expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: drawer)], timeout: 3)
+        homeTab(app, "Gaming")
+        XCTAssertTrue(app.navigationBars["Gaming"].waitForExistence(timeout: 5), "A tab turned on in Customize is in the menu")
     }
 
     func testLiveKioskLoadsMoreOnItsOwnAtTheBottom() {
         let app = application()
-        XCTAssertTrue(app.buttons["tabBar-section:Live"].waitForExistence(timeout: 10)); app.buttons["tabBar-section:Live"].tap()
+        tab(app, "Home")
+        XCTAssertTrue(app.navigationBars["Live"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browseVideo-'")).firstMatch.waitForExistence(timeout: 45))
         XCTAssertFalse(app.buttons["Load more"].exists, "There is no Load more button")
         // The kiosk page itself has no continuation; scrolling to the end opens each shelf's full list in turn, with no tap.
@@ -374,44 +356,41 @@ final class NavigationTests: XCTestCase {
     }
     private func loadMoreCount(_ button: XCUIElement) -> Int { Int((button.value as? String ?? "").split(separator: " ").first ?? "") ?? 0 }
 
-    func testKioskFromDrawerLoadsYouTubeLiveAndStaysOnHome() {
+    func testLiveKioskIsTheFirstHomeTab() {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        let live = app.descendants(matching: .any)["drawer-section-Live"].firstMatch
-        if live.exists, !live.isHittable { app.swipeUp() }
-        XCTAssertTrue(live.waitForExistence(timeout: 5)); live.tap()
+        tab(app, "Home")
         XCTAssertTrue(app.staticTexts["kioskSource"].waitForExistence(timeout: 10))
         let video = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'browseVideo-'")).firstMatch
         XCTAssertTrue(video.waitForExistence(timeout: 45), "The Live kiosk should list videos")
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["tabBar-section:Live"].waitForExistence(timeout: 10), "Live is on home")
-        XCTAssertLessThan(app.buttons["tabBar-section:Live"].frame.minX, app.buttons["tabBar-section:Subscriptions"].frame.minX, "Live is the first home tab")
+        tab(app, "Home")
+        XCTAssertTrue(app.navigationBars["Live"].waitForExistence(timeout: 10), "Live is on home")
+        openHomeMenu(app)
+        XCTAssertLessThan(app.buttons["Live"].firstMatch.frame.minY, app.buttons["Trending music"].firstMatch.frame.minY, "Live is the first home tab")
     }
 
     func testSoundCloudSearchPlaysTracksAndOpensProfiles() {
         let app = application()
-        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 10)); app.buttons["openSearch"].tap()
+        tab(app, "Search")
         app.segmentedControls["searchService"].buttons["SoundCloud"].tap()
-        let query = app.textFields["searchQuery"]
-        XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("lofi hip hop")
-        app.textFields["searchQuery"].typeText("\n")
+        let query = app.searchFields.firstMatch
+        XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("lofi hip hop\n")
         let track = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'searchVideo-sc:'")).firstMatch
         XCTAssertTrue(track.waitForExistence(timeout: 45), "SoundCloud search should list tracks")
         track.tap()
-        XCTAssertTrue(app.staticTexts["SoundCloud"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.navigationBars["SoundCloud"].waitForExistence(timeout: 15))
         XCTAssertTrue(app.descendants(matching: .any)["audioArtwork"].waitForExistence(timeout: 20))
         XCTAssertFalse(app.staticTexts["playbackError"].waitForExistence(timeout: 8), "The track should play")
         app.buttons["minimizePlayer"].tap()
         XCTAssertTrue(app.buttons["expandMiniPlayer"].waitForExistence(timeout: 5))
-        app.buttons["USERS"].tap()
+        segment(app, "Users")
         let profile = app.buttons.matching(NSPredicate(format: "label CONTAINS 'SoundCloud · Channel'")).firstMatch
         XCTAssertTrue(profile.waitForExistence(timeout: 45)); profile.tap()
-        let subscribe = app.buttons["SUBSCRIBE"]
+        let subscribe = app.buttons.matching(NSPredicate(format: "label == 'Subscribe'")).firstMatch
         XCTAssertTrue(subscribe.waitForExistence(timeout: 30)); subscribe.tap()
-        XCTAssertTrue(app.buttons["SUBSCRIBED"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == 'Subscribed'")).firstMatch.waitForExistence(timeout: 5))
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
+        tab(app, "Subscriptions"); segment(app, "Channels")
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'SoundCloud'")).firstMatch.waitForExistence(timeout: 10),
                       "The SoundCloud subscription survives relaunch")
     }
@@ -452,12 +431,12 @@ final class NavigationTests: XCTestCase {
 
     func testAppLinksPlayVideosAndOpenChannelAndProfilePages() throws {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 10))
         try openLink(app, "https://youtu.be/dQw4w9WgXcQ?si=shared")
         XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 15), "A shared video opens the player")
         app.buttons["minimizePlayer"].tap()
         try openLink(app, "https://www.youtube.com/channel/UCUb-HI7Kd-Dr1fBvYjV1IYg")
-        let subscribe = app.buttons.matching(NSPredicate(format: "label IN {'SUBSCRIBE', 'SUBSCRIBED'}")).firstMatch
+        let subscribe = app.buttons.matching(NSPredicate(format: "label IN {'Subscribe', 'Subscribed'}")).firstMatch
         if !subscribe.waitForExistence(timeout: 30) { print("TREEDUMP-A\n" + app.debugDescription + "\nTREEDUMP-END") }
         XCTAssertTrue(subscribe.exists, "A shared channel opens its page")
         app.buttons["Done"].tap()
@@ -470,7 +449,7 @@ final class NavigationTests: XCTestCase {
 
     func testSharingFromSafariOpensTheVideoInDriftLoom() throws {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 10))
         let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
         let video = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         if #available(iOS 16.4, *) {
@@ -508,8 +487,7 @@ final class NavigationTests: XCTestCase {
 
     func testBackupScreenExplainsGoogleTakeoutImport() {
         let app = application()
-        XCTAssertTrue(app.buttons["More options"].waitForExistence(timeout: 10)); app.buttons["More options"].tap()
-        app.buttons["Settings"].tap()
+        tab(app, "Settings")
         let backup = app.buttons["Backup and import"]
         for _ in 0..<4 where !backup.isHittable { app.swipeUp() }
         backup.tap()
@@ -523,7 +501,7 @@ final class NavigationTests: XCTestCase {
         let app = application(extraArguments: ["--download-notifications", "--feed-notifications-on", "--feed-check-channel", "UCupvZG-5ko_eiXAupbDfxWw", "--feed-check-smoke"])
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         if springboard.alerts.buttons["Allow"].waitForExistence(timeout: 5) { springboard.alerts.buttons["Allow"].tap() }
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 10))
         sleep(8) // the first check only records the current feed
         app.terminate()
         app.launchArguments += ["--feed-check-forget", "2"]
@@ -532,7 +510,7 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(banner.waitForExistence(timeout: 45), "Recent uploads that weren't seen before are announced")
         banner.tap()
         let played = app.buttons["minimizePlayer"].waitForExistence(timeout: 15)
-        XCTAssertTrue(played || app.buttons["WHAT'S NEW"].isSelected, "Tapping plays the video (or opens What's new for a summary)")
+        XCTAssertTrue(played || app.segmentedControls.buttons["What's new"].isSelected, "Tapping plays the video (or opens What's new for a summary)")
     }
 
     func testSeekBarShowsYouTubePreviewFrames() {
@@ -611,7 +589,7 @@ final class NavigationTests: XCTestCase {
         sleep(1)
         XCTAssertTrue((before - 2...before + 4).contains(position()), "Double tap on the left goes back 10 s (\(before) -> \(position()))")
 
-        app.buttons["DESCRIPTION"].tap()
+        segment(app, "Description")
         let third = app.buttons["chapter-3"]
         XCTAssertTrue(third.waitForExistence(timeout: 10), "Description lists the chapters")
         let title = chapter.label
@@ -629,14 +607,14 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(side.waitForExistence(timeout: 30), "Landscape iPad puts the tabs beside the player")
         let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
         XCTAssertTrue(player.waitForExistence(timeout: 30))
-        let related = app.buttons.matching(identifier: "sectionTab-0").allElementsBoundByIndex.first { $0.isHittable }
+        let related = app.segmentedControls.buttons.matching(NSPredicate(format: "label == 'Related'")).allElementsBoundByIndex.first { $0.isHittable }
         XCTAssertNotNil(related)
         if let related { XCTAssertGreaterThan(related.frame.minX, player.frame.maxX - 1, "Tabs sit to the right of the player") }
         sleep(4)
         let close = app.buttons.matching(NSPredicate(format: "label IN {'Close', 'Done', 'Dismiss'}")).firstMatch
         XCTAssertFalse(close.exists, "Turning an iPad doesn't force full screen")
         saveScreenshot("ipad-landscape")
-        app.buttons.matching(identifier: "sectionTab-1").allElementsBoundByIndex.first { $0.isHittable }?.tap()
+        segment(app, "Comments")
         XCTAssertTrue(app.descendants(matching: .any)["commentSort"].firstMatch.waitForExistence(timeout: 30), "Comments offer a sort order")
         saveScreenshot("ipad-comments")
         XCUIDevice.shared.orientation = .portrait
@@ -653,8 +631,7 @@ final class NavigationTests: XCTestCase {
 
     func testCommentsCanBeSortedByNewest() {
         let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
-        let comments = app.buttons["COMMENTS"]
-        XCTAssertTrue(comments.waitForExistence(timeout: 20)); comments.tap()
+        segment(app, "Comments")
         let sort = app.descendants(matching: .any)["commentSort"].firstMatch
         XCTAssertTrue(sort.waitForExistence(timeout: 45), "The sort menu appears with the first page")
         XCTAssertEqual(sort.value as? String, "Top comments")
@@ -697,10 +674,9 @@ final class NavigationTests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["gestureLevel"].firstMatch.exists, "No brightness change in portrait")
         mini.tap()
         XCTAssertTrue(app.descendants(matching: .any)["videoPlayer"].firstMatch.waitForExistence(timeout: 5))
-        // The header is a handle too.
-        let header = app.buttons["minimizePlayer"].coordinate(withNormalizedOffset: CGVector(dx: 3, dy: 0.5))
-        header.press(forDuration: 0.05, thenDragTo: header.withOffset(CGVector(dx: 0, dy: 420)))
-        XCTAssertTrue(mini.waitForExistence(timeout: 5), "Dragging the header down minimizes too")
+        // The bar's chevron minimizes too.
+        app.buttons["minimizePlayer"].tap()
+        XCTAssertTrue(mini.waitForExistence(timeout: 5), "The chevron minimizes the player")
     }
 
     func testAudioOnlyResizeAndFullScreenBrightnessVolumeSwipes() {
@@ -771,7 +747,7 @@ final class NavigationTests: XCTestCase {
         app.terminate()
         app.launchArguments.removeAll { $0 == "--diagnostic-smoke" }
         app.launch()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 10))
         sleep(3)
         XCTAssertFalse(app.alerts.firstMatch.exists, "Nothing is offered again")
         // A new one goes to GitHub.
@@ -787,11 +763,11 @@ final class NavigationTests: XCTestCase {
 
     func testEndingWhileOnScreenIsOfferedAsAnUnexpectedQuit() {
         let app = application(extraArguments: ["--exit-check-smoke"])
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 10))
         // Going to the background first is a normal exit.
         XCUIDevice.shared.press(.home); sleep(2)
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); sleep(3)
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 10)); sleep(3)
         XCTAssertFalse(app.alerts["DriftLoom quit unexpectedly"].exists, "Leaving normally isn't a crash")
         // Ended while on screen, as a crash would.
         app.terminate(); app.launch()
@@ -859,10 +835,7 @@ final class NavigationTests: XCTestCase {
 
     func testLanguageRowOpensDriftLoomInTheSettingsApp() {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
-        if !settings.isHittable { app.swipeUp() }
-        XCTAssertTrue(settings.waitForExistence(timeout: 5)); settings.tap()
+        tab(app, "Settings")
         let language = app.buttons["interfaceLanguage"]
         XCTAssertTrue(language.waitForExistence(timeout: 5))
         XCTAssertEqual(language.value as? String, "English", "The row names the current interface language")
@@ -885,72 +858,58 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(elapsed.label.range(of: "^[0-9]+:[0-9]{2}$", options: .regularExpression) != nil, "Elapsed time reads like 1:05")
     }
 
-    func testReopeningSearchShowsThePreviousResults() {
+    func testSearchKeepsResultsAcrossTabsAndCancelShowsPreviousSearches() {
         let app = application()
-        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 10)); app.buttons["openSearch"].tap()
-        let query = app.textFields["searchQuery"]
+        tab(app, "Search")
+        let query = app.searchFields.firstMatch
         XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("lofi")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchSuggestion-")).firstMatch.waitForExistence(timeout: 15))
+        let suggestion = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchSuggestion-")).firstMatch
+        XCTAssertTrue(suggestion.waitForExistence(timeout: 15))
         query.typeText("\n")
         let result = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchVideo-")).firstMatch
         XCTAssertTrue(result.waitForExistence(timeout: 45))
-        let suggestion = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchSuggestion-")).firstMatch
-        // Start editing again so suggestions show, then leave without searching.
+        XCTAssertFalse(suggestion.exists, "Searching hides the suggestions")
+        tab(app, "Home"); tab(app, "Search")
+        XCTAssertTrue(result.waitForExistence(timeout: 5), "The previous results are back")
+        XCTAssertEqual(query.value as? String, "lofi", "The field shows the search the results are for")
+        // Editing again suggests; Cancel empties the field and lists previous searches; one tap searches again.
         query.tap(); query.typeText(" beats")
         XCTAssertTrue(suggestion.waitForExistence(timeout: 15))
-        app.buttons["closeSearch"].tap()
-        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 5)); app.buttons["openSearch"].tap()
-        sleep(2)
-        XCTAssertFalse(suggestion.exists, "No stale suggestions")
-        XCTAssertTrue(result.exists, "The previous results are back")
-        XCTAssertEqual(query.value as? String, "lofi", "The field shows the search the results are for")
-        // Clearing the box lists previous searches instead of the results; one tap searches again.
-        app.buttons["Clear search"].tap()
+        app.buttons["Cancel"].tap()
         let previous = app.buttons["searchHistory-lofi"]
-        XCTAssertTrue(previous.waitForExistence(timeout: 5), "An empty box shows previous searches")
+        XCTAssertTrue(previous.waitForExistence(timeout: 5), "An empty field shows previous searches")
         XCTAssertFalse(result.exists)
         previous.tap()
         XCTAssertTrue(result.waitForExistence(timeout: 45), "A previous search runs again")
     }
 
-    func testUserGuideOpensFromSettingsAndTheMenu() {
+    func testUserGuideOpensFromSettings() {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        let menuEntry = app.descendants(matching: .any)["drawer-User guide"].firstMatch
-        if !menuEntry.isHittable { app.descendants(matching: .any)["navigationDrawer"].firstMatch.swipeUp() }
-        XCTAssertTrue(menuEntry.waitForExistence(timeout: 5)); menuEntry.tap()
+        tab(app, "Settings")
+        let guide = app.buttons["openUserGuide"]
+        for _ in 0..<8 where !guide.isHittable { app.swipeUp() }
+        guide.tap()
+        // Search across the pages.
+        let search = app.searchFields.firstMatch
+        if !search.waitForExistence(timeout: 3) { app.swipeDown() }
+        XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("Takeout")
+        XCTAssertTrue(app.buttons["guidePage-backup-and-import.md"].waitForExistence(timeout: 5), "Search finds pages by their text")
+        XCTAssertFalse(app.buttons["guidePage-player.md"].exists)
+        app.buttons["Cancel"].tap()
         let player = app.buttons["guidePage-player.md"]
-        XCTAssertTrue(player.waitForExistence(timeout: 5), "The menu opens the guide's contents")
+        for _ in 0..<4 where !(player.exists && player.isHittable) { app.swipeUp() }
+        XCTAssertTrue(player.waitForExistence(timeout: 5), "The guide lists its pages")
         player.tap()
         XCTAssertTrue(app.staticTexts["Controls on the video"].waitForExistence(timeout: 5), "A page shows its headings")
         XCTAssertTrue(app.images["The player with its controls showing"].exists, "and its screenshots")
         for _ in 0..<12 where !app.buttons["guideNext"].isHittable { app.swipeUp() }
         app.buttons["guideNext"].tap()
         XCTAssertTrue(app.staticTexts["Playback speed"].waitForExistence(timeout: 5), "Next goes to the following page")
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["closeSheet"].waitForExistence(timeout: 5)); app.buttons["closeSheet"].tap()
-
-        // Settings → Help → User guide, with search across the pages.
-        app.buttons["mainMenu"].tap()
-        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
-        if !settings.isHittable { app.descendants(matching: .any)["navigationDrawer"].firstMatch.swipeUp() }
-        settings.tap()
-        let guide = app.buttons["openUserGuide"]
-        for _ in 0..<8 where !guide.isHittable { app.swipeUp() }
-        guide.tap()
-        let search = app.searchFields.firstMatch
-        if !search.waitForExistence(timeout: 3) { app.swipeDown() }
-        XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("Takeout")
-        XCTAssertTrue(app.buttons["guidePage-backup-and-import.md"].waitForExistence(timeout: 5), "Search finds pages by their text")
-        XCTAssertFalse(app.buttons["guidePage-player.md"].exists)
     }
 
     func testPlaybackSettingsOfferAutoplayAndDefaultResolutions() {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        let settings = app.descendants(matching: .any)["drawer-Settings"].firstMatch
-        if !settings.isHittable { app.swipeUp() }
-        XCTAssertTrue(settings.waitForExistence(timeout: 5)); settings.tap()
+        tab(app, "Settings")
         let autoplay = app.switches["autoplayRelated"]
         for _ in 0..<4 where !autoplay.isHittable { app.swipeUp() }
         XCTAssertTrue(autoplay.exists)
@@ -965,27 +924,24 @@ final class NavigationTests: XCTestCase {
 
     func testPinnedChannelSurvivesRelaunchAndCanBeRemoved() {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        app.descendants(matching: .any)["drawer-section-Subscriptions"].firstMatch.tap()
+        tab(app, "Subscriptions"); segment(app, "Channels")
         let actions = app.buttons["itemActions-channel:UCUb-HI7Kd-Dr1fBvYjV1IYg"].firstMatch
         XCTAssertTrue(actions.waitForExistence(timeout: 10)); actions.tap()
         app.buttons["Add to home"].tap()
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        let pinned = app.descendants(matching: .any)["drawer-pinned-channel:UCUb-HI7Kd-Dr1fBvYjV1IYg"].firstMatch
-        if !pinned.isHittable { app.swipeUp() }
-        XCTAssertTrue(pinned.waitForExistence(timeout: 5)); pinned.tap()
-        XCTAssertTrue(app.staticTexts["pinnedPageTitle"].waitForExistence(timeout: 10))
-        app.buttons["Pinned tab options"].tap(); app.buttons["Remove from home"].tap()
+        tab(app, "Home")
+        homeTab(app, "ndls 404")
+        XCTAssertTrue(app.navigationBars["ndls 404"].waitForExistence(timeout: 10), "The pinned channel opens as a home tab")
+        app.buttons["pinnedTabOptions"].tap(); app.buttons["Remove from home"].tap()
         app.terminate(); app.launch()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        XCTAssertFalse(app.descendants(matching: .any)["drawer-pinned-channel:UCUb-HI7Kd-Dr1fBvYjV1IYg"].firstMatch.exists)
+        tab(app, "Home"); openHomeMenu(app)
+        XCTAssertFalse(app.buttons["ndls 404"].exists)
     }
 
     func testSuggestionSelectionSubmitsTheSuggestedQuery() {
         let app = application()
-        XCTAssertTrue(app.buttons["openSearch"].waitForExistence(timeout: 10)); app.buttons["openSearch"].tap()
-        let query = app.textFields["searchQuery"]
+        tab(app, "Search")
+        let query = app.searchFields.firstMatch
         XCTAssertTrue(query.waitForExistence(timeout: 5)); query.tap(); query.typeText("newpipe")
         let suggestion = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "searchSuggestion-")).firstMatch
         XCTAssertTrue(suggestion.waitForExistence(timeout: 20))
@@ -997,12 +953,9 @@ final class NavigationTests: XCTestCase {
 
     func testTrendingMusicUsesOfficialChart() {
         let app = application()
-        XCTAssertTrue(app.buttons["mainMenu"].waitForExistence(timeout: 10)); app.buttons["mainMenu"].tap()
-        let trending = app.descendants(matching: .any)["drawer-section-Trending music"].firstMatch
-        if !trending.isHittable { app.swipeUp() }
-        XCTAssertTrue(trending.waitForExistence(timeout: 5)); trending.tap()
+        tab(app, "Home")
+        homeTab(app, "Trending music")
         XCTAssertTrue(app.staticTexts["YouTube Charts · PT"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "browseVideo-")).firstMatch.waitForExistence(timeout: 35))
     }
-
 }

@@ -5,7 +5,6 @@ import SwiftUI
 import UIKit
 
 extension Notification.Name {
-    static let driftLoomManageGroups = Notification.Name("DriftLoom.manageGroups")
     static let driftLoomExpandPlayer = Notification.Name("DriftLoom.expandPlayer")
     static let driftLoomAddToPlaylist = Notification.Name("DriftLoom.addToPlaylist")
     /// Object: the URL to open (a YouTube/SoundCloud link or a driftloom://open link).
@@ -24,8 +23,10 @@ struct ContentView: View {
     @StateObject private var network = NetworkStatus()
     @State private var historyRecorder: LibraryPlaybackRecorder?
     @State private var nowPlaying: NowPlayingController?
-    @State private var selectedSection = HomeSection.subscriptions
-    @State private var searching = false
+    @State private var selectedSection = HomeSection.live
+    @State private var tab = AppTab.home
+    @State private var subscriptionsPage = SubscriptionsView.Page.feed
+    @State private var libraryRequest: LibraryRequest?
     @State private var expanded = false
     @State private var addingToPlaylist: BrowseItem?
     @State private var linkedPage: LinkedPage?
@@ -53,18 +54,17 @@ struct ContentView: View {
     }
     var body: some View {
         ZStack {
-            VStack(spacing: 0) {
-                ZStack {
-                    HomeView(selection: $selectedSection, onSearch: { searching = true }, onPlay: play)
-                        .opacity(searching ? 0 : 1).allowsHitTesting(!searching).accessibilityHidden(searching)
-                    // Keep the search hierarchy mounted so player dismissal restores its results and scroll.
-                    SearchView(onPlay: play, onClose: closeSearch, isActive: searching)
-                        .opacity(searching ? 1 : 0).allowsHitTesting(searching).accessibilityHidden(!searching)
-                }
-                DownloadProgressStrip()
-                if playback.videoID != nil, !expanded {
-                    MiniPlayer(playback: playback, onExpand: { expanded = true }, onStop: queue.stop)
-                }
+            TabView(selection: $tab) {
+                HomeView(selection: $selectedSection, onPlay: play).modifier(bottomAccessory)
+                    .tabItem { Label("Home", systemImage: "house") }.tag(AppTab.home)
+                SubscriptionsView(onPlay: play, page: $subscriptionsPage).modifier(bottomAccessory)
+                    .tabItem { Label("Subscriptions", systemImage: "play.square.stack") }.tag(AppTab.subscriptions)
+                LibraryTabView(onPlay: play, request: $libraryRequest).modifier(bottomAccessory)
+                    .tabItem { Label("Library", systemImage: "books.vertical") }.tag(AppTab.library)
+                SearchView(onPlay: play).modifier(bottomAccessory)
+                    .tabItem { Label("Search", systemImage: "magnifyingglass") }.tag(AppTab.search)
+                SettingsView().modifier(bottomAccessory)
+                    .tabItem { Label("Settings", systemImage: "gearshape") }.tag(AppTab.settings)
             }
             .accessibilityHidden(expanded).allowsHitTesting(!expanded)
             if expanded {
@@ -82,21 +82,25 @@ struct ContentView: View {
         .sheet(item: $addingToPlaylist) { item in PlaylistPickerView(item: item).environmentObject(playlists) }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomAddToPlaylist)) { addingToPlaylist = $0.object as? BrowseItem }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomExpandPlayer)) { _ in expanded = true }
-        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in expanded = false; closeSearch() }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenDownloads)) { _ in
+            expanded = false; dismissKeyboard(); tab = .library; libraryRequest = LibraryRequest(page: "downloads")
+        }
         .onOpenURL { url in openLink(url) }
         .modifier(CrashReportPrompt(inbox: .shared))
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenLink)) { if let url = $0.object as? URL { openLink(url) } }
-        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenFeed)) { _ in expanded = false; closeSearch(); linkedPage = nil }
+        .onReceive(NotificationCenter.default.publisher(for: .driftLoomOpenFeed)) { _ in
+            expanded = false; dismissKeyboard(); linkedPage = nil; tab = .subscriptions; subscriptionsPage = .feed
+        }
         .onReceive(NotificationCenter.default.publisher(for: .driftLoomPlayVideo)) { note in
             guard let id = note.object as? String, (try? VideoRequest(input: id))?.videoID == id else { return }
-            closeSearch(); linkedPage = nil
+            dismissKeyboard(); linkedPage = nil
             play(BrowseItem(contentID: id, kind: .video, title: SoundCloudID.isSoundCloud(id) ? String(localized: "SoundCloud track") : PlaybackSession.placeholderTitle))
         }
         .onChange(of: scenePhase) { if $0 == .background { FeedRefresher.shared.schedule() } }
         .sheet(item: $linkedPage) { page in
             AppNavigation {
                 BrowsePageView(route: page.route, onPlay: { item in linkedPage = nil; play(item) })
-                    .toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { linkedPage = nil }.accessibilityIdentifier("closeSheet") } }
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { linkedPage = nil }.accessibilityIdentifier("closeSheet") } }
             }
             .environmentObject(library).environmentObject(queue).environmentObject(preferences).environmentObject(playlists)
             .environmentObject(pinnedTabs).environmentObject(subscriptionGroups).environmentObject(positions)
@@ -105,7 +109,7 @@ struct ContentView: View {
             Button("OK") { linkError = nil }
         } message: { Text(linkError ?? "") }
         .onChange(of: preferences.homeSections) { values in
-            if !values.contains(selectedSection), let first = values.first { selectedSection = first }
+            if !HomeSection.shownOnHome(values).contains(selectedSection) { selectedSection = HomeSection.shownOnHome(values)[0] }
         }
         .onChange(of: preferences.resumesPlayback) { playback.resumesPositions = $0 }
         .onChange(of: preferences.subtitleLanguage) { playback.preferredSubtitleLanguage = $0 }
@@ -130,18 +134,28 @@ struct ContentView: View {
             playback.onSubtitleChoice = { [weak preferences] in preferences?.setSubtitleLanguage($0) }
             if library.isWritable { positions.retainOnly(Set(library.history.map { $0.item.contentID })) }
             if preferences.movedLiveFirst { pinnedTabs.moveToFront(.section(.live)) }
-            selectedSection = preferences.homeSections.first ?? .subscriptions
+            selectedSection = HomeSection.shownOnHome(preferences.homeSections)[0]
             if historyRecorder == nil { historyRecorder = LibraryPlaybackRecorder(playback: playback, library: library) }
             if nowPlaying == nil { nowPlaying = NowPlayingController(playback: playback, queue: queue) }
 #if DEBUG || DRIFTLOOM_DEVICE_TESTING
             let arguments = ProcessInfo.processInfo.arguments
-            searching = arguments.contains("--browse-smoke-query") || arguments.contains("--suggestion-smoke")
+            let searching = arguments.contains("--browse-smoke-query") || arguments.contains("--suggestion-smoke")
+            if searching { tab = .search }
             if arguments.contains("--library-smoke-run") {
                 runLibrarySmokeSetup(library)
                 if let flag = arguments.firstIndex(of: "--library-smoke-section"), arguments.indices.contains(flag + 1) {
-                    selectedSection = arguments[flag + 1] == "History" ? .history : arguments[flag + 1] == "Subscriptions" ? .subscriptions : .bookmarks
-                } else if !searching { selectedSection = .bookmarks }
+                    switch arguments[flag + 1] {
+                    case "Home": tab = .home
+                    case "History": tab = .library; libraryRequest = LibraryRequest(page: "history")
+                    case "Subscriptions": tab = .subscriptions; subscriptionsPage = .channels
+                    default: tab = .library; libraryRequest = LibraryRequest(page: "bookmarks")
+                    }
+                } else if !searching { tab = .library; libraryRequest = LibraryRequest(page: "bookmarks") }
             }
+            // --settings-smoke, --guide-smoke: open Settings at launch, for device screenshots.
+            if arguments.contains("--settings-smoke") || arguments.contains("--guide-smoke") { tab = .settings }
+            // --feed-smoke: open What's new, for device screenshots.
+            if arguments.contains("--feed-smoke") { tab = .subscriptions; subscriptionsPage = .feed }
             if arguments.contains("--playback-smoke-url") || arguments.contains("--autoplay-smoke") { expanded = true }
             await runPlaybackSmokeCheck(playback)
             await runAutoplaySmokeCheck(queue)
@@ -169,7 +183,7 @@ struct ContentView: View {
             linkError = String(localized: "DriftLoom opens YouTube and SoundCloud links."); return
         }
         linkTask?.cancel()
-        closeSearch(); linkedPage = nil
+        dismissKeyboard(); linkedPage = nil
         if let target = LinkResolver.immediate(link) { show(target); return }
         linkTask = Task {
             do {
@@ -184,8 +198,11 @@ struct ContentView: View {
         case let .browse(route): expanded = false; linkedPage = LinkedPage(route: route)
         }
     }
-    private func closeSearch() {
-        searching = false
+    /// The download strip and mini-player sit above the tab bar, on every page of every tab.
+    private var bottomAccessory: BottomAccessory {
+        BottomAccessory(playback: playback, expanded: expanded, onExpand: { expanded = true }, onStop: queue.stop)
+    }
+    private func dismissKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
@@ -204,6 +221,21 @@ func makeAppDefaults() -> UserDefaults {
        let defaults = UserDefaults(suiteName: "DriftLoom.Smoke." + arguments[flag + 1]) { return defaults }
 #endif
     return .standard
+}
+
+struct BottomAccessory: ViewModifier {
+    @ObservedObject var playback: PlaybackSession
+    let expanded: Bool
+    let onExpand: () -> Void
+    let onStop: () -> Void
+    func body(content: Content) -> some View {
+        content.safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                DownloadProgressStrip()
+                if playback.videoID != nil, !expanded { MiniPlayer(playback: playback, onExpand: onExpand, onStop: onStop) }
+            }
+        }
+    }
 }
 
 struct MiniPlayer: View {
