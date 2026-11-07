@@ -42,23 +42,20 @@ import net.driftloom.app.theme.spaceLarge
 import net.driftloom.app.theme.spaceXSmall
 import net.driftloom.app.theme.spaceXXSmall
 import driftloom.shared.generated.resources.Res
-import driftloom.shared.generated.resources.app_description
+import driftloom.shared.generated.resources.app_tagline
 import driftloom.shared.generated.resources.contribution_encouragement
 import driftloom.shared.generated.resources.contribution_title
-import driftloom.shared.generated.resources.donation_encouragement
-import driftloom.shared.generated.resources.donation_title
-import driftloom.shared.generated.resources.faq
-import driftloom.shared.generated.resources.faq_description
-import driftloom.shared.generated.resources.faq_title
-import driftloom.shared.generated.resources.give_back
-import driftloom.shared.generated.resources.ic_foreground
-import driftloom.shared.generated.resources.open_in_browser
-import driftloom.shared.generated.resources.privacy_policy_encouragement
+import driftloom.shared.generated.resources.help_action
+import driftloom.shared.generated.resources.help_description
+import driftloom.shared.generated.resources.help_title
+import driftloom.shared.generated.resources.ic_brand
+import driftloom.shared.generated.resources.privacy_summary
 import driftloom.shared.generated.resources.privacy_policy_title
 import driftloom.shared.generated.resources.read_privacy_policy
+import driftloom.shared.generated.resources.upstream_action
+import driftloom.shared.generated.resources.upstream_description
+import driftloom.shared.generated.resources.upstream_title
 import driftloom.shared.generated.resources.view_on_github
-import driftloom.shared.generated.resources.website_encouragement
-import driftloom.shared.generated.resources.website_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -93,7 +90,7 @@ fun AboutPageContent(
                         .requiredSize(iconTVDPI)
                         .clip(CircleShape)
                         .background(color = logoBackground),
-                    painter = painterResource(Res.drawable.ic_foreground),
+                    painter = painterResource(Res.drawable.ic_brand),
                     contentDescription = BuildConfig.APP_NAME
                 )
                 Spacer(modifier = Modifier.height(spaceXSmall))
@@ -109,7 +106,7 @@ fun AboutPageContent(
                 )
                 Text(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(Res.string.app_description),
+                    text = stringResource(Res.string.app_tagline),
                     textAlign = TextAlign.Center
                 )
             }
@@ -128,10 +125,10 @@ fun AboutPageContent(
 @Composable
 private fun defaultLinks() = listOf(
     Link(
-        title = stringResource(Res.string.faq_title),
-        description = stringResource(Res.string.faq_description),
-        action = stringResource(Res.string.faq),
-        url = Constants.URL_FAQ
+        title = stringResource(Res.string.help_title),
+        description = stringResource(Res.string.help_description),
+        action = stringResource(Res.string.help_action),
+        url = Constants.URL_ISSUES
     ),
     Link(
         title = stringResource(Res.string.contribution_title),
@@ -140,20 +137,14 @@ private fun defaultLinks() = listOf(
         url = Constants.URL_GITHUB
     ),
     Link(
-        title = stringResource(Res.string.donation_title),
-        description = stringResource(Res.string.donation_encouragement),
-        action = stringResource(Res.string.give_back),
-        url = Constants.URL_DONATION
-    ),
-    Link(
-        title = stringResource(Res.string.website_title),
-        description = stringResource(Res.string.website_encouragement),
-        action = stringResource(Res.string.open_in_browser),
-        url = Constants.URL_WEBSITE
+        title = stringResource(Res.string.upstream_title),
+        description = stringResource(Res.string.upstream_description),
+        action = stringResource(Res.string.upstream_action),
+        url = Constants.URL_NEWPIPE
     ),
     Link(
         title = stringResource(Res.string.privacy_policy_title),
-        description = stringResource(Res.string.privacy_policy_encouragement),
+        description = stringResource(Res.string.privacy_summary),
         action = stringResource(Res.string.read_privacy_policy),
         url = Constants.URL_PRIVACY
     )

@@ -7,10 +7,9 @@ package net.driftloom.app
 
 object Constants {
     const val URL_GITHUB = "https://github.com/sk3llo/DriftLoom"
-    const val URL_DONATION = "https://newpipe.net/donate/"
-    const val URL_WEBSITE = "https://github.com/sk3llo/DriftLoom"
-    const val URL_PRIVACY = "https://newpipe.net/legal/privacy/"
-    const val URL_FAQ = "https://newpipe.net/FAQ/"
+    const val URL_ISSUES = "https://github.com/sk3llo/DriftLoom/issues"
+    const val URL_NEWPIPE = "https://newpipe.net"
+    const val URL_PRIVACY = "https://github.com/sk3llo/DriftLoom/blob/main/PRIVACY.md"
 
     const val KEY_STREAMING_SERVICE = "service"
 }

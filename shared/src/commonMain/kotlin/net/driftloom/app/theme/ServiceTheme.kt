@@ -18,13 +18,14 @@ import com.russhwolf.settings.Settings
 import net.driftloom.app.Constants.KEY_STREAMING_SERVICE
 import org.koin.compose.koinInject
 
+// DriftLoom's violet, as in the Android app's `*_youtube_primary_color` resources and branding/generate.py.
 val youTubeLightScheme = lightColorScheme(
-    primaryContainer = Color(0xFFE53935),
+    primaryContainer = Color(0xFF2E1C66),
     onPrimaryContainer = Color(0xFFFFFFFF)
 )
 
 val youTubeDarkScheme = darkColorScheme(
-    primaryContainer = Color(0xFF992722),
+    primaryContainer = Color(0xFF1F1650),
     onPrimaryContainer = Color(0xFFFFFFFF)
 )
 

@@ -161,5 +161,7 @@ write(f"{MARK}/Contents.json", json.dumps({"images": [{"filename": f"brand-mark@
 render(svg_icon("square"), f"{FASTLANE}/icon.png", 512, opaque=True)
 render(feature_graphic(), f"{FASTLANE}/featureGraphic.png", None, opaque=True, height=500)
 render(svg_icon("square"), os.path.join(ROOT, "branding/icon-1024.png"), 1024, opaque=True)
+# The Android About page's logo (shared Compose module), shown in a circle.
+render(svg_icon("square"), os.path.join(ROOT, "shared/src/commonMain/composeResources/drawable/ic_brand.png"), 256, opaque=True)
 write(os.path.join(ROOT, "branding/icon.svg"), svg_icon("square"))
 print("done")
