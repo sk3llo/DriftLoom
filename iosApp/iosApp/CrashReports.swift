@@ -46,13 +46,19 @@ struct CrashReportPrompt: ViewModifier {
 #endif
     }
 
+    /// Where the "on screen" note is kept: the app's own defaults, or in UI tests that run's separate store, so a
+    /// test run that ends with the app on screen doesn't leave a note for the next run to find.
+    @MainActor private static var exitNoteDefaults: UserDefaults { makeAppDefaults() }
+
     func body(content: Content) -> some View {
         content
             .onAppear {
-                if Self.notesExits { inbox.checkLastRun(appVersion: Self.appVersion) }
+                if Self.notesExits { inbox.checkLastRun(appVersion: Self.appVersion, defaults: Self.exitNoteDefaults) }
                 offer()
             }
-            .onChange(of: scenePhase) { phase in if Self.notesExits { inbox.noteForeground(phase == .active, appVersion: Self.appVersion) } }
+            .onChange(of: scenePhase) { phase in
+                if Self.notesExits { inbox.noteForeground(phase == .active, appVersion: Self.appVersion, defaults: Self.exitNoteDefaults) }
+            }
             .onChange(of: inbox.pending) { _ in offer() }
             .alert(shown?.kind == .hang ? "DriftLoom stopped responding" : "DriftLoom quit unexpectedly",
                    isPresented: Binding(get: { shown != nil }, set: { if !$0 { shown = nil } }), presenting: shown) { report in
@@ -90,7 +96,7 @@ struct CrashReportPrompt: ViewModifier {
     // --diagnostic-smoke-clear: drop pending reports left by device checks.
     if arguments.contains("--diagnostic-smoke-clear") {
         DiagnosticInbox.shared.pending.forEach(DiagnosticInbox.shared.finish)
-        DiagnosticInbox.shared.noteForeground(false, appVersion: "")
+        DiagnosticInbox.shared.noteForeground(false, appVersion: "", defaults: makeAppDefaults())
     }
     if arguments.contains("--crash-smoke") {
         NSLog("DriftLoomDiagnostics: crashing on purpose")

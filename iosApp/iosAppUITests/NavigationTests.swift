@@ -773,7 +773,9 @@ final class NavigationTests: XCTestCase {
     }
 
     func testEndingWhileOnScreenIsOfferedAsAnUnexpectedQuit() {
-        let app = application(extraArguments: ["--exit-check-smoke"])
+        // Start without reports left pending by earlier runs; the later launches keep the note this test is about.
+        let app = application(extraArguments: ["--exit-check-smoke", "--diagnostic-smoke-clear"])
+        app.launchArguments.removeAll { $0 == "--diagnostic-smoke-clear" }
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 10))
         // Going to the background first is a normal exit.
         XCUIDevice.shared.press(.home); sleep(2)
