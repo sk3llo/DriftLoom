@@ -36,7 +36,7 @@ struct UserGuide {
     }
 }
 
-/// Contents, with search across page titles and text, as in the RØDE and NewPipe guides.
+/// Contents, with search across page titles and text.
 struct UserGuideView: View {
     @State private var search = ""
     @State private var opened: String?
