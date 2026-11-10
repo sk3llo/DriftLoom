@@ -15,7 +15,7 @@ final class PlaybackClock: ObservableObject {
     private var observer: Any?
     init(player: AVPlayer) {
         self.player = player
-        observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 2), queue: .main) { [weak self] time in
+        observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 2), queue: .main) { [weak self, weak player] time in
             Task { @MainActor [weak self, weak player] in
                 guard let self else { return }
                 self.time = time.seconds.isFinite ? time.seconds : 0

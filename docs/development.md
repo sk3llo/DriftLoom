@@ -186,6 +186,15 @@ English subtitles, and both played from local files, again after a cold relaunch
 then removed the test download, and the normal Release build was reinstalled. YouTube's bot check refused
 the usual fixture video on this network, so device checks used `--download-smoke-video dQw4w9WgXcQ`.
 
+Verification on 10 November 2026 (tab bar layout, iOS 26 and 27): built with Xcode 27.2 and the iOS 27.2 SDK,
+where MetricKit's own `DiagnosticReport` needed DriftLoom's to be named explicitly in `CrashReports.swift`
+(the release workflow still builds with Xcode 26.6). The UI suite passes on iPhone 18 Pro/iOS 27.2 and
+iPhone 17 Pro/iOS 26.5, and the changed journeys pass on iPhone SE (3rd generation)/iOS 17.5, except
+`testEndingWhileOnScreenIsOfferedAsAnUnexpectedQuit`, which also fails on 17.5 and 26.5 at the commit before the
+redesign. iOS 26 and later name some system controls differently: the search field's Cancel is a round Close
+button, list reorder handles are "Reorder <row>", and Safari's Share is inside the Page Menu. The tests handle
+both. The share extension opened a video from Safari on iOS 27.2. The screenshot tour runs on 17.5 and 27.2.
+
 ## Repository layout
 
 The project includes the Android app (`app`), shared Kotlin/Compose module (`shared`),

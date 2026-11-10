@@ -131,7 +131,8 @@ struct ContentView: View {
             playback.translatesSubtitles = preferences.translatesSubtitles
             queue.autoplaysRelated = preferences.autoplaysRelated
             playback.defaultMaximumHeight = defaultMaximumHeight
-            playback.onSubtitleChoice = { [weak preferences] in preferences?.setSubtitleLanguage($0) }
+            let subtitlePreferences = preferences
+            playback.onSubtitleChoice = { [weak subtitlePreferences] in subtitlePreferences?.setSubtitleLanguage($0) }
             if library.isWritable { positions.retainOnly(Set(library.history.map { $0.item.contentID })) }
             if preferences.movedLiveFirst { pinnedTabs.moveToFront(.section(.live)) }
             selectedSection = HomeSection.shownOnHome(preferences.homeSections)[0]

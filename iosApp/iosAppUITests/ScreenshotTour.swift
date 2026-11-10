@@ -31,14 +31,14 @@ final class ScreenshotTour: XCTestCase {
         let target = element(id)
         if target.waitForExistence(timeout: timeout) { target.tap() } else { XCTFail("Missing \(id)") }
     }
-    /// The visible one of several elements sharing an identifier (the home tab strip stays behind the player).
     private func closeSheet() {
         let close = app.buttons["closeSheet"].firstMatch
         if close.waitForExistence(timeout: 3) { close.tap() } else { app.swipeDown(velocity: .fast) }
         sleep(1)
     }
-    /// Closes a menu with a tap on the navigation bar's title, which does nothing on its own.
-    private func dismissOverlay() { app.navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); sleep(1) }
+    /// Closes a menu or dialog with a tap near the lower-left edge: outside the menus, which open from the top (on
+    /// iOS 27 they reach across the bar's title), and beside the speed dialog. The tap that closes a menu isn't passed on.
+    private func dismissOverlay() { app.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.75)).tap(); sleep(1) }
     private func back() { app.navigationBars.buttons.element(boundBy: 0).tap(); sleep(1) }
     private func tab(_ title: String) { app.tabBars.buttons[title].firstMatch.tap(); sleep(1) }
     /// Opens the Home title menu and picks a tab from it.

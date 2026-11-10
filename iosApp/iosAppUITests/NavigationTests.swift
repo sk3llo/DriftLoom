@@ -48,6 +48,11 @@ final class NavigationTests: XCTestCase {
         let target = button.first { $0.isHittable } ?? app.segmentedControls.buttons[title].firstMatch
         XCTAssertTrue(target.waitForExistence(timeout: 15), "The \(title) segment"); target.tap()
     }
+    /// Leaves the search field: "Cancel" up to iOS 18, a round "Close" button from iOS 26.
+    private func endSearch(_ app: XCUIApplication) {
+        let cancel = app.buttons["Cancel"].firstMatch
+        (cancel.exists ? cancel : app.buttons["Close"].firstMatch).tap()
+    }
     private func subscriptionGroup(_ app: XCUIApplication, _ name: String) {
         app.buttons["subscriptionGroupFilter"].firstMatch.tap()
         let item = app.buttons[name].firstMatch
@@ -310,8 +315,10 @@ final class NavigationTests: XCTestCase {
         openHomeMenu(app); app.buttons["Customize tabs"].tap()
         let local = app.descendants(matching: .any)["homeTab-local"].firstMatch
         XCTAssertTrue(local.waitForExistence(timeout: 5))
-        let first = app.cells.containing(.any, identifier: "homeTab-section:Live").buttons["Reorder"].firstMatch
-        let handle = app.cells.containing(.any, identifier: "homeTab-local").buttons["Reorder"].firstMatch
+        // The handle is "Reorder" up to iOS 18 and "Reorder <row>" from iOS 26.
+        let reorder = NSPredicate(format: "label BEGINSWITH 'Reorder'")
+        let first = app.cells.containing(.any, identifier: "homeTab-section:Live").buttons.matching(reorder).firstMatch
+        let handle = app.cells.containing(.any, identifier: "homeTab-local").buttons.matching(reorder).firstMatch
         XCTAssertTrue(handle.waitForExistence(timeout: 5))
         handle.press(forDuration: 0.6, thenDragTo: first)
         app.buttons["closeSheet"].tap()
@@ -464,13 +471,19 @@ final class NavigationTests: XCTestCase {
             XCTAssertTrue(field.waitForExistence(timeout: 10)); field.typeText(video + "\n")
         }
         let share = safari.buttons["ShareButton"]
-        XCTAssertTrue(share.waitForExistence(timeout: 30)); share.tap()
+        if !share.waitForExistence(timeout: 10) {
+            // iOS 26 and later: Share is in the page menu beside the address.
+            let pageMenu = safari.buttons["MoreMenuButton"]
+            XCTAssertTrue(pageMenu.waitForExistence(timeout: 20)); pageMenu.tap()
+        }
+        XCTAssertTrue(share.waitForExistence(timeout: 10)); share.tap()
         var target = safari.cells["DriftLoom"].firstMatch
         if !target.waitForExistence(timeout: 10) {
             // Not among the first share targets: find it under "More".
             safari.cells["More"].firstMatch.tap()
             target = safari.cells["DriftLoom"].firstMatch
         }
+        if !target.waitForExistence(timeout: 10) { print("TREEDUMP-SHARESHEET\n" + safari.debugDescription + "\nTREEDUMP-END") }
         XCTAssertTrue(target.waitForExistence(timeout: 10), "DriftLoom is in the share sheet"); target.tap()
         // iOS confirms opening another app from Safari.
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
@@ -683,37 +696,35 @@ final class NavigationTests: XCTestCase {
         let app = application(extraArguments: ["--playback-smoke-url", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
         let player = app.descendants(matching: .any)["videoPlayer"].firstMatch
         XCTAssertTrue(player.waitForExistence(timeout: 30))
-        func showControls() { if !app.buttons["playPause"].exists { player.tap() }; XCTAssertTrue(app.buttons["playPause"].waitForExistence(timeout: 3)) }
-        showControls()
+        // The controls hide after 3 s, so bring them back right before each read or tap.
+        func control(_ id: String) -> XCUIElement {
+            let button = app.buttons[id]
+            for _ in 0..<3 {
+                if button.exists && button.isHittable { return button }
+                if !app.buttons["playPause"].exists { player.tap() }
+                _ = button.waitForExistence(timeout: 2)
+            }
+            XCTFail("\(id) never came on screen")
+            return button
+        }
         // Resize cycles fit -> zoom -> fill and says which.
-        let resize = app.buttons["resizeMode"]
-        XCTAssertEqual(resize.value as? String, "Fit")
-        resize.tap()
+        XCTAssertEqual(control("resizeMode").value as? String, "Fit")
+        control("resizeMode").tap()
         XCTAssertTrue(app.staticTexts["playerToast"].waitForExistence(timeout: 2))
-        XCTAssertEqual(app.buttons["resizeMode"].value as? String, "Zoom")
+        XCTAssertEqual(control("resizeMode").value as? String, "Zoom")
         // Audio only switches the stream and shows the thumbnail.
-        showControls()
-        app.buttons["audioOnly"].tap()
+        control("audioOnly").tap()
         // The stream reloads at the same position, then the thumbnail stands in for the picture.
         XCTAssertTrue(app.descendants(matching: .any)["audioArtwork"].firstMatch.waitForExistence(timeout: 30), "Audio only shows the video's thumbnail")
-        showControls()
-        XCTAssertEqual(app.buttons["audioOnly"].value as? String, "On")
+        XCTAssertEqual(control("audioOnly").value as? String, "On")
         // Audio only back off; resize back to fit for other tests.
-        showControls()
-        app.buttons["audioOnly"].tap()
+        control("audioOnly").tap()
         let video = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.descendants(matching: .any)["audioArtwork"].firstMatch)
         wait(for: [video], timeout: 30)
         XCTAssertTrue(player.waitForExistence(timeout: 30))
-        showControls()
-        XCTAssertEqual(app.buttons["audioOnly"].value as? String, "Off")
-        // The controls auto-hide after 3 s, so bring them back before each tap.
-        func tapControl(_ id: String) {
-            showControls()
-            if !app.buttons[id].isHittable { player.tap(); _ = app.buttons[id].waitForExistence(timeout: 2) }
-            app.buttons[id].tap()
-        }
-        tapControl("resizeMode"); tapControl("resizeMode")
-        XCTAssertEqual(app.buttons["resizeMode"].value as? String, "Fit")
+        XCTAssertEqual(control("audioOnly").value as? String, "Off")
+        control("resizeMode").tap(); control("resizeMode").tap()
+        XCTAssertEqual(control("resizeMode").value as? String, "Fit")
 
         // In full screen a swipe on the left third is brightness, on the right third volume.
         XCUIDevice.shared.orientation = .landscapeLeft
@@ -875,7 +886,7 @@ final class NavigationTests: XCTestCase {
         // Editing again suggests; Cancel empties the field and lists previous searches; one tap searches again.
         query.tap(); query.typeText(" beats")
         XCTAssertTrue(suggestion.waitForExistence(timeout: 15))
-        app.buttons["Cancel"].tap()
+        endSearch(app)
         let previous = app.buttons["searchHistory-lofi"]
         XCTAssertTrue(previous.waitForExistence(timeout: 5), "An empty field shows previous searches")
         XCTAssertFalse(result.exists)
@@ -895,7 +906,7 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("Takeout")
         XCTAssertTrue(app.buttons["guidePage-backup-and-import.md"].waitForExistence(timeout: 5), "Search finds pages by their text")
         XCTAssertFalse(app.buttons["guidePage-player.md"].exists)
-        app.buttons["Cancel"].tap()
+        endSearch(app)
         let player = app.buttons["guidePage-player.md"]
         for _ in 0..<4 where !(player.exists && player.isHittable) { app.swipeUp() }
         XCTAssertTrue(player.waitForExistence(timeout: 5), "The guide lists its pages")

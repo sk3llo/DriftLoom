@@ -3,6 +3,9 @@ import DriftLoomPlayback
 import MetricKit
 import SwiftUI
 
+/// MetricKit has its own `DiagnosticReport` since the iOS 27 SDK; in this file the name means DriftLoom's.
+private typealias DiagnosticReport = DriftLoomPlayback.DiagnosticReport
+
 /// Receives crash and hang reports from iOS. MetricKit delivers them on the launch after they happen (iOS 15),
 /// and nothing leaves the device unless the person chooses to report one.
 final class CrashReportCollector: NSObject, MXMetricManagerSubscriber {
