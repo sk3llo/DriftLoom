@@ -40,7 +40,16 @@ final class ScreenshotTour: XCTestCase {
     /// iOS 27 they reach across the bar's title), and beside the speed dialog. The tap that closes a menu isn't passed on.
     private func dismissOverlay() { app.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.75)).tap(); sleep(1) }
     private func back() { app.navigationBars.buttons.element(boundBy: 0).tap(); sleep(1) }
-    private func tab(_ title: String) { app.tabBars.buttons[title].firstMatch.tap(); sleep(1) }
+    /// A tab: in the tab bar on iPhone, or on iPad a plain button named after the tab with its icon name as identifier.
+    private func tabButton(_ title: String) -> XCUIElement {
+        let symbol = ["Home": "house", "Subscriptions": "play.square.stack", "Library": "books.vertical",
+                      "Search": "magnifyingglass", "Settings": "gearshape"][title] ?? title
+        let inTabBar = app.tabBars.buttons[title]
+        if inTabBar.waitForExistence(timeout: 2) { return inTabBar }
+        return app.buttons.matching(NSPredicate(format: "label == %@ AND (identifier == %@ OR identifier BEGINSWITH %@)",
+                                                title, symbol, symbol + ".")).firstMatch
+    }
+    private func tab(_ title: String) { tabButton(title).tap(); sleep(1) }
     /// Opens the Home title menu and picks a tab from it.
     private func homeTab(_ title: String) {
         openHomeMenu()
@@ -49,7 +58,11 @@ final class ScreenshotTour: XCTestCase {
         sleep(1)
     }
     private func openHomeMenu() {
-        app.navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        // The title is a button named after the open tab ("Live", or "Live, Actions Menu" on iPhone Duo); on iPad it
+        // sits below the floating tab bar.
+        let bar = app.navigationBars.firstMatch
+        let title = bar.buttons.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", bar.identifier, bar.identifier + ",")).firstMatch
+        if title.exists { title.tap() } else { bar.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
         if !app.buttons["Customize tabs"].waitForExistence(timeout: 5) { XCTFail("The home menu didn't open") }
         sleep(1)
     }
@@ -74,7 +87,7 @@ final class ScreenshotTour: XCTestCase {
     func testTour() {
         app.launchArguments += ["--library-smoke-section", "Home"]
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15) || tabButton("Home").exists)
         sleep(4); shot("home-live")
         openHomeMenu(); shot("home-menu")
         pick("Trending music"); sleep(4); shot("trending")

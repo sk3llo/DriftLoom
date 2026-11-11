@@ -195,9 +195,28 @@ ends with the app killed on screen, leaving the "on screen" note in the app's ow
 launch. The note now lives in each UI-test run's separate defaults (normal builds still use the standard ones), and
 the test clears reports left pending by earlier runs; it passes on repeated runs on 17.5, 26.5 and 27.2. Logging
 confirmed that going to the background clears the note as intended on iOS 26.5. A reinstall during a test run can
-start the widget extension from the old, deleted app copy and crash it; that's the test runner, not the extension. iOS 26 and later name some system controls differently: the search field's Cancel is a round Close
-button, list reorder handles are "Reorder <row>", and Safari's Share is inside the Page Menu. The tests handle
-both. The share extension opened a video from Safari on iOS 27.2. The screenshot tour runs on 17.5 and 27.2.
+start the widget extension from the old, deleted app copy and crash it; that's the test runner, not the extension.
+iOS 26 and later name some system controls differently: the search field's Cancel is a round Close button, list
+reorder handles are "Reorder <row>", and Safari's Share is inside the Page Menu. The tests handle both. The share
+extension opened a video from Safari on iOS 27.2. The screenshot tour runs on 17.5 and 27.2.
+
+Verification on 11 November 2026 (simulators only, no iOS 26/27 hardware): on iPhone 18 Pro/iOS 27.2 the download
+Live Activity shows in the Dynamic Island (compact and expanded) and on the Lock Screen, and its progress moves while
+DriftLoom is in the background; background audio keeps playing (`--background-smoke`); a merged 480p download
+completes. HLS downloads can't run in the Simulator at all. The iPhone simulators (26.5, 27.2) report Picture in
+Picture as unsupported, so it needs hardware; on iPad Pro 13-inch/iPadOS 27.2 it starts (`--player-smoke pip`).
+On iPad the tab bar is iPadOS's floating one at the top, and the UI tests find tabs by icon name and label on both.
+iPadOS hides that tab bar while a search is active and offers no Cancel, so in the regular-width layout submitting
+a search now ends the search session and keeps its text and results. The side-by-side player passes in landscape.
+
+Known gaps:
+
+- In iPad full screen the brightness and volume swipes don't respond; AVKit seems to take the touches before the
+  pan recognizer on its view. iPhone is fine. The UI test checks the swipes on iPhone only.
+- Picture in Picture and HLS downloads are only checked on hardware (the iPhone 7/iOS 15), not on iOS 26 or 27.
+- iPhone Duo (iOS 27.2) was checked in its starting posture only, since folding isn't scriptable. There iOS shows a
+  vertical tab rail on the right; the title menu, menus and sheets work, but the rail's tabs are images to XCTest,
+  so the UI tests and screenshot tour can't switch tabs on it yet.
 
 ## Repository layout
 

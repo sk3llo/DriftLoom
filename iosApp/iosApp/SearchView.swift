@@ -9,6 +9,8 @@ struct SearchView: View {
     @StateObject private var suggestions = SuggestionStore()
     @State private var query = ""
     @State private var submittedQuery = ""
+    /// Counts searches, so the field can end its search session after each one (see EndSearchAfterSubmit).
+    @State private var submissions = 0
     @State private var filter = SearchFilter.all
     @State private var order = SearchOrder.relevance
     @State private var date = SearchDate.any
@@ -57,6 +59,7 @@ struct SearchView: View {
                     }
                 }
                 Divider()
+                    .background(EndSearchAfterSubmit(submissions: submissions) { if query.isEmpty { query = submittedQuery } })
                 if let linkError { Text(linkError).font(.footnote).foregroundStyle(.secondary).padding(8) }
                 if suggesting, !suggestions.suggestions.isEmpty {
                     List {
@@ -143,6 +146,27 @@ struct SearchView: View {
         preferences.recordSearch(value)
         if submittedQuery == value { Task { await results.load(route) } }
         else { submittedQuery = value }
+        submissions += 1
+    }
+}
+
+/// In the regular-width layout (iPad), iPadOS hides its floating tab bar while a search is active, and the field
+/// offers no Cancel: after submitting, people saw their results but couldn't reach the other tabs without clearing
+/// the search. So once a search is submitted there, the search session ends, keeping the text and the results.
+/// The compact layout keeps the tab bar on screen and is left as it is.
+private struct EndSearchAfterSubmit: View {
+    let submissions: Int
+    let keepText: () -> Void
+    @Environment(\.dismissSearch) private var dismissSearch
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    var body: some View {
+        Color.clear.allowsHitTesting(false).accessibilityHidden(true)
+            .onChange(of: submissions) { _ in
+                guard sizeClass == .regular else { return }
+                dismissSearch()
+                // Ending the session may empty the field; put the search back so it names the results.
+                DispatchQueue.main.async(execute: keepText)
+            }
     }
 }
 
