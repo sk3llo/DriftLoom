@@ -10,6 +10,7 @@ on:
       - '.github/workflows/classic-source.yml'
       - 'scripts/build-classic-source.py'
       - 'scripts/prepare-altstore-source.py'
+      - 'scripts/verify-classic-source.py'
       - 'scripts/tests/**'
 
 permissions:
@@ -20,8 +21,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  refresh-from-main:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      # Release-ref Pages deployments can report success while serving an older artifact.
+      # Dispatch from main instead: https://github.com/actions/deploy-pages/issues/383
+      - name: Request a source refresh from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run classic-source.yml --repo "$GITHUB_REPOSITORY" --ref main
+
   build:
+    if: github.event_name != 'release'
     runs-on: macos-26
+    outputs:
+      source_sha256: ${{ steps.source.outputs.sha256 }}
     permissions:
       contents: read
       pages: read
@@ -35,9 +53,12 @@ jobs:
       - name: Check source publishing
         run: python3 -m unittest discover -s scripts/tests -v
       - name: Build source from published unsigned IPAs
+        id: source
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 scripts/build-classic-source.py --output build/classic-source
+        run: |
+          python3 scripts/build-classic-source.py --output build/classic-source
+          printf 'sha256=%s\n' "$(shasum -a 256 build/classic-source/source.json | awk '{print $1}')" >> "$GITHUB_OUTPUT"
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
@@ -46,13 +67,23 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
       - name: Publish the public source
         id: deployment
         uses: actions/deploy-pages@v5
+      - name: Verify the canonical public source matches the uploaded artifact
+        env:
+          SOURCE_URL: ${{ steps.deployment.outputs.page_url }}source.json
+          EXPECTED_SHA256: ${{ needs.build.outputs.source_sha256 }}
+        run: python3 scripts/verify-classic-source.py --url "$SOURCE_URL" --sha256 "$EXPECTED_SHA256"

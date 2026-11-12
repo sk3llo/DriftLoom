@@ -15,6 +15,11 @@ a release is published, edited, unpublished or deleted, when source-publishing c
 when manually dispatched. Only stable, published releases containing a DriftLoom IPA and matching SHA-256
 file are included. Drafts, prereleases and Android-only releases are excluded.
 
+Release events request a `workflow_dispatch` refresh from main instead of deploying from the release tag.
+This avoids [a Pages issue where release deployments can serve the previous artifact despite reporting success](https://github.com/actions/deploy-pages/issues/383).
+The deployment then compares the canonical public JSON's SHA-256 against the built artifact, retrying while
+the CDN updates. A stale public feed fails the job rather than being reported as a verified deployment.
+
 `scripts/build-classic-source.py` downloads those actual public IPAs, verifies checksums and sizes, and reads
 their bundle ID, version, minimum OS and permissions. Versions are ordered numerically with the newest first;
 older versions remain available. The source includes each IPA's SHA-256, release notes, public icon/screenshots,
@@ -29,7 +34,8 @@ for update discovery. Do not replace an existing IPA with different bytes under 
 
 In the repository's **Settings → Pages**, use **GitHub Actions** as the build source. The workflow deploys a
 GitHub Pages artifact and uses the `github-pages` environment. It requires `contents: read` for the build and
-`pages: write` plus `id-token: write` for deployment. No personal token or paid hosting secret is stored in Actions.
+`pages: write` plus `id-token: write` for deployment. The release relay uses `actions: write` to dispatch a
+refresh on main. No personal token or paid hosting secret is stored in Actions.
 
 The GitHub Pages address, repository name and JSON source identifier must remain stable after users add them.
 If the repository is renamed or moved, preserve the old URL or arrange a permanent redirect before updating links.

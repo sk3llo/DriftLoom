@@ -29,7 +29,7 @@ on an emulator with the demo-mode status bar.
 Distribution: [F-Droid](fdroid/README.md) (Android) and the public
 [SideStore/AltStore Classic source](classic-source.md) (iOS). The repository and unsigned sideload releases are
 public. No paid Apple Developer membership is needed for publishing the source or unsigned IPA.
-The next prepared version is 1.0.1 (build 2); the source lists it only after its release is published.
+Version 1.0.1 (build 2) was published on 12 November 2026. The source lists published releases only.
 
 - **Public source:** `.github/workflows/classic-source.yml` deploys the shared source on GitHub Pages after
   published release changes. It validates actual public IPA/checksum assets and retains older versions.
