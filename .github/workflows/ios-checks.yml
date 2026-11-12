@@ -1,0 +1,41 @@
+name: iOS checks
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select Xcode
+        run: |
+          XCODE="$(printf '%s\n' /Applications/Xcode_26*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+      - name: Test the release package
+        run: swift test --package-path iosApp/Playback -c release --build-system native
+      - name: Test source preparation
+        run: python3 -m unittest discover -s scripts/tests -v
+      - name: Verify the unsigned sideload IPA
+        run: scripts/build-ios-ipa.sh build/ios-verified
+      - name: Test the shared-link confirmation flow
+        run: |
+          DEVICE_ID="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for group in devices.values() for d in group if d["name"].startswith("iPhone")))')"
+          xcodebuild test -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Release \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" -resultBundlePath build/shared-links.xcresult \
+            CODE_SIGNING_ALLOWED=NO SWIFT_ACTIVE_COMPILATION_CONDITIONS=DRIFTLOOM_DEVICE_TESTING \
+            -only-testing:DriftLoomUITests/NavigationTests/testSharedInboxKeepsLaterAndHonorsDiscardAcrossLaunches \
+            -only-testing:DriftLoomUITests/NavigationTests/testSharedInboxOpensOnlyAfterConfirmation \
+            -only-testing:DriftLoomUITests/NavigationTests/testSharingFromSafariSavesOrCopiesWithoutOpeningTheApp
+      - name: Keep UI test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-test-results
+          path: build/shared-links.xcresult
+          if-no-files-found: ignore

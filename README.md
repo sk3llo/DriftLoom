@@ -20,7 +20,7 @@ rebranded and patched, and the iOS app is a native SwiftUI app written to work t
 - Queues, autoplay, history, saved videos and local playlists that stay on your device.
 - Downloads for offline playback, with subtitles, Wi-Fi-only by default.
 - Import subscriptions from NewPipe backups or Google Takeout; back up and restore your library.
-- Opens YouTube and SoundCloud links from the share sheet.
+- Accepts YouTube and SoundCloud links from the share sheet (Copy link for sideloads).
 - English, Ukrainian and Portuguese on iOS.
 
 The [user guide](docs/user-guide/README.md) covers everything, and is also built into the iOS app
@@ -28,10 +28,13 @@ The [user guide](docs/user-guide/README.md) covers everything, and is also built
 
 ## Install
 
-**iPhone and iPad, iOS 15 or later.** DriftLoom isn't on the App Store: Apple doesn't allow apps that download
-YouTube videos. Download `DriftLoom-<version>.ipa` from [Releases](https://github.com/sk3llo/DriftLoom/releases)
+**iPhone and iPad, iOS 15 or later.** DriftLoom isn't on the App Store. Download `DriftLoom-<version>.ipa` from [Releases](https://github.com/sk3llo/DriftLoom/releases)
 and install it with AltStore, SideStore or Sideloadly. With a free Apple ID the app has to be refreshed every 7 days.
 **[Step-by-step install guide](docs/install-ios.md).**
+
+**[Add the public source to SideStore or AltStore Classic](https://sk3llo.github.io/DriftLoom/)** to install DriftLoom
+and see new releases in your installer. The source URL is `https://sk3llo.github.io/DriftLoom/source.json`.
+No paid Apple Developer membership is needed; users sign with their own Apple account and still refresh every seven days.
 
 **Android 6.0 or later.** Download `DriftLoom-<version>.apk` from [Releases](https://github.com/sk3llo/DriftLoom/releases)
 and open it to install. DriftLoom installs alongside NewPipe; it can't update NewPipe or be updated by it.

@@ -11,6 +11,9 @@ permissions:
   contents: read
 
 jobs:
+  ios-checks:
+    uses: ./.github/workflows/ios-checks.yml
+
   android:
     runs-on: ubuntu-latest
     env:
@@ -45,7 +48,7 @@ jobs:
           META=app/build/outputs/apk/release/output-metadata.json
           VERSION_NAME="$(jq -r '.elements[0].versionName' "$META")"
           APK="$(jq -r '.elements[0].outputFile' "$META")"
-          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          APKSIGNER="$(printf '%s\n' "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
           "$APKSIGNER" verify --print-certs "app/build/outputs/apk/release/$APK" | tee "$RUNNER_TEMP/certs.txt"
           grep -qi "certificate SHA-256 digest: $RELEASE_CERT_SHA256" "$RUNNER_TEMP/certs.txt" \
             || { echo "::error::APK is not signed with the DriftLoom release key"; exit 1; }
@@ -60,13 +63,14 @@ jobs:
           path: dist/*
 
   ios:
+    needs: ios-checks
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v6
 
       - name: Select Xcode
         run: |
-          XCODE="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)"
+          XCODE="$(printf '%s\n' /Applications/Xcode_26*.app | sort -V | tail -1)"
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version | tee -a "$GITHUB_STEP_SUMMARY"
 
@@ -89,8 +93,13 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
+          name: android
           path: dist
-          merge-multiple: true
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ios
+          path: dist
 
       - name: Create a draft release
         env:

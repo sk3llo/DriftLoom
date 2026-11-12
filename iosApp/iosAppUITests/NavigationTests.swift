@@ -478,7 +478,49 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(app.alerts["Couldn't open link"].waitForExistence(timeout: 10))
     }
 
-    func testSharingFromSafariOpensTheVideoInDriftLoom() throws {
+    func testSharedInboxKeepsLaterAndHonorsDiscardAcrossLaunches() {
+        let app = application(extraArguments: ["--shared-inbox-smoke", "--shared-inbox-url", "https://youtu.be/dQw4w9WgXcQ"])
+        let prompt = app.alerts["Open shared link?"]
+        XCTAssertTrue(prompt.waitForExistence(timeout: 10))
+        prompt.buttons["Later"].tap()
+        XCTAssertTrue(tabsAppear(app))
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "--library-smoke-seed" }
+        app.launch()
+        XCTAssertTrue(prompt.waitForExistence(timeout: 10), "Later keeps the shared link after a restart")
+        prompt.buttons["Discard"].tap()
+        app.terminate(); app.launch()
+        XCTAssertTrue(tabsAppear(app))
+        XCTAssertFalse(prompt.exists, "Discard removes the link permanently")
+    }
+
+    func testSharedInboxOpensOnlyAfterConfirmation() {
+        let app = application(extraArguments: ["--shared-inbox-smoke", "--shared-inbox-url", "https://youtu.be/dQw4w9WgXcQ"])
+        let prompt = app.alerts["Open shared link?"]
+        XCTAssertTrue(prompt.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["minimizePlayer"].exists)
+        prompt.buttons["Open"].tap()
+        XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 10))
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "--library-smoke-seed" }
+        app.launch()
+        XCTAssertTrue(tabsAppear(app))
+        XCTAssertFalse(prompt.exists, "Opening consumes the shared link")
+    }
+
+    func testSharingFromSafariSavesOrCopiesWithoutOpeningTheApp() throws {
+        try shareFromSafari(expectSaved: false)
+    }
+
+    func testPALSharingSavesLinkForTheNextLaunch() throws {
+#if DRIFTLOOM_PAL_TESTING
+        try shareFromSafari(expectSaved: true)
+#else
+        throw XCTSkip("Requires PAL.xcconfig, simulator signing and DRIFTLOOM_PAL_TESTING")
+#endif
+    }
+
+    private func shareFromSafari(expectSaved: Bool) throws {
         let app = application()
         XCTAssertTrue(tabsAppear(app))
         let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
@@ -509,17 +551,22 @@ final class NavigationTests: XCTestCase {
         }
         if !target.waitForExistence(timeout: 10) { print("TREEDUMP-SHARESHEET\n" + safari.debugDescription + "\nTREEDUMP-END") }
         XCTAssertTrue(target.waitForExistence(timeout: 10), "DriftLoom is in the share sheet"); target.tap()
-        // iOS confirms opening another app from Safari.
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let open = [safari.buttons["Open"], springboard.buttons["Open"]]
-        for _ in 0..<20 where !app.wait(for: .runningForeground, timeout: 0.5) {
-            if let button = open.first(where: { $0.exists }) { button.tap(); break }
+        let done = safari.buttons["finishSharing"]
+        XCTAssertTrue(done.waitForExistence(timeout: 10))
+        let saved = safari.staticTexts["sharedLinkSaved"].waitForExistence(timeout: 3)
+        XCTAssertEqual(saved, expectSaved, "PAL must use the shared inbox; free-account sideloads must offer Copy link")
+        if !saved {
+            let copy = safari.buttons["copySharedLink"]
+            XCTAssertTrue(copy.waitForExistence(timeout: 10)); copy.tap()
+            XCTAssertTrue(safari.staticTexts["Link copied. Open DriftLoom and paste it in Search."].waitForExistence(timeout: 5))
         }
-        if !app.wait(for: .runningForeground, timeout: 15) {
-            print("TREEDUMP-SAFARI\n" + safari.debugDescription + "\nTREEDUMP-SB\n" + springboard.debugDescription + "\nTREEDUMP-END")
-        }
-        XCTAssertTrue(app.state == .runningForeground, "DriftLoom comes to the front")
-        XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 15), "and plays the shared video")
+        XCTAssertNotEqual(app.state, .runningForeground, "Sharing must not force the containing app open")
+        done.tap(); app.activate()
+        if saved {
+            let prompt = app.alerts["Open shared link?"]
+            XCTAssertTrue(prompt.waitForExistence(timeout: 10)); prompt.buttons["Open"].tap()
+            XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 15))
+        } else { XCTAssertTrue(tabsAppear(app)) }
     }
 
     func testBackupScreenExplainsGoogleTakeoutImport() {

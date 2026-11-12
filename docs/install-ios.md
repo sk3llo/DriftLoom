@@ -5,6 +5,21 @@ DriftLoom isn't in the App Store, so you install it yourself ("sideloading"). It
 Each release on the [Releases page](https://github.com/sk3llo/DriftLoom/releases) has a `DriftLoom-<version>.ipa`
 file. It isn't signed: the tool you install it with signs it with your own Apple ID, which is what lets iOS run it.
 
+## Install and update from the public source
+
+After setting up SideStore or AltStore Classic, add the same source in either app:
+
+`https://sk3llo.github.io/DriftLoom/source.json`
+
+Open the installer's **Sources** screen, tap **+**, paste that address and confirm. Find **DriftLoom** in Browse
+and tap Install. Future published releases appear as updates in the installer; update with the same Apple ID
+to keep your library. Installing from the source does not remove the seven-day refresh requirement.
+
+From your iPhone, you can also use [Add to SideStore](sidestore://source?url=https%3A%2F%2Fsk3llo.github.io%2FDriftLoom%2Fsource.json)
+or [Add to AltStore Classic](altstore://source?url=https%3A%2F%2Fsk3llo.github.io%2FDriftLoom%2Fsource.json).
+[The source page](https://sk3llo.github.io/DriftLoom/) includes both links and the manual address.
+The installer must already be installed before these links work. This source is for Classic/SideStore, not PAL.
+
 ## Why the app has to be refreshed every 7 days
 
 Apple only runs apps signed by a certificate it issued. A **free Apple ID** gets a developer certificate that
@@ -15,7 +30,10 @@ refresh; nothing is deleted.
 A free Apple ID also allows at most **3 sideloaded apps** at once (the sideloading app itself counts as one) and
 **10 App IDs per 7 days**. DriftLoom uses 3 App IDs (the app, its Share extension and its Live Activity widget).
 If you're short of App IDs, SideStore and AltStore can install it without the extensions; you then lose
-"DriftLoom" in the share sheet and the lock-screen download progress, but everything else works.
+the share-sheet Copy link action and the lock-screen download progress, but everything else works.
+
+From version 1.0.1, the sideload share extension offers **Copy link**. Open DriftLoom yourself and paste it in Search
+or the Home link box. The older 1.0 release attempts to open the shared link directly.
 
 ## Choose a tool
 
@@ -77,6 +95,9 @@ in [Before you start](#before-you-start-all-tools). Repeat the install at least 
 
 ## Updating DriftLoom
 
+If you added the public source, use **Update** in SideStore or AltStore Classic when a new release appears.
+The source checks published releases, so unreleased development builds and draft releases are not offered.
+
 Install the new IPA with the same tool and the same Apple ID. It replaces the old version and keeps your library.
 
 ## If DriftLoom stops opening
@@ -119,3 +140,7 @@ Each IPA comes with a `.sha256` file. On a Mac, `shasum -a 256 DriftLoom-<versio
 Uninstalling the app, switching tools, or installing it with a different Apple ID starts with an empty library.
 Before any of these, use **Settings → Backup and import → Export library backup** in DriftLoom. Downloads and
 settings aren't in the backup.
+
+This also applies when moving from SideStore/AltStore Classic to an official PAL install: the signing and app
+identity can differ, so iOS may treat them as separate apps. Export first, import into the new install, and
+check your library before removing the old copy. Downloaded media must be downloaded again.

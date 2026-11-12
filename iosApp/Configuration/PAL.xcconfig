@@ -1,0 +1,9 @@
+// Pass with xcodebuild -xcconfig, or select in Xcode's command-line build settings.
+// The project already inherits Config.xcconfig. Do not include it here: -xcconfig
+// overrides target settings too, including the extensions' distinct product names and IDs.
+
+// The signing team must never change the IDs registered in App Store Connect.
+BUNDLE_ID_SUFFIX=
+DRIFTLOOM_APP_GROUP=group.net.driftloom.app.shared
+DRIFTLOOM_APP_ENTITLEMENTS=iosApp/DriftLoom.entitlements
+DRIFTLOOM_SHARE_ENTITLEMENTS=DriftLoomShare/DriftLoomShare.entitlements

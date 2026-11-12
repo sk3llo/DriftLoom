@@ -5635,6 +5635,108 @@
           }
         }
       }
+    },
+    "Couldn't read shared links. Try sharing the link again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler os links partilhados. Tente partilhar o link novamente."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати спільні посилання. Спробуйте поділитися посиланням ще раз."
+          }
+        }
+      }
+    },
+    "Couldn't remove this shared link. Try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível remover este link partilhado. Tente novamente."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося видалити це спільне посилання. Спробуйте ще раз."
+          }
+        }
+      }
+    },
+    "Discard": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descartar"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкинути"
+          }
+        }
+      }
+    },
+    "Later": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mais tarde"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пізніше"
+          }
+        }
+      }
+    },
+    "Open shared link?": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir o link partilhado?"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити спільне посилання?"
+          }
+        }
+      }
+    },
+    "Shared links": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Links partilhados"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Спільні посилання"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

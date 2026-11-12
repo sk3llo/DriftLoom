@@ -26,8 +26,15 @@ screens on system components; the violet `AppStyle.bar` is for brand marks, not 
 screenshots (`fastlane/metadata/android/en-US/images/phoneScreenshots`) are taken by hand from a signed release build
 on an emulator with the demo-mode status bar.
 
-Stores: [F-Droid](fdroid/README.md) (Android, needs the repository public) and [AltStore PAL](altstore-pal.md)
-(iPhone in the EU, needs Apple notarization). The repository stays private until DriftLoom is live in a store.
+Distribution: [F-Droid](fdroid/README.md) (Android) and the public
+[SideStore/AltStore Classic source](classic-source.md) (iOS). The repository and unsigned sideload releases are
+public. No paid Apple Developer membership is needed for publishing the source or unsigned IPA.
+The next prepared version is 1.0.1 (build 2); the source lists it only after its release is published.
+
+- **Public source:** `.github/workflows/classic-source.yml` deploys the shared source on GitHub Pages after
+  published release changes. It validates actual public IPA/checksum assets and retains older versions.
+  See [classic-source.md](classic-source.md). PAL is deferred; its optional build setup remains documented
+  in [altstore-pal.md](altstore-pal.md) and is not required by CI or the sideload release process.
 
 - **IPA:** `scripts/build-ios-ipa.sh [output-dir]` builds it locally the same way: Release configuration, no test
   flags (the script fails if any are compiled in), unsigned so AltStore/SideStore/Sideloadly can sign it.
@@ -208,6 +215,15 @@ Picture as unsupported, so it needs hardware; on iPad Pro 13-inch/iPadOS 27.2 it
 On iPad the tab bar is iPadOS's floating one at the top, and the UI tests find tabs by icon name and label on both.
 iPadOS hides that tab bar while a search is active and offers no Cancel, so in the regular-width layout submitting
 a search now ends the search session and keeps its text and results. The side-by-side player passes in landscape.
+
+Verification on 12 November 2026 (PAL preparation): the Release package suite completes 186 tests with
+182 passed, four opt-in live-network checks skipped and no failures. Five source-generator checks pass.
+On an isolated iPhone SE/iOS 17.5 simulator, the sharing journeys cover Later across relaunch, Discard,
+explicit Open, the free-account Copy link fallback in Safari, and PAL's App Group handoff from Safari
+without forcing the app open. Both the unsigned PAL archive and sideload IPA pass release inspection at
+1.0.1 (build 2); workflow and shell checks pass. The simulator PAL test uses local ad-hoc signing, not an
+Apple distribution identity. Account setup, signed-device verification, notarization and a real marketplace
+install remain required before publishing PAL.
 
 Known gaps:
 

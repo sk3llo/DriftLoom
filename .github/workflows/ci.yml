@@ -30,6 +30,11 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
 
 jobs:
+  ios:
+    uses: ./.github/workflows/ios-checks.yml
+    permissions:
+      contents: read
+
   build-and-test-jvm:
     runs-on: ubuntu-latest
 

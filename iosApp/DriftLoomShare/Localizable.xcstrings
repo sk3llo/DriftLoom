@@ -1,36 +1,121 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "DriftLoom couldn't be opened from here. Copy the link and paste it in DriftLoom.": {
+    "Copy link": {
       "extractionState": "manual",
       "localizations": {
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível abrir o DriftLoom daqui. Copie o link e cole no DriftLoom."
+            "value": "Copiar link"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не вдалося відкрити DriftLoom звідси. Скопіюйте посилання й вставте його в DriftLoom."
+            "value": "Копіювати посилання"
           }
         }
       }
     },
-    "Opening in DriftLoom…": {
+    "Copy this link, then open DriftLoom and paste it in Search.": {
       "extractionState": "manual",
       "localizations": {
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abrindo no DriftLoom…"
+            "value": "Copie este link, abra o DriftLoom e cole-o na Pesquisa."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Відкриття в DriftLoom…"
+            "value": "Скопіюйте це посилання, відкрийте DriftLoom і вставте його в Пошуку."
+          }
+        }
+      }
+    },
+    "Couldn't save this link. Copy it and paste it in DriftLoom.": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível guardar este link. Copie-o e cole-o no DriftLoom."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося зберегти посилання. Скопіюйте та вставте його в DriftLoom."
+          }
+        }
+      }
+    },
+    "Done": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concluído"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово"
+          }
+        }
+      }
+    },
+    "Link copied. Open DriftLoom and paste it in Search.": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link copiado. Abra o DriftLoom e cole-o na Pesquisa."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Посилання скопійовано. Відкрийте DriftLoom і вставте його в Пошуку."
+          }
+        }
+      }
+    },
+    "Link saved. Open DriftLoom to choose when to play it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link guardado. Abra o DriftLoom para escolher quando o reproduzir."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Посилання збережено. Відкрийте DriftLoom, щоб вибрати, коли його відтворити."
+          }
+        }
+      }
+    },
+    "Preparing link…": {
+      "extractionState": "manual",
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A preparar o link…"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підготовка посилання…"
           }
         }
       }
@@ -41,7 +126,7 @@
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Compartilhe um link do YouTube ou do SoundCloud para abri-lo no DriftLoom."
+            "value": "Partilhe um link do YouTube ou do SoundCloud para o abrir no DriftLoom."
           }
         },
         "uk": {

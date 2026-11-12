@@ -514,6 +514,7 @@
 				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "$(DRIFTLOOM_APP_ENTITLEMENTS)";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
@@ -539,6 +540,8 @@
 		26BCF56F8CD5F2837A8011B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "$(DRIFTLOOM_SHARE_ENTITLEMENTS)";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "$(TEAM_ID)";
@@ -551,7 +554,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(TEAM_ID).Share";
+				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(BUNDLE_ID_SUFFIX).Share";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -564,6 +567,7 @@
 		2727D7B744DCA6FB045A8451 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "$(TEAM_ID)";
@@ -576,7 +580,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(TEAM_ID).Widgets";
+				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(BUNDLE_ID_SUFFIX).Widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -653,6 +657,7 @@
 		79989B97EEF3CD0DCD46F30B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "$(TEAM_ID)";
@@ -665,7 +670,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(TEAM_ID).Widgets";
+				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(BUNDLE_ID_SUFFIX).Widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -711,6 +716,7 @@
 				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "$(DRIFTLOOM_APP_ENTITLEMENTS)";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
@@ -736,6 +742,8 @@
 		FF2A594F9B3DFBF0522517B8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "$(DRIFTLOOM_SHARE_ENTITLEMENTS)";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "$(TEAM_ID)";
@@ -748,7 +756,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(TEAM_ID).Share";
+				PRODUCT_BUNDLE_IDENTIFIER = "net.driftloom.app.DriftLoom$(BUNDLE_ID_SUFFIX).Share";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;

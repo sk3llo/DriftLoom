@@ -37,3 +37,4 @@ node_modules/
 .build/
 DerivedData/
 .swiftpm/
+__pycache__/

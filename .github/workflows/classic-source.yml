@@ -1,0 +1,58 @@
+name: Publish SideStore and AltStore Classic source
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published, edited, deleted, unpublished]
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/classic-source.yml'
+      - 'scripts/build-classic-source.py'
+      - 'scripts/prepare-altstore-source.py'
+      - 'scripts/tests/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: driftloom-classic-source
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-26
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Check source publishing
+        run: python3 -m unittest discover -s scripts/tests -v
+      - name: Build source from published unsigned IPAs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/build-classic-source.py --output build/classic-source
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/classic-source
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the public source
+        id: deployment
+        uses: actions/deploy-pages@v5

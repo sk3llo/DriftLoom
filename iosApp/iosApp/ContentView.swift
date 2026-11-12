@@ -97,6 +97,7 @@ struct ContentView: View {
             play(BrowseItem(contentID: id, kind: .video, title: SoundCloudID.isSoundCloud(id) ? String(localized: "SoundCloud track") : PlaybackSession.placeholderTitle))
         }
         .onChange(of: scenePhase) { if $0 == .background { FeedRefresher.shared.schedule() } }
+        .modifier(SharedLinkPrompt(onOpen: openLink))
         .sheet(item: $linkedPage) { page in
             AppNavigation {
                 BrowsePageView(route: page.route, onPlay: { item in linkedPage = nil; play(item) })

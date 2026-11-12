@@ -33,15 +33,7 @@ APP="$ARCHIVE/Products/Applications/DriftLoom.app"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")"
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Info.plist")"
 
-# Test-only launch flags must not be in a release binary.
-for flag in --playback-smoke-url --diagnostic-smoke --settings-smoke --crash-smoke; do
-  if grep -q -- "$flag" "$APP/DriftLoom"; then
-    echo "error: $flag is compiled into the release binary; build without test flags" >&2; exit 1
-  fi
-done
-for ext in DriftLoomShare DriftLoomWidgets; do
-  [[ -d "$APP/PlugIns/$ext.appex" ]] || { echo "error: $ext.appex is missing" >&2; exit 1; }
-done
+python3 "$ROOT/scripts/check-ios-release.py" "$APP" --channel sideload
 
 IPA="$OUT/DriftLoom-$VERSION.ipa"
 rm -rf "$WORK/Payload" "$IPA"; mkdir -p "$WORK/Payload"

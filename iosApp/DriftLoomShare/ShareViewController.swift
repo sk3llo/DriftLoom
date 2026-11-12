@@ -3,22 +3,35 @@ import DriftLoomActivity
 import UIKit
 import UniformTypeIdentifiers
 
-/// "DriftLoom" in the share sheet: finds the YouTube or SoundCloud link that was shared and
-/// opens it in the app through the driftloom://open URL scheme.
+/// Saves a link to the PAL App Group inbox. Free-account sideloads offer an explicit copy action.
 final class ShareViewController: UIViewController {
     private let label = UILabel()
+    private let action = UIButton(type: .system)
+    private let done = UIButton(type: .system)
     private var handled = false
+    private var link: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        label.text = String(localized: "Opening in DriftLoom…")
+        label.text = String(localized: "Preparing link…")
         label.font = .preferredFont(forTextStyle: .headline)
         label.textAlignment = .center; label.numberOfLines = 0
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
-        NSLayoutConstraint.activate([label.centerXAnchor.constraint(equalTo: view.centerXAnchor), label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                                     label.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24)])
+        action.addTarget(self, action: #selector(copyLink), for: .touchUpInside)
+        action.setTitle(String(localized: "Copy link"), for: .normal)
+        action.accessibilityIdentifier = "copySharedLink"
+        action.isHidden = true
+        done.addTarget(self, action: #selector(finish), for: .touchUpInside)
+        done.setTitle(String(localized: "Done"), for: .normal)
+        done.accessibilityIdentifier = "finishSharing"
+        let stack = UIStackView(arrangedSubviews: [label, action, done])
+        stack.axis = .vertical; stack.spacing = 20; stack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stack)
+        NSLayoutConstraint.activate([stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                                     stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
+                                     stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
+                                     action.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
+                                     done.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)])
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -26,11 +39,23 @@ final class ShareViewController: UIViewController {
         guard !handled else { return }
         handled = true
         Task { @MainActor in
-            guard let link = await sharedLink(), let appURL = SharedLink.appURL(for: link) else {
+            guard let link = await sharedLink() else {
                 fail(String(localized: "Share a YouTube or SoundCloud link to open it in DriftLoom.")); return
             }
-            if openContainingApp(appURL) { extensionContext?.completeRequest(returningItems: nil) }
-            else { fail(String(localized: "DriftLoom couldn't be opened from here. Copy the link and paste it in DriftLoom.")) }
+            self.link = link
+            if let inbox = SharedLinkInbox.configured() {
+                do {
+                    try inbox.save(link)
+                    label.text = String(localized: "Link saved. Open DriftLoom to choose when to play it.")
+                    label.accessibilityIdentifier = "sharedLinkSaved"
+                    return
+                } catch {
+                    label.text = String(localized: "Couldn't save this link. Copy it and paste it in DriftLoom.")
+                }
+            } else {
+                label.text = String(localized: "Copy this link, then open DriftLoom and paste it in Search.")
+            }
+            action.isHidden = false
         }
     }
 
@@ -47,21 +72,14 @@ final class ShareViewController: UIViewController {
         return nil
     }
 
-    /// Share extensions have no public API to open their app, so ask the application object in
-    /// the responder chain to open the app's own URL scheme.
-    private func openContainingApp(_ url: URL) -> Bool {
-        let selector = NSSelectorFromString("openURL:options:completionHandler:")
-        var responder: UIResponder? = self
-        while let current = responder {
-            if NSStringFromClass(type(of: current)).contains("Application"), current.responds(to: selector) {
-                typealias Open = @convention(c) (NSObject, Selector, NSURL, NSDictionary, AnyObject?) -> Void
-                unsafeBitCast(current.method(for: selector), to: Open.self)(current, selector, url as NSURL, NSDictionary(), nil)
-                return true
-            }
-            responder = current.next
-        }
-        return false
+    @objc private func copyLink() {
+        guard let link else { return }
+        UIPasteboard.general.url = link
+        label.text = String(localized: "Link copied. Open DriftLoom and paste it in Search.")
+        action.isHidden = true
     }
+
+    @objc private func finish() { extensionContext?.completeRequest(returningItems: nil) }
 
     private func fail(_ message: String) {
         label.text = message
