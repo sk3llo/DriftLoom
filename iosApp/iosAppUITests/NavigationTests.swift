@@ -544,8 +544,15 @@ final class NavigationTests: XCTestCase {
             XCTAssertTrue(pageMenu.waitForExistence(timeout: 20))
             // Safari's compact toolbar can report an invalid accessibility hit point (-1, -1).
             // Tap the center of its on-screen frame, then still require the native Share action.
-            XCTAssertTrue(safari.windows.firstMatch.frame.contains(pageMenu.frame), "Safari's menu is on screen")
-            pageMenu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            // A loading page can also dismiss the menu; confirm it opened before proceeding.
+            for _ in 0..<3 {
+                let window = safari.windows.firstMatch
+                let frame = pageMenu.frame
+                XCTAssertTrue(window.frame.contains(frame), "Safari's menu is on screen")
+                window.coordinate(withNormalizedOffset: .zero)
+                    .withOffset(CGVector(dx: frame.midX - window.frame.minX, dy: frame.midY - window.frame.minY)).tap()
+                if share.waitForExistence(timeout: 5) { break }
+            }
         }
         let shareAvailable = share.waitForExistence(timeout: 10)
         if !shareAvailable {
@@ -555,7 +562,8 @@ final class NavigationTests: XCTestCase {
         }
         XCTAssertTrue(shareAvailable, "Safari exposes its Share action"); share.tap()
         // Use the Apps list so the test does not depend on suggested-app ordering.
-        let more = safari.cells["More"].firstMatch
+        // Some runtimes label only the child text, leaving the enclosing share cell unnamed.
+        let more = safari.collectionViews["activityCollectionView"].cells.containing(.staticText, identifier: "More").firstMatch
         XCTAssertTrue(more.waitForExistence(timeout: 10)); more.tap()
         // The icon row remains in the accessibility tree behind the Apps list.
         let target = safari.tables.cells.containing(NSPredicate(format: "label == %@", "DriftLoom")).firstMatch
