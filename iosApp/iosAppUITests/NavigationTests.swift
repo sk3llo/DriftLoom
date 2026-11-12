@@ -524,11 +524,13 @@ final class NavigationTests: XCTestCase {
         let app = application()
         XCTAssertTrue(tabsAppear(app))
         let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        safari.terminate()
         let video = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         if #available(iOS 16.4, *) {
             // Safari's address bar label depends on its leftover state (e.g. "Reader Available"), so open the URL directly.
             XCUIDevice.shared.system.open(URL(string: video)!)
-            XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 10))
+            safari.activate()
+            XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 30))
         } else {
             safari.launch()
             let address = safari.textFields["TabBarItemTitle"].exists ? safari.textFields["TabBarItemTitle"] : safari.buttons["Address"]
@@ -542,15 +544,23 @@ final class NavigationTests: XCTestCase {
             let pageMenu = safari.buttons["MoreMenuButton"]
             XCTAssertTrue(pageMenu.waitForExistence(timeout: 20)); pageMenu.tap()
         }
-        XCTAssertTrue(share.waitForExistence(timeout: 10)); share.tap()
-        var target = safari.cells["DriftLoom"].firstMatch
-        if !target.waitForExistence(timeout: 10) {
-            // Not among the first share targets: find it under "More".
-            safari.cells["More"].firstMatch.tap()
-            target = safari.cells["DriftLoom"].firstMatch
+        let shareAvailable = share.waitForExistence(timeout: 10)
+        if !shareAvailable {
+            let screen = XCTAttachment(screenshot: safari.screenshot())
+            screen.name = "Safari before sharing"; screen.lifetime = .keepAlways; add(screen)
+            print("TREEDUMP-SAFARI\n" + safari.debugDescription + "\nTREEDUMP-END")
         }
+        XCTAssertTrue(shareAvailable, "Safari exposes its Share action"); share.tap()
+        // Use the Apps list so the test does not depend on suggested-app ordering.
+        let more = safari.cells["More"].firstMatch
+        XCTAssertTrue(more.waitForExistence(timeout: 10)); more.tap()
+        // The icon row remains in the accessibility tree behind the Apps list.
+        let target = safari.tables.cells.containing(NSPredicate(format: "label == %@", "DriftLoom")).firstMatch
         if !target.waitForExistence(timeout: 10) { print("TREEDUMP-SHARESHEET\n" + safari.debugDescription + "\nTREEDUMP-END") }
-        XCTAssertTrue(target.waitForExistence(timeout: 10), "DriftLoom is in the share sheet"); target.tap()
+        XCTAssertTrue(target.waitForExistence(timeout: 10), "DriftLoom is in the share sheet")
+        let readyToShare = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: target)
+        XCTAssertEqual(XCTWaiter.wait(for: [readyToShare], timeout: 10), .completed, "The visible share target is tappable")
+        target.tap()
         let done = safari.buttons["finishSharing"]
         XCTAssertTrue(done.waitForExistence(timeout: 10))
         let saved = safari.staticTexts["sharedLinkSaved"].waitForExistence(timeout: 3)
