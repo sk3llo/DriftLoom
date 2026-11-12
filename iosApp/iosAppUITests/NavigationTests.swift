@@ -525,14 +525,13 @@ final class NavigationTests: XCTestCase {
         XCTAssertTrue(tabsAppear(app))
         let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
         safari.terminate()
+        safari.launch()
         let video = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         if #available(iOS 16.4, *) {
             // Safari's address bar label depends on its leftover state (e.g. "Reader Available"), so open the URL directly.
             XCUIDevice.shared.system.open(URL(string: video)!)
-            safari.activate()
             XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 30))
         } else {
-            safari.launch()
             let address = safari.textFields["TabBarItemTitle"].exists ? safari.textFields["TabBarItemTitle"] : safari.buttons["Address"]
             if address.waitForExistence(timeout: 10) { address.tap() }
             let field = safari.textFields["URL"]
@@ -542,7 +541,11 @@ final class NavigationTests: XCTestCase {
         if !share.waitForExistence(timeout: 10) {
             // iOS 26 and later: Share is in the page menu beside the address.
             let pageMenu = safari.buttons["MoreMenuButton"]
-            XCTAssertTrue(pageMenu.waitForExistence(timeout: 20)); pageMenu.tap()
+            XCTAssertTrue(pageMenu.waitForExistence(timeout: 20))
+            // Safari's compact toolbar can report an invalid accessibility hit point (-1, -1).
+            // Tap the center of its on-screen frame, then still require the native Share action.
+            XCTAssertTrue(safari.windows.firstMatch.frame.contains(pageMenu.frame), "Safari's menu is on screen")
+            pageMenu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
         let shareAvailable = share.waitForExistence(timeout: 10)
         if !shareAvailable {
