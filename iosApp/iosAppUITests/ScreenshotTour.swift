@@ -42,7 +42,7 @@ final class ScreenshotTour: XCTestCase {
     private func back() { app.navigationBars.buttons.element(boundBy: 0).tap(); sleep(1) }
     /// A tab: in the tab bar on iPhone, or on iPad a plain button named after the tab with its icon name as identifier.
     private func tabButton(_ title: String) -> XCUIElement {
-        let symbol = ["Home": "house", "Subscriptions": "play.square.stack", "Library": "books.vertical",
+        let symbol = ["Home": "house", "Subscriptions": "play.rectangle.on.rectangle", "Library": "books.vertical",
                       "Search": "magnifyingglass", "Settings": "gearshape"][title] ?? title
         let inTabBar = app.tabBars.buttons[title]
         if inTabBar.waitForExistence(timeout: 2) { return inTabBar }

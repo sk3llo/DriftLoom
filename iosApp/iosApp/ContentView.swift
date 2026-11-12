@@ -58,7 +58,7 @@ struct ContentView: View {
                 HomeView(selection: $selectedSection, onPlay: play).modifier(bottomAccessory)
                     .tabItem { Label("Home", systemImage: "house") }.tag(AppTab.home)
                 SubscriptionsView(onPlay: play, page: $subscriptionsPage).modifier(bottomAccessory)
-                    .tabItem { Label("Subscriptions", systemImage: "play.square.stack") }.tag(AppTab.subscriptions)
+                    .tabItem { Label("Subscriptions", systemImage: "play.rectangle.on.rectangle") }.tag(AppTab.subscriptions)
                 LibraryTabView(onPlay: play, request: $libraryRequest).modifier(bottomAccessory)
                     .tabItem { Label("Library", systemImage: "books.vertical") }.tag(AppTab.library)
                 SearchView(onPlay: play).modifier(bottomAccessory)

@@ -21,7 +21,7 @@ final class NavigationTests: XCTestCase {
     /// A tab, once one is on screen. On iPhone it's in the tab bar. iPadOS 18 and later float the tab bar at the top,
     /// where XCTest sees plain buttons labelled with the tab's name and carrying its icon name as identifier.
     private func tabButton(_ app: XCUIApplication, _ title: String, timeout: TimeInterval = 10) -> XCUIElement? {
-        let symbol = ["Home": "house", "Subscriptions": "play.square.stack", "Library": "books.vertical",
+        let symbol = ["Home": "house", "Subscriptions": "play.rectangle.on.rectangle", "Library": "books.vertical",
                       "Search": "magnifyingglass", "Settings": "gearshape"][title] ?? title
         let inTabBar = app.tabBars.buttons[title]
         let floating = app.buttons.matching(NSPredicate(format: "label == %@ AND (identifier == %@ OR identifier BEGINSWITH %@)",
