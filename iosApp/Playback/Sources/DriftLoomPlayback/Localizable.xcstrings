@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ (auto-dubbed)": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (dublagem automática)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (автоматичне дублювання)"
+          }
+        }
+      }
+    },
+    "%@ (original)": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (original)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (оригінал)"
+          }
+        }
+      }
+    },
     "%lld YouTube subscriptions": {
       "localizations": {
         "en": {
@@ -2472,6 +2504,22 @@
         }
       }
     },
+    "This track is protected by SoundCloud and this device wouldn't start its playback.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta faixa é protegida pelo SoundCloud e este dispositivo não iniciou a reprodução."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цей трек захищено SoundCloud, і цей пристрій не почав його відтворення."
+          }
+        }
+      }
+    },
     "This YouTube link isn't a video, playlist or channel DriftLoom can open.": {
       "localizations": {
         "pt": {
@@ -2741,22 +2789,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Цей трек зашифровано, його не можна зберегти."
-          }
-        }
-      }
-    },
-    "This track is only available as DRM-protected audio, which DriftLoom can't play.": {
-      "localizations": {
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Esta faixa só está disponível como áudio protegido por DRM, que o DriftLoom não reproduz."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Цей трек доступний лише як аудіо із захистом DRM, яке DriftLoom не може відтворити."
           }
         }
       }
@@ -3250,6 +3282,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "YouTube зараз обмежує запити субтитрів із цієї мережі, найбільше це стосується автоперекладу. Спробуйте пізніше або виберіть інші субтитри."
+          }
+        }
+      }
+    },
+    "YouTube Music has no charts for this content region. Choose another region in Settings.": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O YouTube Music não tem paradas para esta região de conteúdo. Escolha outra região nas Configurações."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube Music не має хіт-парадів для цього регіону контенту. Виберіть інший регіон у Налаштуваннях."
           }
         }
       }

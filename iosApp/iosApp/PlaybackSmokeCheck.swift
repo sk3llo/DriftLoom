@@ -6,11 +6,42 @@ import UIKit
 
 /// Opt-in device/simulator check. Compiled out of normal Release builds.
 @MainActor
+private func runDRMSmoke(_ id: String) async {
+    do {
+        let stream = try await SoundCloudClient.shared.stream(id)
+        guard stream.licenseURL != nil else { NSLog("DriftLoomDRMSmoke: FAIL no license URL"); return }
+        let session = PlaybackSession()
+        session.player.isMuted = true
+        session.open(id)
+        for _ in 0..<30 where session.player.currentItem?.status != .readyToPlay {
+            if case let .failed(message) = session.phase { NSLog("DriftLoomDRMSmoke: FAIL playback error %@ %@", message, String(describing: session.player.currentItem?.errorLog()?.events.last?.errorComment)); return }
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+        guard session.player.currentItem?.status == .readyToPlay else { NSLog("DriftLoomDRMSmoke: FAIL not ready"); return }
+        session.player.play()
+        try await Task.sleep(nanoseconds: 6_000_000_000)
+        let seconds = session.player.currentTime().seconds
+        var refused = false
+        if let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            do { _ = try await SoundCloudDownload.save(playlist: stream.url, directory: directory, baseName: "drm") { _ in } }
+            catch { refused = true }
+        }
+        session.stop()
+        NSLog("DriftLoomDRMSmoke: %@ at %.1fs, save refused: %@", seconds > 2 ? "PASS" : "FAIL", seconds, refused ? "yes" : "no")
+    } catch {
+        NSLog("DriftLoomDRMSmoke: FAIL %@", error.localizedDescription)
+    }
+}
+
+/// Opt-in device/simulator check. Compiled out of normal Release builds.
+@MainActor
 func runPlaybackSmokeCheck(_ session: PlaybackSession) async {
     let arguments = ProcessInfo.processInfo.arguments
     let flag = arguments.firstIndex(of: "--playback-smoke-url")
     guard flag != nil || arguments.contains("--browse-smoke-play") else { return }
     session.player.isMuted = true
+    // --drm-smoke ID: a protected SoundCloud track must license, start and refuse to be saved.
+    if let drm = arguments.firstIndex(of: "--drm-smoke"), arguments.indices.contains(drm + 1) { await runDRMSmoke(arguments[drm + 1]); return }
     // --subtitle-smoke LANG: turn on subtitles in that language and require a visible cue.
     let subtitleFlag = arguments.firstIndex(of: "--subtitle-smoke")
     if let subtitleFlag, arguments.indices.contains(subtitleFlag + 1) { session.preferredSubtitleLanguage = arguments[subtitleFlag + 1] }

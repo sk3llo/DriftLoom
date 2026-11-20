@@ -11,6 +11,12 @@ public struct ResolvedVideo: Sendable {
     public let audioURL: URL?
     /// Metadata found while resolving (artist, artwork, link), for items opened by ID alone.
     public var item: BrowseItem?
+    /// The video's audio languages when it has several (original first), and the one playing.
+    public var audioTracks: [AudioTrack] = []
+    public var audioTrackID: String?
+    /// A FairPlay-protected stream (SoundCloud) is licensed from here with this token while it plays.
+    public var licenseURL: URL?
+    public var licenseToken: String?
 
     public init(title: String, streamURL: URL, usesHLS: Bool, description: String = "", audioURL: URL? = nil, item: BrowseItem? = nil) {
         self.item = item
@@ -19,6 +25,17 @@ public struct ResolvedVideo: Sendable {
         self.usesHLS = usesHLS
         self.description = description
         self.audioURL = audioURL
+    }
+
+    /// The same video with another of its audio tracks: it replaces the separate audio stream, or the
+    /// stream itself for audio-only playback.
+    public func with(audioTrack track: AudioTrack) -> ResolvedVideo {
+        guard audioTracks.contains(track), let url = track.url else { return self }
+        let separate = audioURL != nil
+        var copy = ResolvedVideo(title: title, streamURL: separate ? streamURL : url, usesHLS: usesHLS, description: description,
+                                 audioURL: separate ? url : nil, item: item)
+        copy.audioTracks = audioTracks; copy.audioTrackID = track.id
+        return copy
     }
 }
 
@@ -47,7 +64,9 @@ public struct YouTubeStreamResolver: StreamResolving {
     /// SoundCloud tracks have a single HLS audio stream; every format choice resolves to it.
     private func soundCloud(_ request: VideoRequest) async throws -> ResolvedVideo {
         let stream = try await SoundCloudClient.shared.stream(request.videoID)
-        return ResolvedVideo(title: stream.title, streamURL: stream.url, usesHLS: true, description: stream.description, item: stream.item)
+        var resolved = ResolvedVideo(title: stream.title, streamURL: stream.url, usesHLS: true, description: stream.description, item: stream.item)
+        resolved.licenseURL = stream.licenseURL; resolved.licenseToken = stream.licenseToken
+        return resolved
     }
     private func resolveChoice(_ request: VideoRequest, choice: DownloadChoice?) async throws -> ResolvedVideo {
         guard let choice else { return try await resolveDefault(request) }
@@ -63,10 +82,14 @@ public struct YouTubeStreamResolver: StreamResolving {
         let video = YouTube(videoID: request.videoID, methods: [.local])
         let metadata = try? await video.metadata
         try Task.checkCancellation()
-        guard let stream = try await video.streams.filter({ !$0.includesVideoTrack && $0.isNativelyPlayable })
+        let streams = try await video.streams
+        guard let stream = streams.withoutDubs.filter({ !$0.includesVideoTrack && $0.isNativelyPlayable })
             .max(by: { ($0.bitrate ?? 0) < ($1.bitrate ?? 0) }) else { return nil }
-        return ResolvedVideo(title: metadata?.title ?? PlaybackSession.placeholderTitle, streamURL: stream.url, usesHLS: false,
-                             description: metadata?.description ?? "")
+        var resolved = ResolvedVideo(title: metadata?.title ?? PlaybackSession.placeholderTitle, streamURL: stream.url, usesHLS: false,
+                                     description: metadata?.description ?? "")
+        resolved.audioTracks = streams.audioTracks
+        resolved.audioTrackID = resolved.audioTracks.first(where: \.isOriginal)?.id
+        return resolved
     }
 
     public func resolve(_ request: VideoRequest) async throws -> ResolvedVideo {
@@ -89,7 +112,15 @@ public struct YouTubeStreamResolver: StreamResolving {
             .filter({ $0.isNativelyPlayable }).highestResolutionStream() else {
             throw PlaybackError.noPlayableStream
         }
-        return ResolvedVideo(title: title, streamURL: stream.url, usesHLS: false, description: metadata?.description ?? "")
+        var resolved = ResolvedVideo(title: title, streamURL: stream.url, usesHLS: false, description: metadata?.description ?? "")
+        // A combined stream of a multi-language video carries whichever dub YouTube picks for the viewer;
+        // its picture is played with the original audio track instead.
+        let tracks = streams.audioTracks
+        if let original = tracks.first(where: \.isOriginal) ?? tracks.first, let url = original.url {
+            resolved = ResolvedVideo(title: title, streamURL: stream.url, usesHLS: false, description: metadata?.description ?? "", audioURL: url)
+            resolved.audioTracks = tracks; resolved.audioTrackID = original.id
+        }
+        return resolved
     }
 }
 

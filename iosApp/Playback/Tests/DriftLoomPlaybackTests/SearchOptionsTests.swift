@@ -11,7 +11,7 @@ final class SearchOptionsTests: XCTestCase {
         XCTAssertEqual(SearchOptions(type: .channels, duration: .long).parameter, SearchFilter.channels.parameter)
     }
     func testInvalidLocaleFallsBackWithoutPassingArbitraryQueryValues() {
-        XCTAssertEqual(ContentLocale(language: "bad&hl=xxx", country: "bad"), ContentLocale(language: "en", country: "PT"))
+        XCTAssertEqual(ContentLocale(language: "bad&hl=xxx", country: "bad"), ContentLocale(language: "en", country: "US"))
         XCTAssertEqual(ContentLocale(language: "pt", country: "BR").country, "BR")
     }
 }

@@ -118,6 +118,13 @@ struct VideoDetailView: View {
                             }
                         }
                         }
+                        if playback.audioTracks.count > 1 {
+                            Menu("Audio track") {
+                                ForEach(playback.audioTracks) { track in
+                                    Button(track.name + (playback.selectedAudioTrackID == track.id ? " ✓" : "")) { playback.selectAudioTrack(track) }
+                                }
+                            }.accessibilityIdentifier("audioTrack")
+                        }
                         if !playback.subtitleTracks.isEmpty {
                             Menu("Subtitles") {
                                 Button(String(localized: "Off") + (playback.selectedSubtitle == nil ? " ✓" : "")) { playback.selectSubtitle(nil) }

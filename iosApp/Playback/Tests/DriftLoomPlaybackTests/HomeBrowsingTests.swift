@@ -98,4 +98,17 @@ final class ChartsParserTests: XCTestCase {
     func testNonChartResponseIsNotMisrepresentedAsTrendingContent() {
         XCTAssertThrowsError(try ChartsParser.music(["items": []], country: "PT"))
     }
+    func testYouTubeMusicChartsPickTheTrendingPlaylist() {
+        func shelf(_ ids: [String]) -> [String: Any] {
+            ["musicCarouselShelfRenderer": ["contents": ids.map { ["musicTwoRowItemRenderer": ["navigationEndpoint": ["browseEndpoint": ["browseId": $0]]]] }]]
+        }
+        func root(_ sections: [[String: Any]]) -> [String: Any] {
+            ["contents": ["singleColumnBrowseResultsRenderer": ["tabs": [["tabRenderer": ["content": ["sectionListRenderer": ["contents": sections]]]]]]]]
+        }
+        let charts = root([["musicShelfRenderer": [:]], shelf(["VLPL4fGSI1pDJn4yCNzulPkUbxgr4pl0gmI-", "VLOLAK5uy_kNWGJvgWVqlt5LsFDL9Sdluly4M8TvGkM"]),
+                           shelf(["VLOLAK5uy_second00000000000000000000000000"])])
+        XCTAssertEqual(ChartsParser.trendingPlaylist(charts), "OLAK5uy_kNWGJvgWVqlt5LsFDL9Sdluly4M8TvGkM")
+        XCTAssertNil(ChartsParser.trendingPlaylist(root([shelf(["VLPL4fGSI1pDJn4yCNzulPkUbxgr4pl0gmI-", "VLOLAK5uy_bad&id"])])))
+        XCTAssertNil(ChartsParser.trendingPlaylist(["error": "x"]))
+    }
 }

@@ -35,12 +35,13 @@ public struct VideoRequest: Equatable, Sendable {
 }
 
 public enum PlaybackError: LocalizedError {
-    case invalidURL, noPlayableStream, extractionRefused
+    case invalidURL, noPlayableStream, extractionRefused, protectedStream
 
     public var errorDescription: String? {
         switch self {
         case .invalidURL: return L("Enter a YouTube video link or video ID.")
         case .noPlayableStream: return L("No stream supported by this device is available for this video.")
+        case .protectedStream: return L("This track is protected by SoundCloud and this device wouldn't start its playback.")
         case .extractionRefused:
             return L("YouTube didn't provide this video's streams. It may need a signed-in account, or YouTube may be limiting requests from this network. Try again later or on another network.")
         }

@@ -13,8 +13,8 @@ let package = Package(
         .executable(name: "BrowseProbe", targets: ["BrowseProbe"])
     ],
     dependencies: [
-        .package(url: "https://github.com/alexeichhorn/YouTubeKit.git",
-                 revision: "e5b7d0396ce12bf3444f0d209e8436c83373b7af")
+        // Vendored with a small change that keeps dubbed audio tracks; see Vendor/YouTubeKit/Package.swift.
+        .package(path: "Vendor/YouTubeKit")
     ],
     targets: [
         .target(name: "DriftLoomPlayback", dependencies: ["YouTubeKit", "DriftLoomActivity"], resources: [.process("Localizable.xcstrings")]),
