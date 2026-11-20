@@ -335,6 +335,7 @@ final class DownloadManager: ObservableObject {
         guard let relativePath = DownloadPaths.relativePath(for: location, home: URL(fileURLWithPath: NSHomeDirectory())) else {
             failed(transfer, message: String(localized: "Downloaded media location is unavailable.")); return
         }
+        let location = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(relativePath)
         let asset = AVURLAsset(url: location)
         do {
             let playable = try await asset.load(.isPlayable)
