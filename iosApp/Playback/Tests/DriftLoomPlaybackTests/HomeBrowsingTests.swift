@@ -81,23 +81,6 @@ final class SuggestionStoreTests: XCTestCase {
 }
 
 final class ChartsParserTests: XCTestCase {
-    func testOfficialChartOrderVisibilityAndDuration() throws {
-        let rows: [[String: Any]] = [
-            ["id": "11-9ZaYiTPE", "title": "First", "channelName": "Artist", "videoDuration": 155],
-            ["id": "dQw4w9WgXcQ", "title": "Hidden", "isAvailable": false],
-            ["id": "11-9ZaYiTPE", "title": "Duplicate"],
-            ["id": "jNQXAC9IVRw", "title": "Second", "videoDuration": "3601"]
-        ]
-        let root: [String: Any] = ["contents": ["sectionListRenderer": ["contents": [["musicAnalyticsSectionRenderer": ["content": ["videos": [["videoViews": rows]]]]]]]]]
-        let page = try ChartsParser.music(root, country: "PT")
-        XCTAssertEqual(page.items.map(\.title), ["First", "Second"])
-        XCTAssertEqual(page.items.map(\.duration), ["2:35", "1:00:01"])
-        XCTAssertEqual(page.title, "Trending music · PT")
-        XCTAssertNil(page.next)
-    }
-    func testNonChartResponseIsNotMisrepresentedAsTrendingContent() {
-        XCTAssertThrowsError(try ChartsParser.music(["items": []], country: "PT"))
-    }
     func testYouTubeMusicChartsPickTheTrendingPlaylist() {
         func shelf(_ ids: [String]) -> [String: Any] {
             ["musicCarouselShelfRenderer": ["contents": ids.map { ["musicTwoRowItemRenderer": ["navigationEndpoint": ["browseEndpoint": ["browseId": $0]]]] }]]

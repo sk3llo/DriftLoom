@@ -6,7 +6,7 @@ DriftLoom brings YouTube's own curated pages to Home:
 - **Gaming**: gaming videos and streams.
 - **Podcasts**: podcast episodes.
 - **Trending music**: YouTube's official music chart.
-- **Movie trailers**: trending trailers.
+- **Movie trailers**: this week's most-viewed trailers.
 - **SoundCloud trending**: popular tracks on SoundCloud.
 
 ![Trending music](images/trending.jpg)
@@ -15,7 +15,7 @@ Live, Trending music and the others are on Home by default; add the rest with [C
 
 ## See more
 
-Keep scrolling **Live** or **Podcasts**: more videos load on their own when you reach the end. DriftLoom goes through each section of the page in turn (for Live: live now, recent streams, upcoming, news, gaming and sports), adding the videos not already listed. Gaming, Trending music and Movie trailers show YouTube's whole list at once, so nothing more loads there.
+Keep scrolling **Live** or **Podcasts**: more videos load on their own when you reach the end. DriftLoom goes through each section of the page in turn (for Live: live now, recent streams, upcoming, news, gaming and sports), adding the videos not already listed. Movie trailers keeps loading too. Gaming and Trending music show YouTube's whole list at once, so nothing more loads there.
 
 ## Change the country
 

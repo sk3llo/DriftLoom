@@ -95,7 +95,7 @@ requests with HTTP 429 from the test network (plain tracks still load); the app 
 and keeps playing. Translation is off by default and only used when the chosen language has no track.
 
 Kiosks: Live (YouTube's Live channel tab), Gaming (the Gaming channel's trending tab), Podcasts
-(/podcasts) and Movie trailers (YouTube Charts TRENDING_MOVIES). They are opt-in home sections, turned on
+(/podcasts) and Movie trailers (this week's most-viewed "official trailer" videos; YouTube Charts TRENDING_MOVIES, which NewPipe uses, now answers 403 without a reCAPTCHA token). They are opt-in home sections, turned on
 in Customize tabs. Kiosk pages currently load one page without continuation.
 
 NewPipe settings: only `preferences.json` is read (never the Java-serialized `newpipe.settings`). Theme,
@@ -119,8 +119,8 @@ is closed and can be retried. NewPipe backups' SoundCloud entries are still skip
 which would need one lookup per item).
 
 Kiosk paging: YouTube serves the Live, Gaming and Podcasts pages as single pages (53, 50 and 48 items on
-26 October 2026) without continuation tokens, and DriftLoom shows all of them; Trending music and Movie trailers
-are fixed-size YouTube Charts lists. SoundCloud trending already pages through next_href. There is nothing further
+26 October 2026) without continuation tokens, and DriftLoom shows all of them; Trending music
+is a fixed-size playlist and Movie trailers pages through search results. SoundCloud trending already pages through next_href. There is nothing further
 to load, so no paging was added.
 
 Seek-bar previews: the storyboard spec (`storyboards.playerStoryboardSpecRenderer.spec`) comes from the same
