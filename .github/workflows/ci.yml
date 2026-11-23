@@ -57,7 +57,21 @@ jobs:
         with:
           java-version: 21
           distribution: "temurin"
-          cache: 'gradle'
+
+      # This job keeps its own Gradle cache. setup-java's cache: 'gradle' is one cache shared by every job and saved by
+      # whichever finishes first; when that was an emulator job, which never needs Robolectric, this job downloaded
+      # Robolectric from Maven Central on every run and failed whenever Maven Central rate-limited it (HTTP 429).
+      # Robolectric also downloads Android framework jars (about 190 MB) into ~/.m2 itself while the tests run.
+      - name: Cache Gradle and Robolectric downloads
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.m2/repository/org/robolectric
+          key: gradle-jvm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/*.versions.toml', '**/robolectric.properties') }}
+          # After a build change, start from the previous cache and download only what's new.
+          restore-keys: gradle-jvm-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build debug APK and run jvm tests
         run: ./gradlew assembleContinuous lintContinuous testDebugUnitTest :shared:testAndroidHostTest :shared:jvmTest --stacktrace -DskipFormatKtlint
