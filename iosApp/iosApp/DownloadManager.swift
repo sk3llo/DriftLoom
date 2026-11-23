@@ -345,14 +345,15 @@ final class DownloadManager: ObservableObject {
         guard var record = matching(transfer) else {
             try? FileManager.default.removeItem(at: location); return
         }
+        var location = location
         #if targetEnvironment(macCatalyst)
         // macOS leaves finished HLS packages in nsurlsessiond's cache, outside the folders this app manages.
-        let location = hls ? Self.moveIntoMedia(location, id: record.id) ?? location : location
+        if hls, let moved = Self.moveIntoMedia(location, id: record.id) { location = moved }
         #endif
         guard let relativePath = DownloadPaths.relativePath(for: location, home: URL(fileURLWithPath: NSHomeDirectory())) else {
             failed(transfer, message: String(localized: "Downloaded media location is unavailable.")); return
         }
-        let location = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(relativePath)
+        location = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(relativePath)
         let asset = AVURLAsset(url: location)
         do {
             let playable = try await asset.load(.isPlayable)
