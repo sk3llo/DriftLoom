@@ -16,7 +16,7 @@ public enum BrowseRoute: Hashable, Sendable {
 /// YouTube's own curated pages, matching the kiosks NewPipe's extractor offers.
 public enum YouTubeKiosk: String, CaseIterable, Codable, Sendable {
     case live = "Live", gaming = "Gaming", podcasts = "Podcasts", trailers = "Movie trailers"
-    /// Page path on www.youtube.com; trailers come from YouTube Charts instead.
+    /// Page path on www.youtube.com; trailers come from a search for this week's most-viewed trailers instead.
     var path: String? {
         switch self {
         case .live: return "/channel/UC4R8DWoMoI7CAwX8_LjQHig/livetab"
@@ -181,7 +181,12 @@ public actor YouTubeBrowsingClient: Browsing {
     }
     public func page(for route: BrowseRoute) async throws -> BrowsePage {
         if route == .trendingMusic { return try await YouTubeChartsClient(session: session).music(locale: .current()) }
-        if route == .kiosk(.trailers) { return try await YouTubeChartsClient(session: session).trailers(locale: .current()) }
+        if route == .kiosk(.trailers) {
+            // YouTube Charts' TrendingMovies chart (NewPipe's source) now needs a reCAPTCHA token and answers 403.
+            // ponytail: this week's most-viewed trailers stand in for the chart; switch back if Charts opens up again.
+            let results = try await page(for: .advancedSearch("official trailer", SearchOptions(type: .videos, order: .views, date: .week)))
+            return BrowsePage(title: YouTubeKiosk.trailers.title + " · " + ContentLocale.current().country, items: results.items, next: results.next)
+        }
         switch route {
         case let .soundCloudSearch(query, filter): return try await SoundCloudClient.shared.search(query, filter: filter)
         case .soundCloudTrending: return try await SoundCloudClient.shared.trending()
