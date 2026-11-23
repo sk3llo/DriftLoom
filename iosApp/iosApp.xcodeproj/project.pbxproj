@@ -17,7 +17,7 @@
 		6B7156D1A56573DB7863FE2A /* DriftLoomActivity in Frameworks */ = {isa = PBXBuildFile; productRef = 801D388CCEAE507F6F2BC814 /* DriftLoomActivity */; };
 		6BF4A0B85BB6A487CE4C8258 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E0C0DBA696A39096ED141ED3 /* Localizable.xcstrings */; };
 		83F48F7E7CCF0004CABC8A2D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB578B5F9F6851018024C8DB /* SwiftUI.framework */; };
-		AD1B568042447103A6159561 /* DriftLoomWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BAB7EB6C984C052928D78B57 /* DriftLoomWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AD1B568042447103A6159561 /* DriftLoomWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BAB7EB6C984C052928D78B57 /* DriftLoomWidgets.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B8D4860841FD03DF47541C88 /* user-guide in Resources */ = {isa = PBXBuildFile; fileRef = C82B8D3816AE5078FB262DDE /* user-guide */; };
 		D11111111111111111111111 /* DriftLoomPlayback in Frameworks */ = {isa = PBXBuildFile; productRef = D22222222222222222222222 /* DriftLoomPlayback */; };
 		DA188BF843EADD058CF3AD39 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C7B72842A5B5DCA0AF9FBCD /* UniformTypeIdentifiers.framework */; };
@@ -439,6 +439,7 @@
 		AFD14BD9FEB3E44C052D7287 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = DriftLoomWidgets;
+			platformFilter = ios;
 			target = 158C425E29A3841B45931699 /* DriftLoomWidgets */;
 			targetProxy = CA9D6D798DB96CD0D85F99DB /* PBXContainerItemProxy */;
 		};

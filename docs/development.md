@@ -255,6 +255,32 @@ Known gaps:
   vertical tab rail on the right; the title menu, menus and sheets work, but the rail's tabs are images to XCTest,
   so the UI tests and screenshot tour can't switch tabs on it yet.
 
+## Mac app (Mac Catalyst)
+
+The iOS app also builds as a Mac app. `scripts/build-mac-app.sh --unsigned` builds a universal (Apple silicon and
+Intel), sandboxed app with the hardened runtime and packages `build/mac-release/DriftLoom-<version>-mac.dmg`.
+Releases ship this ad hoc build, because Developer ID signing and notarization need the paid Apple Developer
+Program; other Macs open it only after the user allows it once (see [install-mac.md](install-mac.md)). The release
+workflow builds it next to the IPA, and the iOS checks build it on every push. With `DRIFTLOOM_MAC_IDENTITY` set to
+a "Developer ID Application" certificate it
+signs for distribution, and `--notarize` with `DRIFTLOOM_NOTARY_PROFILE` (made with
+`xcrun notarytool store-credentials`) uploads the disk image to Apple's notary service and staples the ticket.
+The script checks the signed result: sandboxed app and share extension, hardened runtime, no debugging entitlement,
+both architectures.
+
+Differences from iOS: no Live Activities (the widget extension is built for iOS only), no brightness or volume
+swipes in full screen, and finished HLS downloads are moved from `nsurlsessiond`'s cache, where macOS leaves them,
+into the app's Media folder. The entitlements are `iosApp/DriftLoom-Mac.entitlements` and
+`DriftLoomShare/DriftLoomShare-Mac.entitlements`; `Config.xcconfig` applies them for the Mac SDK only.
+
+Verification on 17 November 2026 (macOS 26.6.2, sandboxed Release build with the hardened runtime and the
+device-testing flags): playback, Picture in Picture, HLS and merged downloads, and the HLS download after a cold
+launch pass. Launch test builds with `open -g -n --stderr <file> <app> --args ...` so they don't take focus;
+`NSLog` results go to that file and `Logger` results to the unified log (`/usr/bin/log stream`; zsh has its own
+`log`). Re-signing a Debug build with the hardened runtime crashes at launch, because Debug splits the code into
+`DriftLoom.debug.dylib`, which library validation then rejects; check Release builds. Not yet checked: the Share
+extension from Safari's share menu, notifications, menus and keyboard shortcuts, and Intel Macs.
+
 ## Repository layout
 
 The project includes the Android app (`app`), shared Kotlin/Compose module (`shared`),

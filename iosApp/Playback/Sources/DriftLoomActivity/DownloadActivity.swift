@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import Foundation
-#if canImport(ActivityKit) && os(iOS)
+#if canImport(ActivityKit) && os(iOS) && !targetEnvironment(macCatalyst)
 import ActivityKit
 #endif
 
@@ -49,7 +49,7 @@ public struct DownloadSummary: Codable, Hashable, Sendable {
     }
 }
 
-#if canImport(ActivityKit) && os(iOS)
+#if canImport(ActivityKit) && os(iOS) && !targetEnvironment(macCatalyst)
 @available(iOS 16.1, *)
 public struct DownloadActivityAttributes: ActivityAttributes {
     public typealias ContentState = DownloadSummary

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#if canImport(ActivityKit)
+#if canImport(ActivityKit) && !targetEnvironment(macCatalyst)
 import ActivityKit
 #endif
 import Combine
@@ -31,7 +31,7 @@ struct DownloadProgressStrip: View {
     }
 }
 
-#if canImport(ActivityKit)
+#if canImport(ActivityKit) && !targetEnvironment(macCatalyst)
 /// Mirrors running downloads into one Live Activity (lock screen and Dynamic Island) on iOS 16.1+.
 /// Background transfers can't wake the app for every progress step, so the activity shows the last
 /// known progress while the app is suspended and is finished when iOS reports the transfer's end.

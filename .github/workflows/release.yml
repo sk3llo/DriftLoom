@@ -1,7 +1,8 @@
 name: Release
 
-# Push a tag such as v1.0 to build a signed APK and an unsigned IPA and attach them to a draft
-# GitHub release. Run it by hand (Actions → Release → Run workflow) to get the files as artifacts only.
+# Push a tag such as v1.0 to build a signed APK, an unsigned IPA and the Mac disk image (signed ad hoc,
+# not notarized) and attach them to a draft GitHub release. Run it by hand (Actions → Release →
+# Run workflow) to get the files as artifacts only.
 on:
   push:
     tags: ['v*']
@@ -77,11 +78,15 @@ jobs:
       - name: Build the unsigned IPA
         run: scripts/build-ios-ipa.sh dist
 
+      - name: Build the Mac disk image
+        run: scripts/build-mac-app.sh --unsigned dist
+
       - uses: actions/upload-artifact@v7
         with:
           name: ios
           path: |
             dist/*.ipa
+            dist/*.dmg
             dist/*.sha256
 
   release:

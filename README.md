@@ -1,8 +1,9 @@
 # DriftLoom
 
-A free YouTube and SoundCloud client for **iPhone, iPad and Android**, with no ads, no tracking and no account.
+A free YouTube and SoundCloud client for **iPhone, iPad, Mac and Android**, with no ads, no tracking and no account.
 DriftLoom is a fork of [NewPipe](https://github.com/TeamNewPipe/NewPipe): the Android app is NewPipe 0.29.1
-rebranded and patched, and the iOS app is a native SwiftUI app written to work the way NewPipe does.
+rebranded and patched, and the iOS app is a native SwiftUI app written to work the way NewPipe does. The Mac app is
+the iOS app built for the Mac.
 
 <p>
   <img src="docs/user-guide/images/home.jpg" width="200" alt="Home with trending videos">
@@ -39,10 +40,15 @@ No paid Apple Developer membership is needed; users sign with their own Apple ac
 **Android 6.0 or later.** Download `DriftLoom-<version>.apk` from [Releases](https://github.com/sk3llo/DriftLoom/releases)
 and open it to install. DriftLoom installs alongside NewPipe; it can't update NewPipe or be updated by it.
 
+**Mac, macOS 12 or later (preview).** Download `DriftLoom-<version>-mac.dmg` from [Releases](https://github.com/sk3llo/DriftLoom/releases)
+and drag DriftLoom to Applications. It isn't notarized by Apple, so macOS asks you to allow it once.
+**[Mac install guide](docs/install-mac.md).**
+
 ## Build
 
 **iOS:** Xcode 26.6 or newer. Open `iosApp/iosApp.xcodeproj`, choose the `iosApp` scheme and your device, set your
-team under *Signing & Capabilities*, and run. No Gradle, Java or Android SDK needed.
+team under *Signing & Capabilities*, and run. No Gradle, Java or Android SDK needed. For the Mac app, choose
+*My Mac (Mac Catalyst)*, or run `scripts/build-mac-app.sh --unsigned` to build the disk image.
 
 ```sh
 swift test --package-path iosApp/Playback

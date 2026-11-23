@@ -75,7 +75,9 @@ final class InlinePlayerController: NSObject, ObservableObject, AVPictureInPictu
                                          host.view.topAnchor.constraint(equalTo: content.topAnchor), host.view.bottomAnchor.constraint(equalTo: content.bottomAnchor)])
         }
         controller.addChild(host); host.didMove(toParent: controller)
-        levelSwipes.install(on: controller.view)
+        #if !targetEnvironment(macCatalyst)
+        levelSwipes.install(on: controller.view)  // A Mac has no brightness or volume swipes; a mouse drag would trigger them.
+        #endif
         fullscreen = controller
         presenter.present(controller, animated: true)
     }

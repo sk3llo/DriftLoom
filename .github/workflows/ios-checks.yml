@@ -23,6 +23,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -v
       - name: Verify the unsigned sideload IPA
         run: scripts/build-ios-ipa.sh build/ios-verified
+      - name: Verify the Mac app
+        run: scripts/build-mac-app.sh --unsigned build/mac-verified
       - name: Test the shared-link confirmation flow
         run: |
           DEVICE_ID="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for group in devices.values() for d in group if d["name"].startswith("iPhone")))')"

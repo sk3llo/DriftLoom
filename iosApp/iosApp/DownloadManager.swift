@@ -317,6 +317,19 @@ final class DownloadManager: ObservableObject {
         partProgress[transfer] = nil
         await completed(transfer, location: output, hls: false)
     }
+    #if targetEnvironment(macCatalyst)
+    /// Moves a finished HLS package into DriftLoom's Media folder, next to its other downloads.
+    private static func moveIntoMedia(_ package: URL, id: UUID) -> URL? {
+        let media = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+            .appendingPathComponent("Library/Application Support/DriftLoom/Media", isDirectory: true)
+        let target = media.appendingPathComponent(id.uuidString + "-" + UUID().uuidString + ".movpkg", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
+            try FileManager.default.moveItem(at: package, to: target)
+            return target
+        } catch { return nil }
+    }
+    #endif
     fileprivate func completed(_ transfer: String?, location: URL, hls: Bool) async {
         if let part = TransferParts.part(transfer), let base = TransferParts.base(transfer) {
             guard var record = matching(base), let path = DownloadPaths.relativePath(for: location, home: URL(fileURLWithPath: NSHomeDirectory())) else {
@@ -332,6 +345,10 @@ final class DownloadManager: ObservableObject {
         guard var record = matching(transfer) else {
             try? FileManager.default.removeItem(at: location); return
         }
+        #if targetEnvironment(macCatalyst)
+        // macOS leaves finished HLS packages in nsurlsessiond's cache, outside the folders this app manages.
+        let location = hls ? Self.moveIntoMedia(location, id: record.id) ?? location : location
+        #endif
         guard let relativePath = DownloadPaths.relativePath(for: location, home: URL(fileURLWithPath: NSHomeDirectory())) else {
             failed(transfer, message: String(localized: "Downloaded media location is unavailable.")); return
         }
@@ -394,7 +411,9 @@ final class DownloadAppDelegate: NSObject, UIApplicationDelegate {
         DownloadNotifier.shared.install()
         FeedRefresher.shared.register()
         CrashReportCollector.shared.start()
+        #if canImport(ActivityKit) && !targetEnvironment(macCatalyst)
         if #available(iOS 16.1, *) { DownloadActivityController.shared.start() }
+        #endif
         return true
     }
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
