@@ -93,7 +93,8 @@ final class NewPipeMigrationTests: XCTestCase {
         let plan = try LibraryTransfer.preview(try zip(Data(contentsOf: file)))
         // Only history entries count; the 19-second video at 15 s is too close to its end to resume.
         XCTAssertEqual(plan.positions, [ImportedPosition(videoID: "11-9ZaYiTPE", seconds: 123.456, duration: 600)])
-        XCTAssertTrue(plan.summary.contains("1 resume positions"))
+        // English has a singular form ("1 resume position"); runs that don't localize show the plural key instead.
+        XCTAssertTrue(plan.summary.contains("1 resume position"), plan.summary)
 
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }

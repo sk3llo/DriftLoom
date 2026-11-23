@@ -65,7 +65,8 @@ final class YouTubeTakeoutTests: XCTestCase {
         let plan = try LibraryTransfer.preview(Data(legacy.utf8))
         XCTAssertEqual(plan.library.subscriptions.map(\.item.contentID), [a])
         XCTAssertEqual(plan.library.subscriptions.first?.item.thumbnail?.host, "yt3.ggpht.com")
-        XCTAssertTrue(plan.warnings.contains { $0.contains("1 rows") })
+        // English has a singular form ("1 row that isn't…"); runs that don't localize show the plural key instead.
+        XCTAssertTrue(plan.warnings.contains { $0.contains("1 row") }, "\(plan.warnings)")
         let newPipe = #"{"app_version":"0.29.1","app_version_int":1015,"subscriptions":[{"service_id":0,"url":"https://www.youtube.com/channel/\#(b)","name":"Lofi Girl"}]}"#
         XCTAssertEqual(try LibraryTransfer.preview(Data(newPipe.utf8)).library.subscriptions.map(\.item.contentID), [b])
     }
