@@ -34,14 +34,14 @@ public struct YouTubeDownloadResolver: Sendable {
         if (try? await video.livestreams.contains(where: { $0.streamType == .hls })) == true {
             choices.append(DownloadChoice(id: "hls", name: L("Video · automatic quality (HLS)"), kind: .hls))
         }
-        if let streams = try? await video.streams {
+        if let streams = try? await video.streams.withoutDubs {
             choices += streams.filter { $0.isNativelyPlayable && ($0.includesVideoAndAudioTrack || !$0.includesVideoTrack) }
                 .compactMap { stream in
                     guard let id = Self.formatID(stream) else { return nil }
                     return DownloadChoice(id: id, name: stream.includesVideoTrack ? L("Video · \(String(stream.videoResolution ?? 0))p") : L("Audio · \((stream.bitrate ?? 0) / 1000) kbps"), kind: stream.includesVideoTrack ? .video : .audio)
                 }
         }
-        if let streams = try? await video.streams { choices += Self.mergedChoices(streams) }
+        if let streams = try? await video.streams.withoutDubs { choices += Self.mergedChoices(streams) }
         try Task.checkCancellation()
         guard !choices.isEmpty else { throw PlaybackError.noPlayableStream }
         return choices
@@ -88,13 +88,13 @@ public struct YouTubeDownloadResolver: Sendable {
         if choice.kind == .merged {
             let parts = choice.id.split(separator: "-").map(String.init)
             guard parts.count == 3, parts[0] == "merged" else { throw PlaybackError.noPlayableStream }
-            let streams = try await video.streams
+            let streams = try await video.streams.withoutDubs
             guard let videoStream = streams.first(where: { Self.formatID($0) == parts[1] && $0.includesVideoTrack && $0.isNativelyPlayable }),
                   let audioStream = streams.first(where: { Self.formatID($0) == parts[2] && !$0.includesVideoTrack && $0.isNativelyPlayable })
             else { throw PlaybackError.noPlayableStream }
             return DownloadSource(url: videoStream.url, choice: choice, audioURL: audioStream.url)
         }
-        guard let stream = try await video.streams.first(where: { Self.formatID($0) == choice.id && $0.isNativelyPlayable && ($0.includesVideoAndAudioTrack || !$0.includesVideoTrack) }) else { throw PlaybackError.noPlayableStream }
+        guard let stream = try await video.streams.withoutDubs.first(where: { Self.formatID($0) == choice.id && $0.isNativelyPlayable && ($0.includesVideoAndAudioTrack || !$0.includesVideoTrack) }) else { throw PlaybackError.noPlayableStream }
         return DownloadSource(url: stream.url, choice: choice)
     }
 }

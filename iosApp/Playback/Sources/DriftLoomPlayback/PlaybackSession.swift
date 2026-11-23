@@ -30,6 +30,14 @@ public final class PlaybackSession: ObservableObject {
     /// Play only the audio stream to save data, as NewPipe's background player does. It stays on for the
     /// following videos until turned off; a format chosen in the player still wins.
     @Published public private(set) var audioOnly = false
+    /// The audio language chosen in the player for this video; nil plays the original.
+    private var audioTrackChoice: String?
+    /// The video's audio languages when it has several, original first, and the one playing.
+    @Published public private(set) var audioTracks: [AudioTrack] = []
+    @Published public private(set) var selectedAudioTrackID: String?
+    /// HLS renditions behind `audioTracks`, selected on the player item instead of reloading.
+    private var hlsAudio: (group: AVMediaSelectionGroup, options: [String: AVMediaSelectionOption])?
+    private var fairPlay: FairPlayLicense?
     @Published public private(set) var subtitleTracks: [SubtitleTrack] = []
     /// Languages YouTube can machine-translate this video's subtitles into.
     @Published public private(set) var subtitleTranslations: [SubtitleLanguage] = []
@@ -106,11 +114,13 @@ public final class PlaybackSession: ObservableObject {
 
     public func open(_ input: String) {
         // Invalid input must also cancel the previous video/resolution.
+        let previousVideoID = videoID
         stop()
         do {
             let request = try VideoRequest(input: input)
             heightOverride = nil
             applyMaximumHeight(defaultMaximumHeight)
+            if request.videoID != previousVideoID { audioTrackChoice = nil }
             currentRequest = request
             videoID = request.videoID
             recoveryPolicy = PlaybackRecoveryPolicy()
@@ -190,6 +200,37 @@ public final class PlaybackSession: ObservableObject {
         clearItemObservers(); player.pause(); player.replaceCurrentItem(with: nil)
         resolve(currentRequest, position: position, autoplay: autoplay)
     }
+    /// Switch to another audio language at the current position; it stays chosen until another video opens.
+    public func selectAudioTrack(_ track: AudioTrack) {
+        guard audioTracks.contains(track), selectedAudioTrackID != track.id else { return }
+        audioTrackChoice = track.id
+        if let hlsAudio, let option = hlsAudio.options[track.id], let item = player.currentItem {
+            item.select(option, in: hlsAudio.group)
+            selectedAudioTrackID = track.id
+            return
+        }
+        guard let current = video, current.audioTracks.contains(track) else { return }
+        let next = current.with(audioTrack: track)
+        let position = player.currentTime()
+        let autoplay = phase == .playing || phase == .loading
+        generation = UUID()
+        let token = generation
+        resolveTask?.cancel()
+        clearItemObservers(); player.pause()
+        phase = .loading
+        resolveTask = Task { [weak self] in
+            do {
+                let merged: AVAsset? = try await next.audioURL.asyncMap { try await MergedMedia.composition(video: next.streamURL, audio: $0) }
+                try Task.checkCancellation()
+                guard let self, self.generation == token else { return }
+                self.install(next, asset: merged, position: position, autoplay: autoplay)
+            } catch is CancellationError {
+            } catch {
+                guard let self, self.generation == token else { return }
+                self.phase = .failed(error.localizedDescription)
+            }
+        }
+    }
     nonisolated public static let resolutionChoices = [0, 360, 480, 720, 1080]
     /// Chapters from a description loaded separately (the watch page), when the stream's own had none.
     public func useChapters(fromDescription description: String, videoID: String) {
@@ -228,6 +269,7 @@ public final class PlaybackSession: ObservableObject {
         title = "DriftLoom"
         didRecover = false
         video = nil
+        audioTracks = []; selectedAudioTrackID = nil; hlsAudio = nil; fairPlay = nil
         chapters = []
         selectedFormat = nil
         clearSubtitles()
@@ -330,15 +372,19 @@ public final class PlaybackSession: ObservableObject {
         phase = .resolving
         let chosen = selectedFormat
         let wantsAudio = audioOnly && !request.isSoundCloud
+        let trackChoice = audioTrackChoice
         resolveTask = Task { [weak self, resolver] in
             do {
                 // Audio-only falls back to the normal stream when YouTube offers no playable audio track.
                 var audio: ResolvedVideo?
                 if chosen == nil, wantsAudio { audio = try? await resolver.resolveAudio(request) }
                 try Task.checkCancellation()
-                let video: ResolvedVideo
-                if let audio { video = audio } else { video = try await resolver.resolve(request, choice: chosen) }
+                var resolved: ResolvedVideo
+                if let audio { resolved = audio } else { resolved = try await resolver.resolve(request, choice: chosen) }
                 try Task.checkCancellation()
+                // Keep the language chosen in the player across retries, audio-only and refreshed links.
+                if let trackChoice, let track = resolved.audioTracks.first(where: { $0.id == trackChoice }) { resolved = resolved.with(audioTrack: track) }
+                let video = resolved
                 // A separate audio stream is combined with the video-only stream for playback.
                 let merged: AVAsset? = try await video.audioURL.asyncMap { try await MergedMedia.composition(video: video.streamURL, audio: $0) }
                 try Task.checkCancellation()
@@ -360,11 +406,15 @@ public final class PlaybackSession: ObservableObject {
     private func install(_ video: ResolvedVideo, asset: AVAsset? = nil, position: CMTime, autoplay: Bool = true) {
         clearItemObservers()
         self.video = video
+        audioTracks = video.audioTracks; selectedAudioTrackID = video.audioTrackID; hlsAudio = nil
         chapters = VideoChapters.parse(video.description)
         title = video.title
         if sourceItem == nil, let item = video.item, item.contentID == videoID { sourceItem = item }
         phase = .loading
-        let item = asset.map { AVPlayerItem(asset: $0) } ?? AVPlayerItem(url: video.streamURL)
+        // The license handler must live as long as the item: AVPlayer asks for keys again after seeks and stalls.
+        if let url = video.licenseURL, let token = video.licenseToken { fairPlay = FairPlayLicense(licenseURL: url, token: token) } else { fairPlay = nil }
+        let source = asset ?? fairPlay.map { FairPlayAsset.make(url: video.streamURL, handler: $0) }
+        let item = source.map { AVPlayerItem(asset: $0) } ?? AVPlayerItem(url: video.streamURL)
         item.preferredMaximumResolution = resolutionLimit
         itemObservation = item.observe(\.status, options: [.new]) { [weak self, weak item] _, _ in
             Task { @MainActor [weak self, weak item] in
@@ -372,6 +422,7 @@ public final class PlaybackSession: ObservableObject {
                 if item.status == .failed { self.failed(item) }
                 else if item.status == .readyToPlay {
                     self.phase = .paused
+                    if video.usesHLS { await self.selectHLSAudio(item) }
                     if position.isNumeric && position.seconds > 0 {
                         await self.player.seek(to: position)
                     }
@@ -389,6 +440,24 @@ public final class PlaybackSession: ObservableObject {
             }
         }
         player.replaceCurrentItem(with: item)
+    }
+
+    /// AVPlayer picks an HLS audio rendition by the device language, so a Russian video on an English
+    /// iPhone would play YouTube's English dub; play the original (or the language chosen) instead.
+    private func selectHLSAudio(_ item: AVPlayerItem) async {
+        guard let group = try? await item.asset.loadMediaSelectionGroup(for: .audible), player.currentItem === item else { return }
+        var options: [String: AVMediaSelectionOption] = [:], tracks: [AudioTrack] = []
+        for option in group.options {
+            let track = AudioTrack(option: option)
+            if options[track.id] == nil { options[track.id] = option; tracks.append(track) }
+        }
+        guard tracks.count > 1 else { return }
+        tracks = AudioTrack.ordered(tracks)
+        let wanted = tracks.first { $0.id == audioTrackChoice } ?? tracks.first(where: \.isOriginal)
+        if let wanted, let option = options[wanted.id] { item.select(option, in: group) }
+        hlsAudio = (group, options)
+        audioTracks = tracks
+        selectedAudioTrackID = wanted?.id ?? item.currentMediaSelection.selectedMediaOption(in: group).map { AudioTrack(option: $0).id }
     }
 
     private func failed(_ item: AVPlayerItem) {

@@ -44,6 +44,10 @@ public struct SoundCloudStream: Sendable {
     public let title: String
     public let description: String
     public var item: BrowseItem? = nil
+    /// Set for a FairPlay-protected stream: the license and certificate are requested from it with this
+    /// token, the way soundcloud.com's own player does.
+    public var licenseURL: URL? = nil
+    public var licenseToken: String? = nil
 }
 
 /// SoundCloud's web API (api-v2), authorised the way NewPipe does it: with the public client ID
@@ -206,8 +210,13 @@ public actor SoundCloudClient {
         }
         let location = try await json(components.url!)
         guard let value = location["url"] as? String, let url = URL(string: value), url.scheme == "https" else { throw BrowseError.unsupportedResponse }
-        return SoundCloudStream(url: url, title: track["title"] as? String ?? L("SoundCloud track"), description: track["description"] as? String ?? "",
-                                item: SoundCloudParser.track(track))
+        var stream = SoundCloudStream(url: url, title: track["title"] as? String ?? L("SoundCloud track"), description: track["description"] as? String ?? "",
+                                      item: SoundCloudParser.track(track))
+        if SoundCloudParser.isEncrypted(transcoding) {
+            guard let token = location["licenseAuthToken"] as? String, !token.isEmpty, token.count <= 8_000 else { throw BrowseError.unsupportedResponse }
+            stream.licenseURL = SoundCloudParser.licenseURL; stream.licenseToken = token
+        }
+        return stream
     }
 
     // MARK: Requests
@@ -322,19 +331,25 @@ enum SoundCloudParser {
                           thumbnail: artwork(object["artwork_url"] as? String) ?? artwork(user?["avatar_url"] as? String),
                           duration: duration, channelID: (user?["id"] as? Int).map(SoundCloudID.user), webURL: web(object["permalink_url"]))
     }
-    /// Prefer full-length HLS AAC, then other full-length HLS. Snippets (previews) are skipped.
+    /// SoundCloud's own FairPlay license server, published in the site's client configuration.
+    static let licenseURL = URL(string: "https://license.media-streaming.soundcloud.cloud/playback/fairplay")!
+    static func isEncrypted(_ transcoding: Object) -> Bool { (transcoding["format"] as? Object)?["protocol"] as? String == "cbc-encrypted-hls" }
+    /// Prefer full-length HLS AAC, then other full-length HLS, then a FairPlay stream. Snippets (previews)
+    /// and the Widevine variant (ctr-encrypted-hls) are skipped.
     static func bestTranscoding(_ transcodings: [Object]) -> Object? {
-        let full = transcodings.filter { $0["snipped"] as? Bool != true && (($0["format"] as? Object)?["protocol"] as? String) == "hls" }
-        func mime(_ item: Object) -> String { ((item["format"] as? Object)?["mime_type"] as? String) ?? "" }
-        return full.first { mime($0).contains("mp4a") || mime($0).contains("aac") } ?? full.first { mime($0) == "audio/mpegurl" }
+        func rank(_ item: Object) -> Int? {
+            guard item["snipped"] as? Bool != true, let format = item["format"] as? Object, let mime = format["mime_type"] as? String else { return nil }
+            switch format["protocol"] as? String {
+            case "hls": return mime.contains("mp4a") || mime.contains("aac") ? 0 : mime == "audio/mpegurl" ? 1 : nil
+            case "cbc-encrypted-hls": return mime.contains("mp4a") ? 2 : nil
+            default: return nil
+            }
+        }
+        return transcodings.min { (rank($0) ?? 9) < (rank($1) ?? 9) }.flatMap { rank($0) == nil ? nil : $0 }
     }
-    /// Why no transcoding is usable: none at all, DRM-only (encrypted HLS), or previews only.
+    /// Why no transcoding is usable: none at all, only previews, or a format this device can't decode.
     static func unplayableReason(_ transcodings: [Object]) -> String {
         if transcodings.isEmpty { return L("SoundCloud doesn't offer playback for this track.") }
-        let protocols = transcodings.compactMap { ($0["format"] as? Object)?["protocol"] as? String }
-        if protocols.allSatisfy({ $0.contains("encrypted") }) {
-            return L("This track is only available as DRM-protected audio, which DriftLoom can't play.")
-        }
         if transcodings.allSatisfy({ $0["snipped"] as? Bool == true }) { return L("Only a preview of this track is available.") }
         return L("SoundCloud offers this track only in a format this device can't play.")
     }

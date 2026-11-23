@@ -146,7 +146,7 @@ its optional remote service is disabled. MIT attribution is included in the app'
 screen. The `StreamResolving` interface allows replacing the extractor independently of the UI.
 Browsing is a separate `Browsing` interface. Its client reads YouTube page data directly and
 keeps continuation context in memory; it does not use a third-party browsing server or a
-hard-coded web client version. Browsing defaults to English/Portugal, with content language and
+hard-coded web client version. Browsing defaults to the device's language and region, with content language and
 region controls for new requests (separate from the interface language).
 
 Verification on 25 October 2026: all 43 package tests pass in Debug and Release. Three optimized

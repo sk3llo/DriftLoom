@@ -58,8 +58,11 @@ final class SoundCloudParsingTests: XCTestCase {
         XCTAssertEqual(SoundCloudParser.bestTranscoding([snippet, opus, mp3])?["url"] as? String, "b")
         XCTAssertNil(SoundCloudParser.bestTranscoding([snippet, opus]), "Previews and Opus-only tracks aren't offered")
         let drm: [String: Any] = ["url": "e", "snipped": false, "format": ["protocol": "cbc-encrypted-hls", "mime_type": "audio/mp4; codecs=\"mp4a.40.2\""]]
-        XCTAssertNil(SoundCloudParser.bestTranscoding([drm]))
-        XCTAssertTrue(SoundCloudParser.unplayableReason([drm]).contains("DRM"))
+        let widevine: [String: Any] = ["url": "f", "snipped": false, "format": ["protocol": "ctr-encrypted-hls", "mime_type": "audio/mp4; codecs=\"mp4a.40.2\""]]
+        XCTAssertEqual(SoundCloudParser.bestTranscoding([drm])?["url"] as? String, "e", "A FairPlay stream plays when nothing open is offered")
+        XCTAssertEqual(SoundCloudParser.bestTranscoding([aac, drm])?["url"] as? String, "c", "An open stream still wins")
+        XCTAssertNil(SoundCloudParser.bestTranscoding([widevine]), "The Widevine variant isn't playable here")
+        XCTAssertFalse(SoundCloudParser.unplayableReason([drm]).contains("DRM"))
         XCTAssertTrue(SoundCloudParser.unplayableReason([snippet]).contains("preview"))
         XCTAssertTrue(SoundCloudParser.unplayableReason([opus]).contains("format"))
     }

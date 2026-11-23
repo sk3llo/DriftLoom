@@ -912,6 +912,22 @@
         }
       }
     },
+    "Audio track": {
+      "localizations": {
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faixa de áudio"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Звукова доріжка"
+          }
+        }
+      }
+    },
     "Auto": {
       "localizations": {
         "pt": {

@@ -34,9 +34,9 @@ public struct ContentLocale: Hashable, Sendable {
     /// The language video titles are asked for first, when it differs from `language`: a search typed in
     /// Portuguese shows Portuguese videos under their own titles rather than YouTube's translations.
     public let titleLanguage: String?
-    public init(language: String = "en", country: String = "PT", titleLanguage: String? = nil) {
+    public init(language: String = ContentLocale.deviceLanguage, country: String = ContentLocale.deviceCountry, titleLanguage: String? = nil) {
         self.language = Locale.isoLanguageCodes.contains(language) ? language : "en"
-        self.country = Locale.isoRegionCodes.contains(country) ? country : "PT"
+        self.country = Locale.isoRegionCodes.contains(country) ? country : "US"
         let base = self.language
         self.titleLanguage = titleLanguage.flatMap { Locale.isoLanguageCodes.contains($0) && $0 != base ? $0 : nil }
     }
@@ -44,6 +44,15 @@ public struct ContentLocale: Hashable, Sendable {
         ContentLocale(language: self.language, country: country, titleLanguage: language)
     }
     public static func current(defaults: UserDefaults = .standard) -> ContentLocale {
-        ContentLocale(language: defaults.string(forKey: "contentLanguage") ?? "en", country: defaults.string(forKey: "contentCountry") ?? "PT")
+        ContentLocale(language: defaults.string(forKey: "contentLanguage") ?? deviceLanguage, country: defaults.string(forKey: "contentCountry") ?? deviceCountry)
+    }
+    /// Until the user picks a content language and region, YouTube gets the device's own.
+    public static var deviceLanguage: String {
+        let code = Locale.preferredLanguages.first.flatMap { $0.split(separator: "-").first.map(String.init) } ?? "en"
+        return Locale.isoLanguageCodes.contains(code) ? code : "en"
+    }
+    public static var deviceCountry: String {
+        let code = Locale.current.regionCode ?? "US"
+        return Locale.isoRegionCodes.contains(code) ? code : "US"
     }
 }
