@@ -537,34 +537,21 @@ final class NavigationTests: XCTestCase {
             let field = safari.textFields["URL"]
             XCTAssertTrue(field.waitForExistence(timeout: 10)); field.typeText(video + "\n")
         }
-        let share = safari.buttons["ShareButton"]
-        if !share.waitForExistence(timeout: 10) {
-            // iOS 26 and later: Share is in the page menu beside the address.
-            let pageMenu = safari.buttons["MoreMenuButton"]
-            XCTAssertTrue(pageMenu.waitForExistence(timeout: 20))
-            // Safari's compact toolbar can report an invalid accessibility hit point (-1, -1).
-            // Tap the center of its on-screen frame, then still require the native Share action.
-            // A loading page can also dismiss the menu; confirm it opened before proceeding.
-            for _ in 0..<3 {
-                let window = safari.windows.firstMatch
-                let frame = pageMenu.frame
-                XCTAssertTrue(window.frame.contains(frame), "Safari's menu is on screen")
-                window.coordinate(withNormalizedOffset: .zero)
-                    .withOffset(CGVector(dx: frame.midX - window.frame.minX, dy: frame.midY - window.frame.minY)).tap()
-                if share.waitForExistence(timeout: 5) { break }
-            }
+        // Use the Apps list so the test does not depend on suggested-app ordering. A loading page can close the
+        // page menu or the share sheet, and the sheet can take a while to list apps, so retry the whole opening.
+        var more: XCUIElement?
+        for attempt in 0..<3 where more == nil {
+            if attempt > 0 { closeShareSheet(safari) }
+            guard tapShare(in: safari) else { continue }
+            more = moreAppsCell(in: safari)
         }
-        let shareAvailable = share.waitForExistence(timeout: 10)
-        if !shareAvailable {
+        if more == nil {
             let screen = XCTAttachment(screenshot: safari.screenshot())
-            screen.name = "Safari before sharing"; screen.lifetime = .keepAlways; add(screen)
+            screen.name = "Safari share sheet without More"; screen.lifetime = .keepAlways; add(screen)
             print("TREEDUMP-SAFARI\n" + safari.debugDescription + "\nTREEDUMP-END")
         }
-        XCTAssertTrue(shareAvailable, "Safari exposes its Share action"); share.tap()
-        // Use the Apps list so the test does not depend on suggested-app ordering.
-        // Some runtimes label only the child text, leaving the enclosing share cell unnamed.
-        let more = safari.collectionViews["activityCollectionView"].cells.containing(.staticText, identifier: "More").firstMatch
-        XCTAssertTrue(more.waitForExistence(timeout: 10)); more.tap()
+        let moreCell = try XCTUnwrap(more, "Safari's share sheet offers More")
+        moreCell.tap()
         // The icon row remains in the accessibility tree behind the Apps list.
         let target = safari.tables.cells.containing(NSPredicate(format: "label == %@", "DriftLoom")).firstMatch
         if !target.waitForExistence(timeout: 10) { print("TREEDUMP-SHARESHEET\n" + safari.debugDescription + "\nTREEDUMP-END") }
@@ -588,6 +575,74 @@ final class NavigationTests: XCTestCase {
             XCTAssertTrue(prompt.waitForExistence(timeout: 10)); prompt.buttons["Open"].tap()
             XCTAssertTrue(app.buttons["minimizePlayer"].waitForExistence(timeout: 15))
         } else { XCTAssertTrue(tabsAppear(app)) }
+    }
+
+    /// Taps Safari's Share action: on the toolbar, or from iOS 26 in the page menu beside the address.
+    private func tapShare(in safari: XCUIApplication) -> Bool {
+        let share = safari.buttons["ShareButton"]
+        if !share.waitForExistence(timeout: 10) {
+            let pageMenu = safari.buttons["MoreMenuButton"]
+            guard pageMenu.waitForExistence(timeout: 20) else { return false }
+            // Safari's compact toolbar can report an invalid accessibility hit point (-1, -1), so tap the center of
+            // its on-screen frame. A loading page can also dismiss the menu; confirm it opened before going on.
+            for _ in 0..<3 {
+                let window = safari.windows.firstMatch
+                let frame = pageMenu.frame
+                guard window.frame.contains(frame) else { return false }
+                window.coordinate(withNormalizedOffset: .zero)
+                    .withOffset(CGVector(dx: frame.midX - window.frame.minX, dy: frame.midY - window.frame.minY)).tap()
+                if share.waitForExistence(timeout: 5) { break }
+            }
+        }
+        guard share.waitForExistence(timeout: 10) else { return false }
+        share.tap()
+        return true
+    }
+
+    /// The share sheet's list of apps and actions: `activityCollectionView` on iOS 26 and later, an unnamed
+    /// collection view inside `ActivityListView` on iOS 17.
+    private func shareSheetList(in safari: XCUIApplication) -> XCUIElement? {
+        let named = safari.collectionViews["activityCollectionView"]
+        if named.exists { return named }
+        let nested = safari.otherElements["ActivityListView"].collectionViews.firstMatch
+        return nested.exists ? nested : nil
+    }
+
+    /// The share sheet's More cell, once the sheet lists its apps. Some runtimes name only the cell's text, and
+    /// with more apps than fit (on a small phone in particular) the cell sits past the visible end of the row.
+    private func moreAppsCell(in safari: XCUIApplication) -> XCUIElement? {
+        // The sheet loads the page's preview before it lists apps, which is slow on a busy machine.
+        let opened = Date()
+        var list = shareSheetList(in: safari)
+        while list == nil, Date().timeIntervalSince(opened) < 20 {
+            usleep(500_000)
+            list = shareSheetList(in: safari)
+        }
+        guard let sheet = list else { return nil }
+        let byText = sheet.cells.containing(.staticText, identifier: "More").firstMatch
+        let byLabel = sheet.cells.matching(NSPredicate(format: "label == %@", "More")).firstMatch
+        let listed = Date()
+        var swipes = 0
+        while Date().timeIntervalSince(listed) < 25 {
+            if byText.exists { return byText }
+            if byLabel.exists { return byLabel }
+            if swipes < 3, Date().timeIntervalSince(listed) > 3 + 2 * Double(swipes), sheet.cells.firstMatch.exists {
+                sheet.cells.firstMatch.swipeLeft()
+                swipes += 1
+            }
+            usleep(500_000)
+        }
+        return nil
+    }
+
+    /// Closes a share sheet left open by a failed attempt, so Safari's toolbar is reachable again.
+    private func closeShareSheet(_ safari: XCUIApplication) {
+        guard let sheet = shareSheetList(in: safari) else { return }
+        let inSheet = safari.otherElements["ActivityListView"].buttons["Close"].firstMatch
+        let close = inSheet.exists ? inSheet : safari.buttons["Close"].firstMatch
+        if close.exists, close.isHittable { close.tap() } else { sheet.swipeDown() }
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: sheet)
+        _ = XCTWaiter.wait(for: [gone], timeout: 5)
     }
 
     func testBackupScreenExplainsGoogleTakeoutImport() {
