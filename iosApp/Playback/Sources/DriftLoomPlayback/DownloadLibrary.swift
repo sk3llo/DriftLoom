@@ -196,10 +196,16 @@ public enum TransferParts {
 
 public enum DownloadPaths {
     /// Normalize both sides before deriving a relative path: iOS may report /var and /private/var aliases.
+    /// AVAssetDownloadTask reports its .movpkg relative to the home directory (Library/com.apple.UserManagedAssets…),
+    /// which would otherwise resolve against the working directory ("/") and never match.
     public static func relativePath(for location: URL, home: URL) -> String? {
         guard location.isFileURL, home.isFileURL else { return nil }
-        let root = home.standardizedFileURL.resolvingSymlinksInPath().path + "/"
-        let path = location.standardizedFileURL.resolvingSymlinksInPath().path
+        let location = location.relativePath.hasPrefix("/") ? location : home.appendingPathComponent(location.relativePath)
+        func normalized(_ url: URL) -> String {
+            let path = url.standardizedFileURL.resolvingSymlinksInPath().path
+            return path.hasPrefix("/private/") ? String(path.dropFirst("/private".count)) : path
+        }
+        let root = normalized(home) + "/", path = normalized(location)
         guard path.hasPrefix(root) else { return nil }
         return String(path.dropFirst(root.count))
     }

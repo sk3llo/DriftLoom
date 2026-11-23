@@ -18,6 +18,10 @@ final class DownloadLibraryTests: XCTestCase {
         XCTAssertEqual(DownloadPaths.relativePath(for: alias.appendingPathComponent("asset.movpkg"), home: home), "asset.movpkg")
         XCTAssertNil(DownloadPaths.relativePath(for: root.appendingPathComponent("outside"), home: home))
         XCTAssertNil(DownloadPaths.relativePath(for: URL(string: "https://example.com/media")!, home: home))
+        // AVAssetDownloadTask locations are relative to the home directory, with or without a base URL.
+        XCTAssertEqual(DownloadPaths.relativePath(for: URL(fileURLWithPath: "asset.movpkg", relativeTo: home), home: home), "asset.movpkg")
+        XCTAssertEqual(DownloadPaths.relativePath(for: URL(string: "asset.movpkg", relativeTo: URL(fileURLWithPath: "/"))!, home: home), "asset.movpkg")
+        XCTAssertNil(DownloadPaths.relativePath(for: URL(fileURLWithPath: "../outside", relativeTo: home), home: home))
     }
     func testJobLifecyclePersistsWithoutSignedURLs() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
