@@ -140,8 +140,9 @@ xcodebuild test -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration R
 
 Each UI journey uses its own test library and preferences; it never edits the normal library.
 
-The iOS resolver uses [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit), pinned to a
-specific revision in `Package.swift` and the lockfiles. Only local extraction is enabled;
+The iOS resolver uses [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit), vendored in
+`iosApp/Playback/Vendor/YouTubeKit` at revision e5b7d039 with one change: dubbed audio tracks are kept, and
+DriftLoom picks the original by default (see that folder's `Package.swift`). Only local extraction is enabled;
 its optional remote service is disabled. MIT attribution is included in the app's licenses
 screen. The `StreamResolving` interface allows replacing the extractor independently of the UI.
 Browsing is a separate `Browsing` interface. Its client reads YouTube page data directly and

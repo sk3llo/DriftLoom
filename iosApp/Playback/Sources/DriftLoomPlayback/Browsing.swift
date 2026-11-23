@@ -183,7 +183,7 @@ public actor YouTubeBrowsingClient: Browsing {
         if route == .trendingMusic { return try await YouTubeChartsClient(session: session).music(locale: .current()) }
         if route == .kiosk(.trailers) {
             // YouTube Charts' TrendingMovies chart (NewPipe's source) now needs a reCAPTCHA token and answers 403.
-            // ponytail: this week's most-viewed trailers stand in for the chart; switch back if Charts opens up again.
+            // Until it opens up again, this week's most-viewed trailers stand in for the chart.
             let results = try await page(for: .advancedSearch("official trailer", SearchOptions(type: .videos, order: .views, date: .week)))
             return BrowsePage(title: YouTubeKiosk.trailers.title + " · " + ContentLocale.current().country, items: results.items, next: results.next)
         }
